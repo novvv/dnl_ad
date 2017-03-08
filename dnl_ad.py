@@ -31,7 +31,7 @@ class GZipRotator:
 
 def rotating_file_handler(filename, maxBytes,backupCount):
     log=logging.handlers.RotatingFileHandler(
-              filename, maxBytes=int(maxBytes), backupCount=int(backupCount)
+              filename, maxBytes=int(maxBytes), backupCount=int(backupCount))
     log.rotator=GZipRotator()
     return log
 
@@ -54,7 +54,7 @@ LOGGING = {
             '()':rotating_file_handler,
 	    'level':LOGLEVEL,
             'formatter': 'verbose',
-            'filename':LOGGILE,
+            'filename':LOGFILE,
             'maxBytes':20,
             'backupCount':5,
         },
