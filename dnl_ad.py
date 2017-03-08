@@ -1,4 +1,5 @@
 #!/usr/bin/python
+#dnl_ad daemon
 import daemon
 from daemon import runner
 import psycopg2
