@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project dnl_ad -->
-<!-- Saved: 2017-03-10, 00:44:20 -->
+<!-- Saved: 2017-03-10, 02:03:55 -->
 <!-- Copyright (C) 2017 Valentin Novikov, novvvster@gmail.com -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -175,7 +175,7 @@
               <string>FixCodes</string>
             </key>
             <value>
-              <string></string>
+              <string>E225, E501</string>
             </value>
             <key>
               <string>FixIssues</string>
@@ -217,7 +217,7 @@
               <string>NoFixCodes</string>
             </key>
             <value>
-              <string>E501</string>
+              <string></string>
             </value>
             <key>
               <string>RepeatMessages</string>

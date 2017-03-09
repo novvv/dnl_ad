@@ -19,7 +19,8 @@ import pytz  # $ pip install pytz
 import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import urllib2,json
+import urllib2
+import json
 
 CONNECTION_STRING = "host='localhost' dbname='class4_pr' user='postgres'"
 PIDFILE = '/var/tmp/dnl_ad.pid'
@@ -115,17 +116,20 @@ def get_mail_params(fr):
     except Exception as e:
         LOG.error("system_parameters not ready: %s", str(e))
         raise e
-    return (p.smtphost, p.smtpport, p.emailusername, p.emailpassword, p.__dict__[fr])
+    return (
+        (p.smtphost, p.smtpport, p.emailusername, \
+         p.emailpassword, p.__dict__[fr])
+    )
 
 
-def sendMail(from_field, TO, SUBJECT, TEXT):
+def send_mail(from_field, to, subject, text):
     """sending email."""
     (host, port, user, passw, mfrom) = get_mail_params(from_field)
     msg = MIMEMultipart()
-    msg['Subject'] = SUBJECT
+    msg['Subject'] = subject
     msg['From'] = mfrom
-    msg['To'] = TO
-    txt = MIMEText(TEXT, 'html')
+    msg['To'] = to
+    txt = MIMEText(text, 'html')
     msg.attach(txt)
     LOG.info(msg.as_string())
     try:
@@ -133,9 +137,8 @@ def sendMail(from_field, TO, SUBJECT, TEXT):
         server.ehlo()
         if port == '587':
             server.starttls()
-      #server.ehlo
         server.login(user, passw)
-        server.sendmail(mfrom, TO, msg.as_string())
+        server.sendmail(mfrom, to, msg.as_string())
         server.quit()
     except Exception as e:
         LOG.error("sending mail: %s", str(e))
@@ -211,27 +214,35 @@ def process_table(data, select=None, style={'table': 'dttable'}):
 
 def do_notify_client_balance(sleep_time, no_send_mail):
     u"""
-     Check every 5 minute for each “active” clients’ current balance and “low balance” trigger.  If the “current balance” is below the “low balance” trigger, then send out an alert.
+     Check every 5 minute for each “active” clients’ current balance and “low
+     balance” trigger.  If the “current balance” is below the “low balance”
+     trigger, then send out an alert.
 
-Also, there is a “number of time” that we should send in total before payment or credit is added.
-Each day, the low balance should be sent once.  The subsequent notification should be sent on 00:00:00 of the client’s GMT timezone ( default is gmt+0)
-Notification Setting of client:
-select  notify_client_balance, low_balance_notice from client;
-To check if client is active:
-Select status from client ;
+Also, there is a “number of time” that we should send in total before payment
+or credit is added. Each day, the low balance should be sent once.  The
+subsequent notification should be sent on 00:00:00 of the client’s GMT timezone
+( default is gmt+0) Notification Setting of client: select 
+notify_client_balance, low_balance_notice from client; To check if client is
+active: Select status from client ;
 
     """
     LOG.info("start notify low client balance")
-    clients = query("select * from client c,c4_client_balance b where c.client_id::text=b.client_id and balance::numeric <= notify_client_balance and status=true")
+    clients = query(
+        "select * from client c,c4_client_balance b where\
+        c.client_id::text=b.client_id and balance::numeric <=\
+        notify_client_balance and status=true")
     try:
         templ = query('select * from mail_tmplate')[0]
     except Exception as e:
         LOG.error('no template table:'+str(e))
     for cl in clients:
-        LOG.warning('NOTIFY LOW BALANCE ALERT! client_id:%s, name:%s' % (cl.client_id, cl.name))
+        LOG.warning('NOTIFY LOW BALANCE ALERT! client_id:%s, name:%s' %
+                    (cl.client_id, cl.name))
         if cl.payment_term_id:
             try:
-                cl.payment_terms = query("select * from payment_term where payment_term_id=%s" % cl.payment_term_id)[0].name
+                cl.payment_terms = query(
+                    "select * from payment_term where payment_term_id=%s" %
+                 cl.payment_term_id)[0].name 
             except:
                 LOG.error('no payment_term table:'+str(e))
         else:
@@ -245,15 +256,22 @@ Select status from client ;
             LOG.error('Sending time not set!')
             cl.daily_balance_send_time = cl.time
         else:
-            cl.daily_balance_send_time = datetime.combine(cl.date, cl.daily_balance_send_time).replace(tzinfo=UTC).timetz()
-
-        sendtime_a = datetime.combine(cl.date, cl.daily_balance_send_time) - timedelta(seconds=sleep_time*2)
-        sendtime_b = datetime.combine(cl.date, cl.daily_balance_send_time) + timedelta(seconds=sleep_time*2)
+            cl.daily_balance_send_time = datetime.combine(
+                cl.date,
+cl.daily_balance_send_time).replace(tzinfo=UTC).timetz()
+        sendtime_a = datetime.combine(
+            cl.date, cl.daily_balance_send_time) - \
+            timedelta(seconds=sleep_time*2)
+        sendtime_b = datetime.combine(
+            cl.date, cl.daily_balance_send_time) + \
+            timedelta(seconds=sleep_time*2)
         if cl.last_lowbalance_time:
             last_send = cl.last_lowbalance_time
         else:
             last_send = cl.now - timedelta(hours=24)
-        LOG.info('times:last %s now %s a %s b %s' % (str(last_send), str(cl.now), str(sendtime_a), str(sendtime_b)))
+        LOG.info('times:last %s now %s a %s b %s' %
+                 (str(last_send), str(cl.now), str(sendtime_a),
+                 str(sendtime_b)))
         if cl.now-last_send > timedelta(seconds=sleep_time*2) and cl.now > sendtime_a and cl.now < sendtime_b:
             LOG.info('Time to send notification!')
         else:
@@ -265,27 +283,32 @@ Select status from client ;
 
         subj = process_template(templ.lowbalance_subject, cl)
         content = process_template(templ.lowbalance_content, cl)
-        LOG.info("%s : %s subject: %s content: %s" % (cl.client_id, cl.email, subj, content))
+        LOG.info("%s : %s subject: %s content: %s" %
+                 (cl.client_id, cl.email, subj, content))
         try:
             if '@' in cl.billing_email and no_send_mail is False:
-                sendMail('fromemail', cl.email, subj, content)
+                send_mail('fromemail', cl.email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
         #make things after send alert
         times = int(cl.lowbalance_notication_time_type)+1
-        query("update client set last_lowbalance_time='%s' where client_id=%s" % (str(cl.now), cl.client_id))
+        query(
+            "update client set last_lowbalance_time='%s' where client_id=%s" %
+              (str(cl.now), cl.client_id))
 
 
 def do_notify_zero_balance(sleep_time, no_send_mail):
     u"""
-Check every 5 minute for each “active” clients’ current balance and “low balance” trigger.  If the “current balance” is below 0 for prepay client type or below  ( negative value of credit ) for postpay client type.
+Check every 5 minute for each “active” clients’ current balance and “low
+balance” trigger.  If the “current balance” is below 0 for prepay client type
+or below  ( negative value of credit ) for postpay client type.
 
-Also, there is a “number of time” that we should send in total before payment or credit is added.
-Each day, the low balance should be sent once.  The subsequent notification should be sent on 00:00:00 of the client’s GMT timezone ( default is gmt+0)
-Notification Setting of client:
-select  notify_client_balance, low_balance_notice from client;
-To check if client is active:
-Select status from client ;
+Also, there is a “number of time” that we should send in total before payment
+or credit is added. Each day, the low balance should be sent once.  The
+subsequent notification should be sent on 00:00:00 of the client’s GMT timezone
+( default is gmt+0) Notification Setting of client: select 
+notify_client_balance, low_balance_notice from client; To check if client is
+active: Select status from client ;
 Select mode from client ;
 Mode = 1 (prepay)
 Mode = 2 (postpay)
@@ -305,11 +328,14 @@ Select credit from client;
     except Exception as e:
         LOG.error('no template table:'+str(e))
     for cl in clients:
-        LOG.warning('NOTIFY ZERO BALANCE ALERT! client_id:%s, name:%s' % (cl.client_id, cl.name))
+        LOG.warning('NOTIFY ZERO BALANCE ALERT! client_id:%s, name:%s' %
+                    (cl.client_id, cl.name))
 
         if cl.payment_term_id:
             try:
-                cl.payment_terms = query("select * from payment_term where payment_term_id=%s" % cl.payment_term_id)[0].name
+                cl.payment_terms = query(
+                    "select * from payment_term where payment_term_id=%s" %
+                    cl.payment_term_id)[0].name 
             except:
                 LOG.error('no payment_term table:'+str(e))
         else:
@@ -318,15 +344,20 @@ Select credit from client;
         cl.date = date.today()
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
-        send_time = time(0, 0, 0, tz_from_string(cl.auto_send_zone))  # cl.daily_balance_send_time
+        send_time = time(0, 0, 0, tz_from_string(cl.auto_send_zone)) 
 
-        sendtime_a = datetime.combine(cl.date, send_time) - timedelta(seconds=sleep_time*2)
-        sendtime_b = datetime.combine(cl.date, send_time) + timedelta(seconds=sleep_time*2)
+        sendtime_a = datetime.combine(
+            cl.date, send_time) - timedelta(seconds=sleep_time*2)
+        sendtime_b = datetime.combine(
+            cl.date, send_time) + timedelta(seconds=sleep_time*2)
         if cl.zero_balance_notice_last_send:
-            last_send = datetime.combine(cl.date, cl.zero_balance_notice_last_send)
+            last_send = datetime.combine(
+                cl.date, cl.zero_balance_notice_last_send)
         else:
             last_send = cl.now - timedelta(hours=24)
-        LOG.info('times:last %s now %s a %s b %s' % (str(last_send), str(cl.now), str(sendtime_a), str(sendtime_b)))
+        LOG.info('times:last %s now %s a %s b %s' %
+                 (str(last_send), str(cl.now), str(sendtime_a),
+                 str(sendtime_b)))
         if cl.now-last_send > timedelta(seconds=sleep_time*2) and cl.now > sendtime_a and cl.now < sendtime_b:
             LOG.info('Time to send notification!')
         else:
@@ -338,87 +369,107 @@ Select credit from client;
 
         subj = process_template(templ.low_balance_alert_email_subject, cl)
         content = process_template(templ.low_balance_alert_email_content, cl)
-        LOG.info("%s : %s subject: %s content: %s" % (cl.client_id, cl.billing_email, subj, content))
+        LOG.info("%s : %s subject: %s content: %s" %
+                 (cl.client_id, cl.billing_email, subj, content))
         try:
             if '@' in cl.billing_email and no_send_mail is False:
-                sendMail('fromemail', cl.email, subj, content)
+                send_mail('fromemail', cl.email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
         #make things after send alert
         times = int(cl.zero_balance_notice_time)+1
-        query("update client set zero_balance_notice_time='%s' zero_balance_notice_last_send='%s'  where client_id=%s" % (times, str(cl.now), cl.client_id))
+        query(
+            "update client set zero_balance_notice_time='%s' zero_balance_notice_last_send='%s'  where client_id=%s" %
+              (times, str(cl.now), cl.client_id))
 
 
 def do_daily_usage_summary(sleep_time, no_send_mail):
     u"""
-    For each client who has “daily usage summary” selected, at the client’s GMT time zone, we need to send out a daily usage summary mail.
-    """
+    For each client who has “daily usage summary” selected, at the client’s GMT
+    time zone, we need to send out a daily usage summary mail. """
     LOG.info("start notify daily usage summary")
-    clients = query("select * from client  where status=true and daily_cdr_generation=1")
+    clients = query(
+        "select * from client  where status=true and daily_cdr_generation=1")
     #templ = query('select * from mail_tmplate')[0]
     for cl in clients:
-        LOG.warning('DAILY USAGE! client_id:%s, name:%s' % (cl.client_id, cl.name))
+        LOG.warning('DAILY USAGE! client_id:%s, name:%s' %
+                    (cl.client_id, cl.name))
         cl.date = date.today()
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
-        usage = query("select * from cdr_report_detail%s where ingress_client_id=%s" % (cl.date.strftime("%Y%m%d"), cl.client_id))
+        usage = query(
+            "select * from cdr_report_detail%s where ingress_client_id=%s" %
+                      (cl.date.strftime("%Y%m%d"), cl.client_id))
         content = process_table(usage)
         subj = 'Daily usage summary'
         try:
             if '@' in cl.billing_email and no_send_mail is False:
-                sendMail('fromemail', cl.email, subj, content)
+                send_mail('fromemail', cl.email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
 
 def do_daily_balance_summary(sleep_time, no_send_mail):
     u"""
-    For each client who has “daily balance summary” selected, at the client’s GMT time zone, we need to send out a daily balance summary mail.
+    For each client who has “daily balance summary” selected, at the client’s
+    GMT time zone, we need to send out a daily balance summary mail.
 
     """
     LOG.info("start Daily Balance Summary")
-    clients = query("select * from client  where status=true and daily_balance_notification=1")
+    clients = query(
+        "select * from client  where status=true and\
+        daily_balance_notification=1")
     for cl in clients:
         cl.date = date.today()
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
-        balance = query("SELECT * FROM balance_history_actual  WHERE  date = '2017-03-06' AND client_id = %d" % cl.client_id)
+        balance = query(
+            "SELECT * FROM balance_history_actual  WHERE  date = '2017-03-06'\
+            AND client_id = %d" % cl.client_id)
         content = process_table(balance)
         subj = 'Daily usage summary'
         try:
             if '@' in cl.billing_email and no_send_mail is False:
-                sendMail('fromemail', cl.email, subj, content)
+                send_mail('fromemail', cl.email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
 
 def do_daily_cdr_delivery(sleep_time, no_send_mail):
     u"""
-    For each client who has “daily CDR delivery” selected, at the client’s GMT time zone, we need to send out a daily CDR mail. Instead of including a large attachment, it should be a CDR link.
+    For each client who has “daily CDR delivery” selected, at the client’s GMT
+    time zone, we need to send out a daily CDR mail. Instead of including a
+    large attachment, it should be a CDR link.
 
-    request POST   with header json   http://192.99.10.113:8000/api/v1.0/show_query_cdr
+    request POST   with header json  
+    http://192.99.10.113:8000/api/v1.0/show_query_cdr
 
 {
   "switch_ip" :  "192.99.10.113",
-  "query_key": "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXNzw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa"
-}
+  "query_key":
+"33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXNzw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa" }
 
     """
     LOG.info('Daily CDR Delivery')
     data = {
-  "switch_ip" :  "192.99.10.113",
-  "query_key": "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXNzw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa"
+        "switch_ip":  "192.99.10.113",
+        "query_key":
+            "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXN" \
+                "zw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa"
                 }
     req = urllib2.Request("http://192.99.10.113:8000/api/v1.0/show_query_cdr")
     req.add_header('Content-Type', 'application/json')
-    
-    resp=urllib2.urlopen(req,json.JSONEncoder().encode(data))
-    dt=resp.read()
+
+    resp = urllib2.urlopen(req, json.JSONEncoder().encode(data))
+    dt = resp.read()
     return dt
-    
+
+
 def do_trunk_pending_suspension_notice(sleep_time, no_send_mail):
     u"""
-    For each client, at the client’s timezone 00:00:00, we need to check if there is any pending rate download and the deadline is to be reached within 24 hours.
+    For each client, at the client’s timezone 00:00:00, we need to check if
+    there is any pending rate download and the deadline is to be reached within
+    24 hours.
 
     If so, pls send this email.
 Select download_deadline from rate_send_log;
@@ -456,6 +507,7 @@ class App():
             try:
                 do_notify_client_balance(sleep_time, no_send_mail)
                 do_notify_zero_balance(sleep_time, no_send_mail)
+                do_daily_usage_summary(sleep_time, no_send_mail)
                 do_daily_balance_summary(sleep_time, no_send_mail)
                 do_daily_cdr_delivery(sleep_time, no_send_mail)
                 do_trunk_pending_suspension_notice(sleep_time, no_send_mail)
