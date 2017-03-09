@@ -19,7 +19,7 @@ import pytz  # $ pip install pytz
 import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
+import urllib2,json
 
 CONNECTION_STRING = "host='localhost' dbname='class4_pr' user='postgres'"
 PIDFILE = '/var/tmp/dnl_ad.pid'
@@ -245,12 +245,12 @@ Select status from client ;
             LOG.error('Sending time not set!')
             cl.daily_balance_send_time = cl.time
         else:
-            cl.daily_balance_send_time = datetime.fromtimestamp(cl.daily_balance_send_time, UTC).timetz()
+            cl.daily_balance_send_time = datetime.combine(cl.date, cl.daily_balance_send_time).replace(tzinfo=UTC).timetz()
 
         sendtime_a = datetime.combine(cl.date, cl.daily_balance_send_time) - timedelta(seconds=sleep_time*2)
         sendtime_b = datetime.combine(cl.date, cl.daily_balance_send_time) + timedelta(seconds=sleep_time*2)
         if cl.last_lowbalance_time:
-            last_send = datetime.combine(cl.date, cl.last_lowbalance_time)
+            last_send = cl.last_lowbalance_time
         else:
             last_send = cl.now - timedelta(hours=24)
         LOG.info('times:last %s now %s a %s b %s' % (str(last_send), str(cl.now), str(sendtime_a), str(sendtime_b)))
@@ -405,8 +405,17 @@ def do_daily_cdr_delivery(sleep_time, no_send_mail):
 
     """
     LOG.info('Daily CDR Delivery')
-
-
+    data = {
+  "switch_ip" :  "192.99.10.113",
+  "query_key": "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXNzw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa"
+                }
+    req = urllib2.Request("http://192.99.10.113:8000/api/v1.0/show_query_cdr")
+    req.add_header('Content-Type', 'application/json')
+    
+    resp=urllib2.urlopen(req,json.JSONEncoder().encode(data))
+    dt=resp.read()
+    return dt
+    
 def do_trunk_pending_suspension_notice(sleep_time, no_send_mail):
     u"""
     For each client, at the client’s timezone 00:00:00, we need to check if there is any pending rate download and the deadline is to be reached within 24 hours.
