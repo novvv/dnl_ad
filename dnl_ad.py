@@ -489,19 +489,23 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
     LOG.info('Trunk Pending Suspension Notice')
     sleep_time=SLEEP_TIME
-    clients = query()
-    
+    tm=datetime.now(UTC)
+    alerts = query("select * from rate_send_log where is_email_alert")
+    for alert in alerts:
+        pass
+
 
 def do_trunk_is_suspended_notice():
-    LOG.info('Trunk is Suspended Notice')
     """
-    For each client, at the client’s timezone 00:00:00, we need to check if there is any pending rate download and the deadline is passed.  If so, pls send this email AND “disable this relevant trunk.”
+    For each client, at the client’s timezone 00:00:00, we need to check if there is any pending rate download and the deadline is passed.
+    If so, pls send this email AND “disable this relevant trunk.”
 Select download_deadline from rate_send_log;
 Select client_id , resource_id from rate_send_log_detail
 , resource where resource.resource_id = rate_send_log_detail.resource_id
 Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
     sleep_time=SLEEP_TIME
+    LOG.info('Trunk is Suspended Notice')
 
 class App():
     def __init__(self):
