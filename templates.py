@@ -19,7 +19,8 @@ fake_daily_balance_summary_template=""""
 </head>
 <body lang="ru-RU" dir="ltr">
 <h2 class="western" align="center" style="margin-bottom: 0.14cm; line-height: 100%; page-break-inside: auto; page-break-after: auto">
-<font size="5" style="font-size: 16pt"><b><span style="background: #51a351">Daily
+<font size="5" style="font-size: 16pt"><b><span style="background:
+#51a351">Daily
 Balance Summary</span></b></font></h2>
 <p align="center" style="margin-left: 0.81cm; margin-bottom: 0cm"> 
 </p>
@@ -95,8 +96,10 @@ fake_trunk_pending_suspension_notice_template="""
 </head>
 <body lang="ru-RU" dir="ltr">
 <h2 class="western" align="center" style="margin-bottom: 0.14cm; line-height: 100%; page-break-inside: auto; page-break-after: auto">
-<font size="5" style="font-size: 16pt"><b><span style="background: #51a351">Trunk
-Suspension Notice</span></b></font><font size="5" style="font-size: 17pt"><b><span style="background: #51a351">
+<font size="5" style="font-size: 16pt"><b><span style="background:
+#51a351">Trunk
+Suspension Notice</span></b></font><font size="5" style="font-size: 17pt"><b><span style="background:
+#51a351">
 </span></b></font>
 </h2>
 <p style="margin-left: 0.81cm; margin-bottom: 0cm">Hi {company_name}</p>

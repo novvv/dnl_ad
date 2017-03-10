@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-#import daemon
 from daemon import runner
 import psycopg2
 import psycopg2.extras
@@ -15,15 +14,16 @@ from time import sleep, gmtime
 from datetime import date, datetime, timedelta, time
 from pytz import UTC
 from collections import defaultdict
-import pytz  # $ pip install pytz
+import pytz 
 import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import urllib2
 import json
+#local imports
 import schedule
 from templates  import *
-
+#configuration
 CONNECTION_STRING = "host='localhost' dbname='class4_pr' user='postgres'"
 PIDFILE = '/var/tmp/dnl_ad.pid'
 LOGFILE = '/var/tmp/dnl_ad.log'
@@ -43,7 +43,7 @@ def tz_align(d, off):
     hm = off[1:].split(':')
     pre = off[0]
     m = {'+': 0, '-': -1}
-    m = {'+00:00': 0, '-12:00':-43200}
+    m = {'+00:00': 0, '-12:00': -43200}
     return d + timedelta(seconds=m[off])
     #return zone_names[timedelta(m[pre], int(hm[0])*3600+int(hm[1])*60)][0]
 
@@ -63,12 +63,13 @@ class GZipRotator:
 
 
 def rotating_file_handler(filename, maxBytes, backupCount):
+    "logger hook"
     log = logging.handlers.RotatingFileHandler(
               filename, maxBytes=int(maxBytes), backupCount=int(backupCount))
     log.rotator = GZipRotator()
     return log
 
-
+#Confuguration for loggin system
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -131,8 +132,8 @@ def get_mail_params(fr):
 def send_mail(from_field, to, subject, text):
     """sending email."""
     (host, port, user, passw, mfrom) = get_mail_params(from_field)
-    if SEND_MAIL==2:
-        to='novvvster@gmail.com'
+    if SEND_MAIL == 2:
+        to = 'novvvster@gmail.com'
     msg = MIMEMultipart()
     msg['Subject'] = subject
     msg['From'] = mfrom
@@ -237,7 +238,7 @@ active: Select status from client ;
 
     """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
-    sleep_time=SLEEP_TIME
+    sleep_time = SLEEP_TIME
     clients = query(
         "select * from client c,c4_client_balance b where\
         c.client_id::text=b.client_id and balance::numeric <=\
@@ -327,7 +328,7 @@ Select credit from client;
 
      """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
-    sleep_time=SLEEP_TIME
+    sleep_time = SLEEP_TIME
     clients1=query("""select * from client c,c4_client_balance b
          where c.client_id::text=b.client_id and balance::numeric <= 0
          and status=true and mode=1 and zero_balance_notice""")
@@ -356,7 +357,8 @@ Select credit from client;
         cl.date = date.today()
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
-        send_time = time(0, 0, 0, 0, UTC ) # TODO tz_from_string(cl.auto_send_zone)) 
+        send_time = time(0, 0, 0, 0, UTC )
+        # TODO tz_from_string(cl.auto_send_zone)) 
 
         sendtime_a = datetime.combine(
             cl.date, send_time) - timedelta(seconds=sleep_time*2)
@@ -399,10 +401,10 @@ def do_daily_usage_summary():
     For each client who has “daily usage summary” selected, at the client’s GMT
     time zone, we need to send out a daily usage summary mail. """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
-    sleep_time=SLEEP_TIME
+    sleep_time = SLEEP_TIME
     try:
         templ = query('select * from mail_tmplate')[0]
-        if templ.auto_summary_subject=='' or templ.auto_summary_content=='':
+        if templ.auto_summary_subject == '' or templ.auto_summary_content == '':
             raise 'Template auto_summary empty!'
     except Exception as e:
         LOG.error('No template:'+str(e))
@@ -420,7 +422,7 @@ sum(ingress_success_calls) as ingress_success_calls,
 sum(ingress_bill_time_inter) as total_billed_min_buy,
 sum(ingress_call_cost_ij) as total_billed_amount_buy,
 sum(egress_total_calls) as total_call_sell,
-sum(non_zero_calls) as total_not_zero_calls_sell,
+sum(not_zero_calls) as total_not_zero_calls_sell,
 sum(egress_bill_time_inter) as total_billed_min_sell,
 sum(egress_call_cost_ij) as total_billed_amount_sell,
 client.*
@@ -430,14 +432,14 @@ where
 client_id=ingress_client_id
 --and ingress_client_id=s
 and status and is_auto_summary
-group by ingress_client_id order by ingress_client_id;""" % \
+group by client_id,ingress_client_id order by ingress_client_id;""" % \
                       reportdate.strftime("%Y%m%d") )
     for cl in clients:
-        cl.client_name=cl.name
-        cl.begin_time='00:00'
-        cl.end_time='23:59'
-        cl.customer_gmt='UTC'
-        content=process_template(templ.auto_summary_content, cl)
+        cl.client_name = cl.name
+        cl.begin_time = '00:00'
+        cl.end_time = '23:59'
+        cl.customer_gmt = 'UTC'
+        content = process_template(templ.auto_summary_content, cl)
         subj = process_template(templ.auto_summary_subject, cl)
         try:
             if '@' in cl.billing_email:
@@ -452,7 +454,7 @@ def do_daily_balance_summary():
     GMT time zone, we need to send out a daily balance summary mail.
     """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
-    sleep_time=SLEEP_TIME
+    sleep_time = SLEEP_TIME
     clients = query(
         "select * from client  where status=true and\
         daily_balance_notification=1")
@@ -463,7 +465,7 @@ def do_daily_balance_summary():
         balance = query(
             "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
             AND client_id = %d" % str(cl.date), cl.client_id)
-        cl.client_name=cl.name
+        cl.client_name = cl.name
         
         content = process_template(fake_daily_balance_summary_template, cl)
         subj = process_template("<p>Hello {client_name}!</p>", cl)
@@ -476,26 +478,31 @@ def do_daily_balance_summary():
 
 
 def create_query_cdr(switch_ip, start, end ):
+    "call api for create query"
     data = {
     "switch_ip":  switch_ip,
     "start":start, 
     "end":end,
-    "search_filter" : "origination_call_id=80DF2626-13C1-E611-AEFA-C79B2B8A31F1@149.56.44.190,origination_destination_number<>12345650601",
+    "search_filter" :
+        "origination_call_id=80DF2626-13C1-E611-AEFA-C79B2B8A31F1@149.56.44.190,origination_destination_number<>12345650601",
     "result_filter" : """trunk_id_termination,answer_time_of_date,
    call_duration,termination_call_id,release_cause,origination_source_number,
    origination_source_host_name,origination_destination_number,pdd,
    ingress_client_rate,egress_rate,orig_code,term_code""" ,
-   "email_to":"sourav27091992@gmail.com",
+   "email_to":"sourav27091992@gmail.com",#?? what this
    "cdr_subject":"CDR parsing testing",
-   "cdr_body":"CDR parsing {from_time} {to_time} {search_parameter} completed with status {status} . URL is {url}."
+   "cdr_body":
+       "CDR parsing {from_time} {to_time} {search_parameter} completed with status {status} . URL is {url}."
     }
-    req = urllib2.Request("http://192.99.10.113:8000/api/v1.0/create_query_cdr")
+    req = urllib2.Request(
+        "http://192.99.10.113:8000/api/v1.0/create_query_cdr")
     req.add_header('Content-Type', 'application/json')
     resp = urllib2.urlopen(req, json.JSONEncoder().encode(data))
     dt = json.JSONDecoder().decode(resp.read())
     return dt
 
 def show_query_cdr(switch_ip, query_key):
+    "call api for getting query results"
     data = { 
     "switch_ip":  switch_ip,
     "query_key":query_key
@@ -520,30 +527,44 @@ def do_daily_cdr_delivery():
 "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXNzw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa" }
     """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
-    sleep_time=SLEEP_TIME
+    sleep_time = SLEEP_TIME
     try:
         templ = query('select * from mail_tmplate')[0]
-        if templ.send_cdr_subject=='' or templ.send_cdr_content=='':
+        if templ.send_cdr_subject == '' or templ.send_cdr_content == '':
             raise 'Template send_cdr!'
     except Exception as e:
         LOG.error('no template table:'+str(e))
         raise
-    cdr_clients=query("select * from client where daily_cdr_generation")
+    reportdate = date.today()
+    reporttime = datetime.now(UTC).timetz()
+    #if reporttime.hour==0:
+    reportdate = reportdate-timedelta(hours=24)
+    reportnow = datetime.combine(reportdate, reporttime)
+    cdr_clients=query(" select r.client_id , r.resource_id,c.name,i.*,c.* from resource r , client c , resource_ip i where r.resource_id = i.resource_id and c.client_id=r.client_id and daily_cdr_generation")
+                #" and c.client_id=%d" % cl.client_id)
     for cl in cdr_clients:
         #todo make header
-        html=''
-        ips=query(" select r.client_id , r.resource_id,c.name,i.*,c.* from resource r , client c , resource_ip i\
-                where r.resource_id = i.resource_id and c.client_id=r.client_id and daily_cdr_generation and c.client_id=%d" % cl.client_id)
-        for ip in ips:
-            try:
-                dt=show_query_cdr(ip.ip)
-                html=html+process_table(dt)
-            except:
-                LOG.error('Query cdr with IP=%s failed' % ip.ip)
-                html+='<p>no info for %s</p>'% ip.ip
-        cl.ip=html
-        content=process_template(templ.send_cdr_content, cl)
-        subj = process_template(templ.send_cdr_subject, cl)
+        try:
+            q = create_query_cdr(cl.ip, start=str(reportdate), finish=str(
+                reportdate+timedelta(hours=23, minutes=59)) )
+            q2 = show_query_cdr(cl.ip, query_key=q[u'query_key'])
+            if q2['url']:
+                cl.download_link = q2['url']
+            else:
+                cl.download_link = 'sorry, link not completed...'
+            if q2['ftp_to']:
+                cl.shared_link = q2['ftp_to']
+            else:
+                cl.shared_link = 'shared link not generated...'
+        except:
+            LOG.error('Query cdr with client_id %d and IP=%s failed' %
+                      (cl.client_id, cl.ip))
+        cl.begin_time = str(reportdate)
+        cl.end_time = str(reportdate+timedelta(hours=23, minutes=59)) 
+        cl.cdrcount = 0 # TODO ?? where is it
+        cl.customer_gmt = cl.daily_cdr_generation_zone
+        content = process_template(templ.auto_cdr_content, cl)
+        subj = process_template(templ.auto_cdr_subject, cl)
         cl.date = date.today()
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
@@ -552,7 +573,6 @@ def do_daily_cdr_delivery():
                 send_mail('fromemail', cl.billing_email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
-
 
 def do_trunk_pending_suspension_notice():
     u"""
@@ -568,15 +588,15 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
 
     """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
-    sleep_time=SLEEP_TIME
+    sleep_time = SLEEP_TIME
     try:
         templ = query('select * from mail_tmplate')[0]
-        if templ.send_cdr_subject=='' or templ.send_cdr_content=='':
+        if templ.send_cdr_subject == '' or templ.send_cdr_content == '':
             raise 'Template send_cdr!'
     except Exception as e:
         LOG.error('no template table:'+str(e))
         raise
-    tm=datetime.now(UTC)
+    tm = datetime.now(UTC)
     clients = query("""
 select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_filename,
 r.alias as trunk_name,c.company as company_name,c.billing_email
@@ -585,7 +605,8 @@ where r.resource_id = d.resource_id and c.client_id=r.client_id
 and d.log_id= l.id and download_deadline - interval '24 hour' < now() 
 and l.is_email_alert""" )
     for cl in clients:
-        content=process_template(fake_trunk_pending_suspension_notice_template, cl)
+        content = process_template(
+            fake_trunk_pending_suspension_notice_template, cl)
         subj = process_template(templ.send_cdr_subject, cl)
         cl.date = date.today()
         cl.time = datetime.now(UTC).timetz()
@@ -599,14 +620,14 @@ and l.is_email_alert""" )
 
 def do_trunk_is_suspended_notice():
     """
-    For each client, at the client’s timezone 00:00:00, we need to check if there is any pending rate download and the deadline is passed.
-    If so, pls send this email AND “disable this relevant trunk.”
+    For each client, at the client’s timezone 00:00:00, we need to check if
+    there is any pending rate download and the deadline is passed. If so, pls send this email AND “disable this relevant trunk.”
 Select download_deadline from rate_send_log;
 Select client_id , resource_id from rate_send_log_detail
 , resource where resource.resource_id = rate_send_log_detail.resource_id
 Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
-    sleep_time=SLEEP_TIME
+    sleep_time = SLEEP_TIME
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
     clients=query("""
 select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_filename,
@@ -616,7 +637,8 @@ where r.resource_id = d.resource_id and c.client_id=r.client_id
 and d.log_id= l.id and download_deadline < now() 
 and l.is_email_alert""")
     for cl in clients:
-        content=process_template(fake_trunk_pending_suspension_notice_template, cl)
+        content = process_template(
+            fake_trunk_pending_suspension_notice_template, cl)
         subj = process_template(templ.send_cdr_subject, cl)
         cl.date = date.today()
         cl.time = datetime.now(UTC).timetz()
@@ -627,13 +649,16 @@ and l.is_email_alert""")
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
         #do trunk blocking
-        query("update resource set active=false,diable_by_alert=true,update_ad='%s',update_by='dnl_ad' where resource_id=" % (cl.now, cl.resource_id))
+        query("update resource set active=false,diable_by_alert=true,update_ad='%s',update_by='dnl_ad' where resource_id=" %
+              (cl.now, cl.resource_id))
 
 def fifteen_minute_job():
+    "call this each 15 minutes"
     do_notify_client_balance()
     do_notify_zero_balance()
     
 def daily_job():
+    "processing all daily report"
     do_daily_usage_summary()
     do_daily_balance_summary()
     do_daily_cdr_delivery()
@@ -641,6 +666,9 @@ def daily_job():
     do_trunk_is_suspended_notice()
 
 class App():
+    
+    "Establish application instance"
+    
     def __init__(self):
         self.stdin_path = '/dev/null'
         self.stdout_path = '/dev/tty'
@@ -649,6 +677,7 @@ class App():
         self.pidfile_timeout = 5
 
     def run(self):
+        "main cycle"
         if LOGLEVEL == logging.DEBUG:
             schedule.every(1).minutes.do(fifteen_minute_job)
             schedule.every(1).minutes.do(daily_job)
@@ -663,9 +692,11 @@ class App():
             finally:
                 sleep(1)
 
+#app instance
 app = App()
 
 if __name__ == '__main__':
+    "main cli routine"
     print 'This is a Dnl Alert Daemon (novvvster@gmail.com)'
     if sys.argv[1] == 'debug':
         app.run()
