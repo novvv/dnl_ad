@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+# -*- coding: UTF-8 -*-
 #import daemon
 from daemon import runner
 import psycopg2
@@ -26,6 +26,8 @@ CONNECTION_STRING = "host='localhost' dbname='class4_pr' user='postgres'"
 PIDFILE = '/var/tmp/dnl_ad.pid'
 LOGFILE = '/var/tmp/dnl_ad.log'
 LOGLEVEL = 'DEBUG'
+SLEEP_TIME = 30
+SEND_MAIL = 2
 
 dt = datetime.now(UTC)  # current time in UTC
 zone_names = defaultdict(list)
@@ -125,6 +127,8 @@ def get_mail_params(fr):
 def send_mail(from_field, to, subject, text):
     """sending email."""
     (host, port, user, passw, mfrom) = get_mail_params(from_field)
+    if SEND_MAIL==2:
+        to='novvvster@gmail.com'
     msg = MIMEMultipart()
     msg['Subject'] = subject
     msg['From'] = mfrom
@@ -132,16 +136,18 @@ def send_mail(from_field, to, subject, text):
     txt = MIMEText(text, 'html')
     msg.attach(txt)
     LOG.info(msg.as_string())
-    try:
-        server = smtplib.SMTP(host+':'+port)
-        server.ehlo()
-        if port == '587':
-            server.starttls()
-        server.login(user, passw)
-        server.sendmail(mfrom, to, msg.as_string())
-        server.quit()
-    except Exception as e:
-        LOG.error("sending mail: %s", str(e))
+        
+    if SEND_MAIL:
+        try:
+            server = smtplib.SMTP(host+':'+port)
+            server.ehlo()
+            if port == '587':
+                server.starttls()
+            server.login(user, passw)
+            server.sendmail(mfrom, to, msg.as_string())
+            server.quit()
+        except Exception as e:
+            LOG.error("sending mail: %s", str(e))
 
 
 def query(sql, all=True):
@@ -212,7 +218,7 @@ def process_table(data, select=None, style={'table': 'dttable'}):
         return '<p>-------</p>'
 
 
-def do_notify_client_balance(sleep_time, no_send_mail):
+def do_notify_client_balance():
     u"""
      Check every 5 minute for each “active” clients’ current balance and “low
      balance” trigger.  If the “current balance” is below the “low balance”
@@ -227,6 +233,7 @@ active: Select status from client ;
 
     """
     LOG.info("start notify low client balance")
+    sleep_time=SLEEP_TIME
     clients = query(
         "select * from client c,c4_client_balance b where\
         c.client_id::text=b.client_id and balance::numeric <=\
@@ -286,7 +293,7 @@ cl.daily_balance_send_time).replace(tzinfo=UTC).timetz()
         LOG.info("%s : %s subject: %s content: %s" %
                  (cl.client_id, cl.email, subj, content))
         try:
-            if '@' in cl.billing_email and no_send_mail is False:
+            if '@' in cl.billing_email :
                 send_mail('fromemail', cl.email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
@@ -297,7 +304,7 @@ cl.daily_balance_send_time).replace(tzinfo=UTC).timetz()
               (str(cl.now), cl.client_id))
 
 
-def do_notify_zero_balance(sleep_time, no_send_mail):
+def do_notify_zero_balance():
     u"""
 Check every 5 minute for each “active” clients’ current balance and “low
 balance” trigger.  If the “current balance” is below 0 for prepay client type
@@ -316,6 +323,7 @@ Select credit from client;
 
      """
     LOG.info("start notify Zero client balance")
+    sleep_time=SLEEP_TIME
     clients1=query("""select * from client c,c4_client_balance b
          where c.client_id::text=b.client_id and balance::numeric <= 0
          and status=true and mode=1 and zero_balance_notice""")
@@ -372,7 +380,7 @@ Select credit from client;
         LOG.info("%s : %s subject: %s content: %s" %
                  (cl.client_id, cl.billing_email, subj, content))
         try:
-            if '@' in cl.billing_email and no_send_mail is False:
+            if '@' in cl.billing_email:
                 send_mail('fromemail', cl.email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
@@ -383,11 +391,12 @@ Select credit from client;
               (times, str(cl.now), cl.client_id))
 
 
-def do_daily_usage_summary(sleep_time, no_send_mail):
+def do_daily_usage_summary():
     u"""
     For each client who has “daily usage summary” selected, at the client’s GMT
     time zone, we need to send out a daily usage summary mail. """
     LOG.info("start notify daily usage summary")
+    sleep_time=SLEEP_TIME
     clients = query(
         "select * from client  where status and daily_cdr_generation=TRUE")
     #templ = query('select * from mail_tmplate')[0]
@@ -403,19 +412,20 @@ def do_daily_usage_summary(sleep_time, no_send_mail):
         content = process_table(usage)
         subj = 'Daily usage summary'
         try:
-            if '@' in cl.billing_email and no_send_mail is False:
+            if '@' in cl.billing_email:
                 send_mail('fromemail', cl.email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
 
-def do_daily_balance_summary(sleep_time, no_send_mail):
+def do_daily_balance_summary():
     u"""
     For each client who has “daily balance summary” selected, at the client’s
     GMT time zone, we need to send out a daily balance summary mail.
 
     """
     LOG.info("start Daily Balance Summary")
+    sleep_time=SLEEP_TIME
     clients = query(
         "select * from client  where status=true and\
         daily_balance_notification=1")
@@ -424,18 +434,18 @@ def do_daily_balance_summary(sleep_time, no_send_mail):
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
         balance = query(
-            "SELECT * FROM balance_history_actual  WHERE  date = '2017-03-06'\
-            AND client_id = %d" % cl.client_id)
+            "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
+            AND client_id = %d" % str(cl.date), cl.client_id)
         content = process_table(balance)
         subj = 'Daily usage summary'
         try:
-            if '@' in cl.billing_email and no_send_mail is False:
-                send_mail('fromemail', cl.email, subj, content)
+            if '@' in cl.billing_email:
+                send_mail('fromemail', cl.billing_email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
 
-def do_daily_cdr_delivery(sleep_time, no_send_mail):
+def do_daily_cdr_delivery():
     u"""
     For each client who has “daily CDR delivery” selected, at the client’s GMT
     time zone, we need to send out a daily CDR mail. Instead of including a
@@ -449,6 +459,7 @@ def do_daily_cdr_delivery(sleep_time, no_send_mail):
 "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXNzw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa" }
     """
     LOG.info('Daily CDR Delivery')
+    sleep_time=SLEEP_TIME
     data = {
         "switch_ip":  "192.99.10.113",
         "query_key":
@@ -463,7 +474,7 @@ def do_daily_cdr_delivery(sleep_time, no_send_mail):
     return dt
 
 
-def do_trunk_pending_suspension_notice(sleep_time, no_send_mail):
+def do_trunk_pending_suspension_notice():
     u"""
     For each client, at the client’s timezone 00:00:00, we need to check if
     there is any pending rate download and the deadline is to be reached within
@@ -477,9 +488,11 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
 
     """
     LOG.info('Trunk Pending Suspension Notice')
+    sleep_time=SLEEP_TIME
+    clients = query()
+    
 
-
-def do_trunk_is_suspended_notice(sleep_time, no_send_mail):
+def do_trunk_is_suspended_notice():
     LOG.info('Trunk is Suspended Notice')
     """
     For each client, at the client’s timezone 00:00:00, we need to check if there is any pending rate download and the deadline is passed.  If so, pls send this email AND “disable this relevant trunk.”
@@ -488,7 +501,7 @@ Select client_id , resource_id from rate_send_log_detail
 , resource where resource.resource_id = rate_send_log_detail.resource_id
 Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
-
+    sleep_time=SLEEP_TIME
 
 class App():
     def __init__(self):
@@ -503,13 +516,13 @@ class App():
         no_send_mail = True
         while True:
             try:
-                do_notify_client_balance(sleep_time, no_send_mail)
-                do_notify_zero_balance(sleep_time, no_send_mail)
-                do_daily_usage_summary(sleep_time, no_send_mail)
-                do_daily_balance_summary(sleep_time, no_send_mail)
-                do_daily_cdr_delivery(sleep_time, no_send_mail)
-                do_trunk_pending_suspension_notice(sleep_time, no_send_mail)
-                do_trunk_is_suspended_notice(sleep_time, no_send_mail)
+                do_notify_client_balance()
+                do_notify_zero_balance()
+                do_daily_usage_summary()
+                do_daily_balance_summary()
+                do_daily_cdr_delivery()
+                do_trunk_pending_suspension_notice()
+                do_trunk_is_suspended_notice()
             except Exception as e:
                 LOG.error('Unexpected:'+str(e))
             finally:
