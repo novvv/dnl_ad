@@ -22,11 +22,12 @@ from email.mime.text import MIMEText
 import urllib2
 import json
 import schedule
+from templates  import *
 
 CONNECTION_STRING = "host='localhost' dbname='class4_pr' user='postgres'"
 PIDFILE = '/var/tmp/dnl_ad.pid'
 LOGFILE = '/var/tmp/dnl_ad.log'
-LOGLEVEL = 'DEBUG'
+LOGLEVEL = logging.DEBUG
 SLEEP_TIME = 30
 SEND_MAIL = 2
 
@@ -102,7 +103,7 @@ LOGGING = {
         'my-logger': {
             #            'handlers': ['sys-logger6','rotated','stdout'],
             'handlers': ['stdout'],
-            'level': logging.DEBUG,
+            'level': LOGLEVEL,
             'propagate': True,
             },
         }
@@ -393,7 +394,6 @@ Select credit from client;
             "update client set zero_balance_notice_time='%s' zero_balance_notice_last_send='%s'  where client_id=%s" %
               (times, str(cl.now), cl.client_id))
 
-
 def do_daily_usage_summary():
     u"""
     For each client who has “daily usage summary” selected, at the client’s GMT
@@ -409,8 +409,8 @@ def do_daily_usage_summary():
         raise
     reportdate = date.today()
     reporttime = datetime.now(UTC).timetz()
-    if reporttime.hour==0:
-            reportdate = reportdate-timedelta(hours=24)
+    #if reporttime.hour==0:
+    reportdate = reportdate-timedelta(hours=24)
     reportnow = datetime.combine(reportdate, reporttime)
     clients = query("""
 select ingress_client_id,
@@ -428,10 +428,10 @@ from cdr_report_detail%s , client
 --from cdr_report20170303
 where  
 client_id=ingress_client_id
-and ingress_client_id=%s
+--and ingress_client_id=s
 and status and is_auto_summary
 group by ingress_client_id order by ingress_client_id;""" % \
-                      (reportdate.strftime("%Y%m%d"), cl.client_id))
+                      reportdate.strftime("%Y%m%d") )
     for cl in clients:
         cl.client_name=cl.name
         cl.begin_time='00:00'
@@ -445,70 +445,6 @@ group by ingress_client_id order by ingress_client_id;""" % \
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
-
-fake_daily_balance_summary_template=""""
-<style type="text/css">
-		h2 { margin-top: 0.64cm; direction: ltr; line-height: 100%; text-align: left; page-break-inside: avoid; orphans: 2; widows: 2 }
-		h2.western { font-family: "Liberation Serif", serif; font-size: 16pt; font-weight: normal }
-		h2.cjk { font-family: "DejaVu Sans"; font-size: 16pt; font-weight: normal }
-		h2.ctl { font-family: "Noto Sans Devanagari"; font-size: 16pt; font-weight: normal }
-</style>
-<h2 class="western" align="center" style="margin-bottom: 0.14cm; line-height: 100%; page-break-inside: auto; page-break-after: auto">
-<font size="5" style="font-size: 16pt"><b><span style="background: #51a351">Daily
-Balance Summary</span></b></font></h2>
-<p align="center" style="margin-left: 0.81cm; margin-bottom: 0cm"> 
-</p>
-<p style="margin-left: 0.81cm; margin-bottom: 0cm">Hi {client_name}</p>
-<p style="margin-left: 0.81cm; margin-bottom: 0cm"><font size="2" style="font-size: 9pt">Your
-blance in ICX is {beginning_of_day_balance} USD as of
-{beginning_of_day}. </font>
-</p>
-<p style="margin-left: 0.81cm; margin-bottom: 0cm">Your credit
-summary is as follows:</p>
-<table width="294" cellpadding="7" cellspacing="0">
-	<col width="126">
-	<col width="137">
-	<tr valign="top">
-		<td width="126" style="border: 1px solid #000001; padding: 0.18cm">
-			<p style="margin-left: 0.81cm">Credit Limit</p>
-		</td>
-		<td width="137" style="border: 1px solid #000001; padding: 0.18cm">
-			<p style="margin-left: 0.81cm">{credit_limit}</p>
-		</td>
-	</tr>
-	<tr valign="top">
-		<td width="126" style="border: 1px solid #000001; padding: 0.18cm">
-			<p style="margin-left: 0.81cm">Remaining Credit</p>
-		</td>
-		<td width="137" style="border: 1px solid #000001; padding: 0.18cm">
-			<p style="margin-left: 0.81cm">{remaining_credit}</p>
-		</td>
-	</tr>
-	<tr valign="top">
-		<td width="126" style="border: 1px solid #000001; padding: 0.18cm">
-			<p style="margin-left: 0.81cm">Current Balance</p>
-		</td>
-		<td width="137" style="border: 1px solid #000001; padding: 0.18cm">
-			<p style="margin-left: 0.81cm">{balance}</p>
-		</td>
-	</tr>
-</table>
-<p style="margin-left: 0.81cm; margin-bottom: 0cm"><br/>
-
-</p>
-<p style="margin-left: 0.81cm; margin-bottom: 0cm"><br/>
-
-</p>
-<p align="center" style="margin-left: 0.81cm; margin-bottom: 0cm">
-International Carrier Exchange Limited</p>
-<p align="center" style="margin-left: 0.81cm; margin-bottom: 0cm">Rooms
-05-15, 13A/F, South Tower, World Finance Centre, Harbour City,</p>
-<p align="center" style="margin-left: 0.81cm; margin-bottom: 0cm">17
-Canton Road, Tsim Sha Tsui, Kowloon, Hong Kong</p>
-<p style="margin-bottom: 0cm"><br/>
-
-</p>
-"""
 
 def do_daily_balance_summary():
     u"""
@@ -527,8 +463,10 @@ def do_daily_balance_summary():
         balance = query(
             "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
             AND client_id = %d" % str(cl.date), cl.client_id)
-        content = process_table(balance)
-        subj = 'Daily usage summary'
+        cl.client_name=cl.name
+        
+        content = process_template(fake_daily_balance_summary_template, cl)
+        subj = process_template("<p>Hello {client_name}!</p>", cl)
         try:
             if '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, content)
@@ -610,11 +548,32 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time=SLEEP_TIME
+    try:
+        templ = query('select * from mail_tmplate')[0]
+        if templ.send_cdr_subject=='' or templ.send_cdr_content=='':
+            raise 'Template send_cdr!'
+    except Exception as e:
+        LOG.error('no template table:'+str(e))
+        raise
     tm=datetime.now(UTC)
-    alerts = query("Select * from rate_send_log where is_email_alert\
-and download_deadline - interval '1 hour' > now() ")
-    for alert in alerts:
-        pass
+    clients = query("""
+select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_filename,
+r.alias as trunk_name,c.company as company_name,c.billing_email
+from rate_send_log_detail d, resource r , client c,rate_send_log l
+where r.resource_id = d.resource_id and c.client_id=r.client_id
+and d.log_id= l.id and download_deadline - interval '24 hour' < now() 
+and l.is_email_alert""" )
+    for cl in clients:
+        content=process_template(fake_trunk_pending_suspension_notice_template, cl)
+        subj = process_template(templ.send_cdr_subject, cl)
+        cl.date = date.today()
+        cl.time = datetime.now(UTC).timetz()
+        cl.now = datetime.now(UTC)
+        try:
+            if '@' in cl.billing_email:
+                send_mail('fromemail', cl.billing_email, subj, content)
+        except Exception as e:
+            LOG.error('cannot sendmail:'+str(e))
 
 
 def do_trunk_is_suspended_notice():
@@ -627,9 +586,32 @@ Select client_id , resource_id from rate_send_log_detail
 Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
     sleep_time=SLEEP_TIME
-    LOG.info('Trunk is Suspended Notice')
-    dl=query("select download_deadline from rate_send_log")
+    LOG.info("START: %s" % sys._getframe().f_code.co_name)
+    clients=query("""
+select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_filename,
+r.alias as trunk_name,r.resource_id,c.company as company_name,c.billing_email
+from rate_send_log_detail d, resource r , client c,rate_send_log l
+where r.resource_id = d.resource_id and c.client_id=r.client_id
+and d.log_id= l.id and download_deadline < now() 
+and l.is_email_alert""")
+    for cl in clients:
+        content=process_template(fake_trunk_pending_suspension_notice_template, cl)
+        subj = process_template(templ.send_cdr_subject, cl)
+        cl.date = date.today()
+        cl.time = datetime.now(UTC).timetz()
+        cl.now = datetime.now(UTC)
+        try:
+            if '@' in cl.billing_email:
+                send_mail('fromemail', cl.billing_email, subj, content)
+        except Exception as e:
+            LOG.error('cannot sendmail:'+str(e))
+        #do trunk blocking
+        query("update resource set active=false,diable_by_alert=true,update_ad='%s',update_by='dnl_ad' where resource_id=" % (cl.now, cl.resource_id))
 
+def fifteen_minute_job():
+    do_notify_client_balance()
+    do_notify_zero_balance()
+    
 def daily_job():
     do_daily_usage_summary()
     do_daily_balance_summary()
@@ -646,12 +628,12 @@ class App():
         self.pidfile_timeout = 5
 
     def run(self):
-        sleep_time = 300
-        no_send_mail = True
-        schedule.every(5).minutes.do(do_notify_client_balance)
-        schedule.every(5).minutes.do(do_notify_zero_balance)
-        schedule.every(5).minutes.do(daily_job)
-        #schedule.every().day.at("00:00").do(daily_job)
+        if LOGLEVEL == logging.DEBUG:
+            schedule.every(1).minutes.do(fifteen_minute_job)
+            schedule.every(1).minutes.do(daily_job)
+        else:
+            schedule.every(15).minutes.do(fifteen_minute_job)
+            schedule.every().day.at("00:00").do(daily_job)
         while True:
             try:                
                 schedule.run_pending()
