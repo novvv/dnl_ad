@@ -475,9 +475,13 @@ def do_daily_balance_summary():
 
 
 
-def create_query_cdr(switch_ip, start, end, ):
-    data = {"switch_ip":  swich_ip,"start":start, "end":end, 
-        "result_filter" : """trunk_id_termination,answer_time_of_date,
+def create_query_cdr(switch_ip, start, end ):
+    data = {
+    "switch_ip":  switch_ip,
+    "start":start, 
+    "end":end,
+    "search_filter" : "origination_call_id=80DF2626-13C1-E611-AEFA-C79B2B8A31F1@149.56.44.190,origination_destination_number<>12345650601",
+    "result_filter" : """trunk_id_termination,answer_time_of_date,
    call_duration,termination_call_id,release_cause,origination_source_number,
    origination_source_host_name,origination_destination_number,pdd,
    ingress_client_rate,egress_rate,orig_code,term_code""" ,
@@ -485,7 +489,7 @@ def create_query_cdr(switch_ip, start, end, ):
    "cdr_subject":"CDR parsing testing",
    "cdr_body":"CDR parsing {from_time} {to_time} {search_parameter} completed with status {status} . URL is {url}."
     }
-    req = urllib2.Request("http://192.99.10.113:8000/api/v1.0/show_query_cdr")
+    req = urllib2.Request("http://192.99.10.113:8000/api/v1.0/create_query_cdr")
     req.add_header('Content-Type', 'application/json')
     resp = urllib2.urlopen(req, json.JSONEncoder().encode(data))
     dt = json.JSONDecoder().decode(resp.read())
