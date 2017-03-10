@@ -495,8 +495,10 @@ def create_query_cdr(switch_ip, start, end ):
     dt = json.JSONDecoder().decode(resp.read())
     return dt
 
-def show_query_cdr(query_key):
-    data = { "query_key":query_key
+def show_query_cdr(switch_ip, query_key):
+    data = { 
+    "switch_ip":  switch_ip,
+    "query_key":query_key
     }
     req = urllib2.Request("http://192.99.10.113:8000/api/v1.0/show_query_cdr")
     req.add_header('Content-Type', 'application/json')
