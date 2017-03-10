@@ -476,7 +476,7 @@ def do_daily_balance_summary():
 
 
 def create_query_cdr(switch_ip, start, end, ):
-    data = {"switch_ip":  ip,"start":start, "end":end, 
+    data = {"switch_ip":  swich_ip,"start":start, "end":end, 
         "result_filter" : """trunk_id_termination,answer_time_of_date,
    call_duration,termination_call_id,release_cause,origination_source_number,
    origination_source_host_name,origination_destination_number,pdd,
