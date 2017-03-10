@@ -474,15 +474,30 @@ def do_daily_balance_summary():
             LOG.error('cannot sendmail:'+str(e))
 
 
-def show_query_cdr(ip):
-    data = {"switch_ip":  ip.ip, "query_key":
-    "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXN" \
-        "zw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa"
-        }
+
+def create_query_cdr(switch_ip, start, end, ):
+    data = {"switch_ip":  ip,"start":start, "end":end, 
+        "result_filter" : """trunk_id_termination,answer_time_of_date,
+   call_duration,termination_call_id,release_cause,origination_source_number,
+   origination_source_host_name,origination_destination_number,pdd,
+   ingress_client_rate,egress_rate,orig_code,term_code""" ,
+   "email_to":"sourav27091992@gmail.com",
+   "cdr_subject":"CDR parsing testing",
+   "cdr_body":"CDR parsing {from_time} {to_time} {search_parameter} completed with status {status} . URL is {url}."
+    }
     req = urllib2.Request("http://192.99.10.113:8000/api/v1.0/show_query_cdr")
     req.add_header('Content-Type', 'application/json')
     resp = urllib2.urlopen(req, json.JSONEncoder().encode(data))
-    dt = json.JSONDecoder.decode(resp.read())
+    dt = json.JSONDecoder().decode(resp.read())
+    return dt
+
+def show_query_cdr(query_key):
+    data = { "query_key":query_key
+    }
+    req = urllib2.Request("http://192.99.10.113:8000/api/v1.0/show_query_cdr")
+    req.add_header('Content-Type', 'application/json')
+    resp = urllib2.urlopen(req, json.JSONEncoder().encode(data))
+    dt = json.JSONDecoder().decode(resp.read())
     return dt
     
 def do_daily_cdr_delivery():
