@@ -397,8 +397,15 @@ def do_daily_usage_summary():
     time zone, we need to send out a daily usage summary mail. """
     LOG.info("start notify daily usage summary")
     sleep_time=SLEEP_TIME
+    try:
+        templ = query('select * from mail_tmplate')[0]
+        if templ.auto_summary_subject=='' or templ.auto_summary_content=='':
+            raise 'Template auto_summary empty!'
+    except Exception as e:
+        LOG.error('No template:'+str(e))
+        raise
     clients = query(
-        "select * from client  where status and daily_cdr_generation=TRUE")
+        "select * from client  where status and is_auto_summary")
     #templ = query('select * from mail_tmplate')[0]
     for cl in clients:
         LOG.warning('DAILY USAGE! client_id:%s, name:%s' %
@@ -409,8 +416,10 @@ def do_daily_usage_summary():
         usage = query(
             "select * from cdr_report_detail%s where ingress_client_id=%s" %
                       (cl.date.strftime("%Y%m%d"), cl.client_id))
-        content = process_table(usage)
-        subj = 'Daily usage summary'
+        html= process_table(usage)
+        cl.html=html
+        content=process_template(templ.auto_summary_content, cl)
+        subj = process_template(templ.auto_summary_subject, cl)
         try:
             if '@' in cl.billing_email:
                 send_mail('fromemail', cl.email, subj, content)
@@ -460,18 +469,46 @@ def do_daily_cdr_delivery():
     """
     LOG.info('Daily CDR Delivery')
     sleep_time=SLEEP_TIME
-    data = {
-        "switch_ip":  "192.99.10.113",
-        "query_key":
-            "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXN" \
-                "zw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa"
-                }
-    req = urllib2.Request("http://192.99.10.113:8000/api/v1.0/show_query_cdr")
-    req.add_header('Content-Type', 'application/json')
+    try:
+        templ = query('select * from mail_tmplate')[0]
+        if templ.send_cdr_subject=='' or templ.send_cdr_content=='':
+            raise 'Template send_cdr!'
+    except Exception as e:
+        LOG.error('no template table:'+str(e))
+        raise
+    cdr_clients=query("select * from client where daily_cdr_generation")
+    for cl in cdr_clients:
+        #todo make header
+        html=''
+        ips=query(" select r.client_id , r.resource_id,c.name,i.*,c.* from resource r , client c , resource_ip i\
+                where r.resource_id = i.resource_id and c.client_id=r.client_id and daily_cdr_generation and c.client_id=%d" % cl.client_id)
+        for ip in ips:
+            try:
+                data = {"switch_ip":  ip.ip,"query_key":
+                "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXN" \
+                    "zw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa"
+                    }
+                req = urllib2.Request("http://192.99.10.113:8000/api/v1.0/show_query_cdr")
+                req.add_header('Content-Type', 'application/json')
+                resp = urllib2.urlopen(req, json.JSONEncoder().encode(data))
+                dt = json.JSONDecoder.decode(resp.read())
+                html=html+process_table(dt)
+            except:
+                LOG.error('Query cdr with IP=%s failed' % ip.ip)
+                html+='<p>no info for %s</p>'% ip.ip
+        cl.ip=html
+        content=process_template(templ.send_cdr_content, cl)
+        subj = process_template(templ.send_cdr_subject, cl)
+        cl.date = date.today()
+        cl.time = datetime.now(UTC).timetz()
+        cl.now = datetime.now(UTC)
+        try:
+            if '@' in cl.billing_email:
+                send_mail('fromemail', cl.billing_email, subj, content)
+        except Exception as e:
+            LOG.error('cannot sendmail:'+str(e))
 
-    resp = urllib2.urlopen(req, json.JSONEncoder().encode(data))
-    dt = resp.read()
-    return dt
+
 
 
 def do_trunk_pending_suspension_notice():
@@ -490,7 +527,8 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
     LOG.info('Trunk Pending Suspension Notice')
     sleep_time=SLEEP_TIME
     tm=datetime.now(UTC)
-    alerts = query("select * from rate_send_log where is_email_alert")
+    alerts = query("Select * from rate_send_log where is_email_alert\
+and download_deadline - interval '1 hour' > now() ")
     for alert in alerts:
         pass
 
@@ -506,6 +544,7 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
     sleep_time=SLEEP_TIME
     LOG.info('Trunk is Suspended Notice')
+    dl=query("select download_deadline from rate_send_log")
 
 class App():
     def __init__(self):
