@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import daemon
+#import daemon
 from daemon import runner
 import psycopg2
 import psycopg2.extras
@@ -254,7 +254,7 @@ active: Select status from client ;
 
         if cl.daily_balance_send_time is None:
             LOG.error('Sending time not set!')
-            cl.daily_balance_send_time = cl.time
+            cl.daily_balance_send_time = time(0, 0, 0, 0, UTC)
         else:
             cl.daily_balance_send_time = datetime.combine(
                 cl.date,
@@ -291,7 +291,7 @@ cl.daily_balance_send_time).replace(tzinfo=UTC).timetz()
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
         #make things after send alert
-        times = int(cl.lowbalance_notication_time_type)+1
+        times = int(cl.lowbalance_notication_time)+1
         query(
             "update client set last_lowbalance_time='%s' where client_id=%s" %
               (str(cl.now), cl.client_id))
@@ -389,7 +389,7 @@ def do_daily_usage_summary(sleep_time, no_send_mail):
     time zone, we need to send out a daily usage summary mail. """
     LOG.info("start notify daily usage summary")
     clients = query(
-        "select * from client  where status=true and daily_cdr_generation=1")
+        "select * from client  where status and daily_cdr_generation=TRUE")
     #templ = query('select * from mail_tmplate')[0]
     for cl in clients:
         LOG.warning('DAILY USAGE! client_id:%s, name:%s' %
@@ -443,12 +443,10 @@ def do_daily_cdr_delivery(sleep_time, no_send_mail):
 
     request POST   with header json  
     http://192.99.10.113:8000/api/v1.0/show_query_cdr
-
 {
   "switch_ip" :  "192.99.10.113",
   "query_key":
 "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXNzw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa" }
-
     """
     LOG.info('Daily CDR Delivery')
     data = {
@@ -502,7 +500,7 @@ class App():
 
     def run(self):
         sleep_time = 300
-        no_send_mail = False  # True
+        no_send_mail = True
         while True:
             try:
                 do_notify_client_balance(sleep_time, no_send_mail)

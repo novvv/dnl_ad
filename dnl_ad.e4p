@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project dnl_ad -->
-<!-- Saved: 2017-03-10, 02:03:55 -->
+<!-- Saved: 2017-03-10, 11:39:50 -->
 <!-- Copyright (C) 2017 Valentin Novikov, novvvster@gmail.com -->
 <Project version="5.1">
   <Language>en_US</Language>
   <Hash>e0520f1905e12b426b6add12e93f57663dcfbb26</Hash>
-  <ProgLanguage mixed="0">Python2</ProgLanguage>
+  <ProgLanguage mixed="1">Python2</ProgLanguage>
   <ProjectType>Console</ProjectType>
   <Description>https://www.upwork.com/d/contracts/17745254</Description>
   <Version>0.1</Version>
