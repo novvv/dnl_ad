@@ -21,6 +21,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import urllib2
 import json
+import schedule
 
 CONNECTION_STRING = "host='localhost' dbname='class4_pr' user='postgres'"
 PIDFILE = '/var/tmp/dnl_ad.pid'
@@ -36,12 +37,14 @@ for tz in pytz.common_timezones:
     zone_names[dt.astimezone(pytz.timezone(tz)).utcoffset()].append(tz)
 
 
-def tz_from_string(off):
+def tz_align(d, off):
     """Return tzinfo.Time zone info from string -12:00 ."""
     hm = off[1:].split(':')
     pre = off[0]
     m = {'+': 0, '-': -1}
-    return zone_names[timedelta(m[pre], int(hm[0])*3600+int(hm[1])*60)][0]
+    m = {'+00:00': 0, '-12:00':-43200}
+    return d + timedelta(seconds=m[off])
+    #return zone_names[timedelta(m[pre], int(hm[0])*3600+int(hm[1])*60)][0]
 
 
 class GZipRotator:
@@ -232,7 +235,7 @@ notify_client_balance, low_balance_notice from client; To check if client is
 active: Select status from client ;
 
     """
-    LOG.info("start notify low client balance")
+    LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time=SLEEP_TIME
     clients = query(
         "select * from client c,c4_client_balance b where\
@@ -294,7 +297,7 @@ cl.daily_balance_send_time).replace(tzinfo=UTC).timetz()
                  (cl.client_id, cl.email, subj, content))
         try:
             if '@' in cl.billing_email :
-                send_mail('fromemail', cl.email, subj, content)
+                send_mail('fromemail', cl.billingemail, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
         #make things after send alert
@@ -322,7 +325,7 @@ Mode = 2 (postpay)
 Select credit from client;
 
      """
-    LOG.info("start notify Zero client balance")
+    LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time=SLEEP_TIME
     clients1=query("""select * from client c,c4_client_balance b
          where c.client_id::text=b.client_id and balance::numeric <= 0
@@ -352,7 +355,7 @@ Select credit from client;
         cl.date = date.today()
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
-        send_time = time(0, 0, 0, tz_from_string(cl.auto_send_zone)) 
+        send_time = time(0, 0, 0, 0, UTC ) # TODO tz_from_string(cl.auto_send_zone)) 
 
         sendtime_a = datetime.combine(
             cl.date, send_time) - timedelta(seconds=sleep_time*2)
@@ -381,7 +384,7 @@ Select credit from client;
                  (cl.client_id, cl.billing_email, subj, content))
         try:
             if '@' in cl.billing_email:
-                send_mail('fromemail', cl.email, subj, content)
+                send_mail('fromemail', cl.billingemail, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
         #make things after send alert
@@ -395,7 +398,7 @@ def do_daily_usage_summary():
     u"""
     For each client who has “daily usage summary” selected, at the client’s GMT
     time zone, we need to send out a daily usage summary mail. """
-    LOG.info("start notify daily usage summary")
+    LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time=SLEEP_TIME
     try:
         templ = query('select * from mail_tmplate')[0]
@@ -404,36 +407,115 @@ def do_daily_usage_summary():
     except Exception as e:
         LOG.error('No template:'+str(e))
         raise
-    clients = query(
-        "select * from client  where status and is_auto_summary")
-    #templ = query('select * from mail_tmplate')[0]
+    reportdate = date.today()
+    reporttime = datetime.now(UTC).timetz()
+    if reporttime.hour==0:
+            reportdate = reportdate-timedelta(hours=24)
+    reportnow = datetime.combine(reportdate, reporttime)
+    clients = query("""
+select ingress_client_id,
+sum(ingress_total_calls) as total_call_buy,
+sum(not_zero_calls) as total_not_zero_calls_buy,
+sum(ingress_success_calls) as ingress_success_calls,
+sum(ingress_bill_time_inter) as total_billed_min_buy,
+sum(ingress_call_cost_ij) as total_billed_amount_buy,
+sum(egress_total_calls) as total_call_sell,
+sum(non_zero_calls) as total_not_zero_calls_sell,
+sum(egress_bill_time_inter) as total_billed_min_sell,
+sum(egress_call_cost_ij) as total_billed_amount_sell,
+client.*
+from cdr_report_detail%s , client
+--from cdr_report20170303
+where  
+client_id=ingress_client_id
+and ingress_client_id=%s
+and status and is_auto_summary
+group by ingress_client_id order by ingress_client_id;""" % \
+                      (reportdate.strftime("%Y%m%d"), cl.client_id))
     for cl in clients:
-        LOG.warning('DAILY USAGE! client_id:%s, name:%s' %
-                    (cl.client_id, cl.name))
-        cl.date = date.today()
-        cl.time = datetime.now(UTC).timetz()
-        cl.now = datetime.now(UTC)
-        usage = query(
-            "select * from cdr_report_detail%s where ingress_client_id=%s" %
-                      (cl.date.strftime("%Y%m%d"), cl.client_id))
-        html= process_table(usage)
-        cl.html=html
+        cl.client_name=cl.name
+        cl.begin_time='00:00'
+        cl.end_time='23:59'
+        cl.customer_gmt='UTC'
         content=process_template(templ.auto_summary_content, cl)
         subj = process_template(templ.auto_summary_subject, cl)
         try:
             if '@' in cl.billing_email:
-                send_mail('fromemail', cl.email, subj, content)
+                send_mail('fromemail', cl.billingemail, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
+
+fake_daily_balance_summary_template=""""
+<style type="text/css">
+		h2 { margin-top: 0.64cm; direction: ltr; line-height: 100%; text-align: left; page-break-inside: avoid; orphans: 2; widows: 2 }
+		h2.western { font-family: "Liberation Serif", serif; font-size: 16pt; font-weight: normal }
+		h2.cjk { font-family: "DejaVu Sans"; font-size: 16pt; font-weight: normal }
+		h2.ctl { font-family: "Noto Sans Devanagari"; font-size: 16pt; font-weight: normal }
+</style>
+<h2 class="western" align="center" style="margin-bottom: 0.14cm; line-height: 100%; page-break-inside: auto; page-break-after: auto">
+<font size="5" style="font-size: 16pt"><b><span style="background: #51a351">Daily
+Balance Summary</span></b></font></h2>
+<p align="center" style="margin-left: 0.81cm; margin-bottom: 0cm"> 
+</p>
+<p style="margin-left: 0.81cm; margin-bottom: 0cm">Hi {client_name}</p>
+<p style="margin-left: 0.81cm; margin-bottom: 0cm"><font size="2" style="font-size: 9pt">Your
+blance in ICX is {beginning_of_day_balance} USD as of
+{beginning_of_day}. </font>
+</p>
+<p style="margin-left: 0.81cm; margin-bottom: 0cm">Your credit
+summary is as follows:</p>
+<table width="294" cellpadding="7" cellspacing="0">
+	<col width="126">
+	<col width="137">
+	<tr valign="top">
+		<td width="126" style="border: 1px solid #000001; padding: 0.18cm">
+			<p style="margin-left: 0.81cm">Credit Limit</p>
+		</td>
+		<td width="137" style="border: 1px solid #000001; padding: 0.18cm">
+			<p style="margin-left: 0.81cm">{credit_limit}</p>
+		</td>
+	</tr>
+	<tr valign="top">
+		<td width="126" style="border: 1px solid #000001; padding: 0.18cm">
+			<p style="margin-left: 0.81cm">Remaining Credit</p>
+		</td>
+		<td width="137" style="border: 1px solid #000001; padding: 0.18cm">
+			<p style="margin-left: 0.81cm">{remaining_credit}</p>
+		</td>
+	</tr>
+	<tr valign="top">
+		<td width="126" style="border: 1px solid #000001; padding: 0.18cm">
+			<p style="margin-left: 0.81cm">Current Balance</p>
+		</td>
+		<td width="137" style="border: 1px solid #000001; padding: 0.18cm">
+			<p style="margin-left: 0.81cm">{balance}</p>
+		</td>
+	</tr>
+</table>
+<p style="margin-left: 0.81cm; margin-bottom: 0cm"><br/>
+
+</p>
+<p style="margin-left: 0.81cm; margin-bottom: 0cm"><br/>
+
+</p>
+<p align="center" style="margin-left: 0.81cm; margin-bottom: 0cm">
+International Carrier Exchange Limited</p>
+<p align="center" style="margin-left: 0.81cm; margin-bottom: 0cm">Rooms
+05-15, 13A/F, South Tower, World Finance Centre, Harbour City,</p>
+<p align="center" style="margin-left: 0.81cm; margin-bottom: 0cm">17
+Canton Road, Tsim Sha Tsui, Kowloon, Hong Kong</p>
+<p style="margin-bottom: 0cm"><br/>
+
+</p>
+"""
 
 def do_daily_balance_summary():
     u"""
     For each client who has “daily balance summary” selected, at the client’s
     GMT time zone, we need to send out a daily balance summary mail.
-
     """
-    LOG.info("start Daily Balance Summary")
+    LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time=SLEEP_TIME
     clients = query(
         "select * from client  where status=true and\
@@ -454,6 +536,17 @@ def do_daily_balance_summary():
             LOG.error('cannot sendmail:'+str(e))
 
 
+def show_query_cdr(ip):
+    data = {"switch_ip":  ip.ip, "query_key":
+    "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXN" \
+        "zw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa"
+        }
+    req = urllib2.Request("http://192.99.10.113:8000/api/v1.0/show_query_cdr")
+    req.add_header('Content-Type', 'application/json')
+    resp = urllib2.urlopen(req, json.JSONEncoder().encode(data))
+    dt = json.JSONDecoder.decode(resp.read())
+    return dt
+    
 def do_daily_cdr_delivery():
     u"""
     For each client who has “daily CDR delivery” selected, at the client’s GMT
@@ -467,7 +560,7 @@ def do_daily_cdr_delivery():
   "query_key":
 "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXNzw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa" }
     """
-    LOG.info('Daily CDR Delivery')
+    LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time=SLEEP_TIME
     try:
         templ = query('select * from mail_tmplate')[0]
@@ -484,14 +577,7 @@ def do_daily_cdr_delivery():
                 where r.resource_id = i.resource_id and c.client_id=r.client_id and daily_cdr_generation and c.client_id=%d" % cl.client_id)
         for ip in ips:
             try:
-                data = {"switch_ip":  ip.ip,"query_key":
-                "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXN" \
-                    "zw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa"
-                    }
-                req = urllib2.Request("http://192.99.10.113:8000/api/v1.0/show_query_cdr")
-                req.add_header('Content-Type', 'application/json')
-                resp = urllib2.urlopen(req, json.JSONEncoder().encode(data))
-                dt = json.JSONDecoder.decode(resp.read())
+                dt=show_query_cdr(ip.ip)
                 html=html+process_table(dt)
             except:
                 LOG.error('Query cdr with IP=%s failed' % ip.ip)
@@ -509,8 +595,6 @@ def do_daily_cdr_delivery():
             LOG.error('cannot sendmail:'+str(e))
 
 
-
-
 def do_trunk_pending_suspension_notice():
     u"""
     For each client, at the client’s timezone 00:00:00, we need to check if
@@ -524,7 +608,7 @@ Select client_id , resource_id from rate_send_log_detail
 Select * from rate_download_log where client_id = xx and log_detail_id = xx
 
     """
-    LOG.info('Trunk Pending Suspension Notice')
+    LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time=SLEEP_TIME
     tm=datetime.now(UTC)
     alerts = query("Select * from rate_send_log where is_email_alert\
@@ -546,6 +630,13 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
     LOG.info('Trunk is Suspended Notice')
     dl=query("select download_deadline from rate_send_log")
 
+def daily_job():
+    do_daily_usage_summary()
+    do_daily_balance_summary()
+    do_daily_cdr_delivery()
+    do_trunk_pending_suspension_notice()
+    do_trunk_is_suspended_notice()
+
 class App():
     def __init__(self):
         self.stdin_path = '/dev/null'
@@ -557,19 +648,17 @@ class App():
     def run(self):
         sleep_time = 300
         no_send_mail = True
+        schedule.every(5).minutes.do(do_notify_client_balance)
+        schedule.every(5).minutes.do(do_notify_zero_balance)
+        schedule.every(5).minutes.do(daily_job)
+        #schedule.every().day.at("00:00").do(daily_job)
         while True:
-            try:
-                do_notify_client_balance()
-                do_notify_zero_balance()
-                do_daily_usage_summary()
-                do_daily_balance_summary()
-                do_daily_cdr_delivery()
-                do_trunk_pending_suspension_notice()
-                do_trunk_is_suspended_notice()
+            try:                
+                schedule.run_pending()
             except Exception as e:
                 LOG.error('Unexpected:'+str(e))
             finally:
-                sleep(sleep_time)
+                sleep(1)
 
 app = App()
 

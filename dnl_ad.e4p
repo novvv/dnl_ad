@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project dnl_ad -->
-<!-- Saved: 2017-03-10, 11:39:50 -->
+<!-- Saved: 2017-03-11, 01:04:41 -->
 <!-- Copyright (C) 2017 Valentin Novikov, novvvster@gmail.com -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -16,6 +16,7 @@
   <Sources>
     <Source>__init__.py</Source>
     <Source>dnl_ad.py</Source>
+    <Source>schedule/__init__.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
