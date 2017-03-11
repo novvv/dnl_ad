@@ -364,8 +364,10 @@ def do_daily_usage_summary():
     sleep_time = SLEEP_TIME
     try:
         templ = query(
-            'select auto_summary_subject, auto_summary_content from
-        mail_tmplate')[0] if templ.auto_summary_subject == ''  or  templ.auto_summary_content == '':
+            """select auto_summary_subject as subject , auto_summary_content as content
+            from
+        mail_tmplate""")[0] 
+        if templ.subject == ''  or  templ.content == '':
             raise 'Template auto_summary empty!'
     except Exception as e:
         LOG.error('No template:'+str(e))
@@ -377,7 +379,7 @@ def do_daily_usage_summary():
     reportstart=reportnow-timedelta(hours=24)
     clients=query("""
 select ingress_client_id,
-daily_balance_send_time_zone,billing_email,name
+daily_balance_send_time_zone,billing_email,name,
 sum(ingress_total_calls) as total_call_buy,
 sum(not_zero_calls) as total_not_zero_calls_buy,
 sum(ingress_success_calls) as ingress_success_calls,
@@ -406,8 +408,8 @@ order by ingress_client_id;""" % \
         cl.start_date=str(tz_align(report_start, tz))[0:19]
         cl.end_date=str(tz_align(report_end, tz))[0:19]
         cl.customer_gmt=tz
-        content=process_template(templ.auto_summary_content, cl)
-        subj=process_template(templ.auto_summary_subject, cl)
+        content=process_template(templ.content, cl)
+        subj=process_template(templ.subject, cl)
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, content)
@@ -421,7 +423,12 @@ def do_daily_balance_summary():
     GMT time zone, we need to send out a daily balance summary mail.
     """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
-    sleep_time=SLEEP_TIME
+    try:
+        templ = query(
+            """select  low_balance_alert_email_subject as
+    content, low_balance_alert_email_subject as subject  from mail_tmplate""")[0]
+    except Exception as e: 
+        LOG.error('no template table:'+str(e))
     clients=query(
         "select * from client  where status=true and\
         daily_balance_notification=1")
@@ -437,12 +444,12 @@ def do_daily_balance_summary():
             "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
             AND client_id = %d" % str(cl.date), cl.client_id)
         cl.client_name=cl.name
-        
-        content=process_template(fake_daily_balance_summary_template, cl)
-        subj=process_template("<p>Hello {client_name}!</p>", cl)
+        subject, content = templ.subject, templ.content
+        content=process_template(content, cl)
+        subject=process_template("<p>Hello {client_name}!</p>", cl)
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, content)
+                send_mail('fromemail', cl.billing_email, subject, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
@@ -501,8 +508,8 @@ def do_daily_cdr_delivery():
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time=SLEEP_TIME
     try:
-        templ=query('select * from mail_tmplate')[0]
-        if templ.send_cdr_subject == '' or templ.send_cdr_content == '':
+        templ=query('select send_cdr_subject as subject,send_cdr_content as content from mail_tmplate')[0]
+        if templ.subject == '' or templ.content == '':
             raise 'Template send_cdr!'
     except Exception as e:
         LOG.error('no template table:'+str(e))
@@ -546,7 +553,7 @@ def do_daily_cdr_delivery():
         # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
         # cl)
         content=process_template(fake_daily_cdr_usage_template, cl)
-        subj=process_template(templ.auto_cdr_subject, cl)
+        subject=process_template(templ.auto_cdr_subject, cl)
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
