@@ -29,7 +29,7 @@ PIDFILE = '/var/tmp/dnl_ad.pid'
 LOGFILE = '/var/tmp/dnl_ad.log'
 LOGLEVEL = logging.DEBUG
 SLEEP_TIME = 30
-SEND_MAIL = 2
+SEND_MAIL = 1
 
 dt = datetime.now(UTC)  # current time in UTC
 zone_names = defaultdict(list)
@@ -242,7 +242,7 @@ active: Select status from client ;
     clients = query("""
         select * from client c,c4_client_balance b where
         c.client_id::text=b.client_id and balance::numeric <=
-        notify_client_balance and status=true and and last_lowbalance_time < now() - interval '24 hour' """)
+        notify_client_balance and status=true and  last_lowbalance_time < now() - interval '24 hour' """)
     try:
         templ = query('select * from mail_tmplate')[0]
     except Exception as e:
@@ -301,11 +301,11 @@ cl.daily_balance_send_time).replace(tzinfo=UTC).timetz()
                  (cl.client_id, cl.email, subj, content))
         try:
             if '@' in cl.billing_email :
-                send_mail('fromemail', cl.billingemail, subj, content)
+                send_mail('fromemail', cl.billing_email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
         #make things after send alert
-        times = int(cl.lowbalance_notication_time)+1
+        #times = int(cl.lowbalance_notication_time)+1
         query(
             "update client set last_lowbalance_time=now() where client_id=%s" %
                cl.client_id)
@@ -389,7 +389,7 @@ Select credit from client;
                  (cl.client_id, cl.billing_email, subj, content))
         try:
             if '@' in cl.billing_email:
-                send_mail('fromemail', cl.billingemail, subj, content)
+                send_mail('fromemail', cl.billing_email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
         #make things after send alert
@@ -445,7 +445,7 @@ group by client_id,ingress_client_id order by ingress_client_id;""" % \
         subj = process_template(templ.auto_summary_subject, cl)
         try:
             if '@' in cl.billing_email:
-                send_mail('fromemail', cl.billingemail, subj, content)
+                send_mail('fromemail', cl.billing_email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
