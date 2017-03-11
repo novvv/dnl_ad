@@ -397,10 +397,10 @@ sum(intra_duration) as sell_total_duration,
 client.*
 from cdr_report_detail%s , client, resource
 where
-client_id=ingress_client_id
+client.client_id=ingress_client_id
 and product_rout_id=resource_id
 and status and is_auto_summary
-group by client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,client.name
+group by client,client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,client.name
 order by ingress_client_id;""" % \
                       reportstart.strftime("%Y%m%d") )
     for cl in clients:
