@@ -317,8 +317,7 @@ Select credit from client;
     try:
         templ = query(
             """select  low_balance_alert_email_subject as
-    content, low_balance_alert_email_subject as subject  from mail_tmplate""")[0]
-    content, low_balance_alert_email_subject as subject  from mail_tmplate""")[0]
+            content, low_balance_alert_email_subject as subject  from mail_tmplate""")[0]
     except Exception as e: 
         LOG.error('no template table:'+str(e))
     for cl in clients:
