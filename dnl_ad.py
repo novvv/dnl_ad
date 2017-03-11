@@ -394,7 +394,7 @@ sum(egress_call_cost_ij) as total_billed_amount_sell,
 sum(inter_duration) as buy_total_duration,
 sum(intra_duration) as sell_total_duration,
 client.*
-from cdr_report_detail%s , client, products p
+from cdr_report_detail%s , client, product
 where
 client_id=ingress_client_id
 and product_rout_id=resource_id
