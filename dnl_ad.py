@@ -42,7 +42,10 @@ def tz_align(d, off):
     """Return datetime, converted by given offset.Time zone info from""" \
         """string -12:00 ."""
     m = {'+00:00': 0, '-12:00': -43200, '-03:00': -10800}
-    return d + timedelta(seconds=m[off])
+    if off in m.keys():
+        return d + timedelta(seconds=m[off])
+    else:
+        return d
     #return zone_names[timedelta(m[pre], int(hm[0])*3600+int(hm[1])*60)][0]
 
 class GZipRotator:
