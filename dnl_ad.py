@@ -364,9 +364,9 @@ Select credit from client;
             cl.date, send_time) - timedelta(seconds=sleep_time*2)
         sendtime_b = datetime.combine(
             cl.date, send_time) + timedelta(seconds=sleep_time*2)
-        if cl.zero_balance_notice_last_send:
+        if cl.zero_balance_notice_last_sent:
             last_send = datetime.combine(
-                cl.date, cl.zero_balance_notice_last_send)
+                cl.date, cl.zero_balance_notice_last_sent)
         else:
             last_send = cl.now - timedelta(hours=24)
         LOG.info('times:last %s now %s a %s b %s' %
@@ -393,7 +393,7 @@ Select credit from client;
         #make things after send alert
         times = int(cl.zero_balance_notice_time)+1
         query(
-            "update client set zero_balance_notice_time='%s' zero_balance_notice_last_send='%s'  where client_id=%s" %
+            "update client set zero_balance_notice_time='%s' zero_balance_notice_last_sent='%s'  where client_id=%s" %
               (times, str(cl.now), cl.client_id))
 
 def do_daily_usage_summary():
@@ -536,33 +536,36 @@ def do_daily_cdr_delivery():
         LOG.error('no template table:'+str(e))
         raise
     reportdate = date.today()
-    reporttime = datetime.now(UTC).timetz()
+    #reporttime = datetime.now(UTC).timetz()
+    reporttime = time(0,0,0,0,UTC)
     #if reporttime.hour==0:
-    reportdate = reportdate-timedelta(hours=24)
-    reportnow = datetime.combine(reportdate, reporttime)
-    cdr_clients=query(" select r.client_id , r.resource_id,c.name,i.*,c.* from resource r , client c , resource_ip i where r.resource_id = i.resource_id and c.client_id=r.client_id and daily_cdr_generation")
+    reportdate_start = reportdate-timedelta(hours=24)
+    report_start = datetime.combine(reportdate_start, reporttime)
+    report_end=report_start++timedelta(hours=23, minutes=59)
+    cdr_clients=query(""" select r.client_id , r.resource_id,r.alias as switch_alias,c.name,i.*,c.* 
+    from resource r , client c , resource_ip i 
+    where r.resource_id = i.resource_id and c.client_id=r.client_id and daily_cdr_generation""")
                 #" and c.client_id=%d" % cl.client_id)
     for cl in cdr_clients:
         #todo make header
+        LOG.waring('Daily cdr delivery client_id %s,IP:%s' %(cl.client_id, cl.ip) )
         try:
-            q = create_query_cdr(cl.ip, start=str(reportdate), finish=str(
-                reportdate+timedelta(hours=23, minutes=59)) )
+            q = create_query_cdr(cl.ip, start=str(report_start)[:19], end= str(report_end)[:19]) 
             q2 = show_query_cdr(cl.ip, query_key=q[u'query_key'])
-            if q2['url']:
-                cl.download_link = q2['url']
-            else:
-                cl.download_link = 'sorry, link not completed...'
-            if q2['ftp_to']:
-                cl.shared_link = q2['ftp_to']
-            else:
-                cl.shared_link = 'shared link not generated...'
+            cl.download_link = q2['query'][0]['url']
+            cl.shared_link = q2['query'][0]['ftp_to']
         except:
             LOG.error('Query cdr with client_id %d and IP=%s failed' %
                       (cl.client_id, cl.ip))
-        cl.begin_time = str(reportdate)
-        cl.end_time = str(reportdate+timedelta(hours=23, minutes=59)) 
+        if not hasattr(cl,'download_link'):
+            cl.download_link = 'sorry, link not completed...'
+        if not hasattr(cl,'download_link'):
+            cl.shared_link = 'shared link not generated...'
+        tz=cl.daily_cdr_generation_zone
+        cl.begin_time = str(tz_align(report_start, tz))[0:19]
+        cl.end_time =  str(tz_align(report_end, tz))[0:19]
+        cl.customer_gmt = ts
         cl.cdrcount = 0 # TODO ?? where is it
-        cl.customer_gmt = cl.daily_cdr_generation_zone
         content = process_template(templ.auto_cdr_content, cl)
         subj = process_template(templ.auto_cdr_subject, cl)
         cl.date = date.today()
