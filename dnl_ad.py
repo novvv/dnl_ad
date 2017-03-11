@@ -318,6 +318,7 @@ Select credit from client;
         templ = query(
             """select  low_balance_alert_email_subject as
     content, low_balance_alert_email_subject as subject  from mail_tmplate""")[0]
+    content, low_balance_alert_email_subject as subject  from mail_tmplate""")[0]
     except Exception as e: 
         LOG.error('no template table:'+str(e))
     for cl in clients:
@@ -553,7 +554,7 @@ def do_daily_cdr_delivery():
         # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
         # cl)
         content=process_template(fake_daily_cdr_usage_template, cl)
-        subject=process_template(templ.auto_cdr_subject, cl)
+        subject=process_template(templ.subject, cl)
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
