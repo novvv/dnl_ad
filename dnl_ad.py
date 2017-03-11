@@ -293,8 +293,8 @@ cl.daily_balance_send_time).replace(tzinfo=UTC).timetz()
         """
         cl.company_name = cl.company
         cl.allow_credit = cl.allowed_credit
-        cl.balance = '%20.2f' % float(cl.balance)
-        cl.notify_balance = cl.notify_client_balance
+        cl.balance = '%.2f' % float(cl.balance)
+        cl.notify_balance = '%.2f' % float(cl.notify_client_balance)
 
         subj = process_template(templ.lowbalance_subject, cl)
         content = process_template(templ.lowbalance_content, cl)
