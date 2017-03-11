@@ -266,7 +266,7 @@ active: Select status from client ;"""
         subj = process_template(templ.subject, cl)
         cont = process_template(templ.content, cl)
         LOG.info("%s : %s subject: %s content: %s" %
-                 (cl.client_id, cl.billing_email, subj, content))
+                 (cl.client_id, cl.billing_email, subj, cont))
         try:
             if cl.billing_email and '@' in cl.billing_email :
                 send_mail('fromemail', cl.billing_email, subj, cont)
