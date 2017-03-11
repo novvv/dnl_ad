@@ -390,11 +390,12 @@ sum(ingress_call_cost_ij) as total_billed_amount_buy,
 sum(egress_total_calls) as total_call_sell,
 sum(not_zero_calls) as total_not_zero_calls_sell,
 sum(egress_bill_time_inter) as total_billed_min_sell,
+sum(egress_bill_time_inter) as total_billed_min_sell,
 sum(egress_call_cost_ij) as total_billed_amount_sell,
 sum(inter_duration) as buy_total_duration,
 sum(intra_duration) as sell_total_duration,
 client.*
-from cdr_report_detail%s , client, product
+from cdr_report_detail%s , client, resource
 where
 client_id=ingress_client_id
 and product_rout_id=resource_id
