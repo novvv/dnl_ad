@@ -141,7 +141,7 @@ def send_mail(from_field, to, subject, text):
     msg['To'] = to
     txt = MIMEText(text, 'html')
     msg.attach(txt)
-    LOG.info(msg.as_string())
+    #LOG.info(msg.as_string())
         
     if SEND_MAIL:
         try:
@@ -200,7 +200,7 @@ def process_template(templ, env):
             if hasattr(env, 'has_key') and env.has_key(f):
                 r = re.compile('{%s}' % f, re.VERBOSE)
                 out = r.sub(str(env[f]), out)
-        LOG.info('rendered:'+out)
+        LOG.info('RENDERED TEMPLATE:\n'+out)
         return out
     except Exception as e:
         LOG.error('template error:'+str(e))
@@ -241,11 +241,12 @@ active: Select status from client ;
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time = SLEEP_TIME
     clients = query("""
-        select * from client c,c4_client_balance b where
+        select b.client_id,name,payment_terms,company,allowed_credit,balance,notify_client_balance,billing_email
+        from client c,c4_client_balance b where
         c.client_id::text=b.client_id and balance::numeric <=
         notify_client_balance and status=true and  last_lowbalance_time < now() - interval '24 hour' """)
     try:
-        templ = query('select * from mail_tmplate')[0]
+        templ = query('select lowbalance_subject,lowbalance_content from mail_tmplate')[0]
     except Exception as e:
         LOG.error('no template table:'+str(e))
     for cl in clients:
@@ -264,42 +265,15 @@ active: Select status from client ;
         cl.date = date.today()
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
-        """
-        if cl.daily_balance_send_time is None:
-            LOG.error('Sending time not set!')
-            cl.daily_balance_send_time = time(0, 0, 0, 0, UTC)
-        else:
-            cl.daily_balance_send_time = datetime.combine(
-                cl.date,
-cl.daily_balance_send_time).replace(tzinfo=UTC).timetz()
-        sendtime_a = datetime.combine(
-            cl.date, cl.daily_balance_send_time) - \
-            timedelta(seconds=sleep_time*2)
-        sendtime_b = datetime.combine(
-            cl.date, cl.daily_balance_send_time) + \
-            timedelta(seconds=sleep_time*2)
-        if cl.last_lowbalance_time:
-            last_send = cl.last_lowbalance_time
-        else:
-            last_send = cl.now - timedelta(hours=24)
-        LOG.info('times:last %s now %s a %s b %s' %
-                 (str(last_send), str(cl.now), str(sendtime_a),
-                 str(sendtime_b)))
-        if cl.now-last_send > timedelta(seconds=sleep_time*2) and cl.now > sendtime_a and cl.now < sendtime_b:
-            LOG.info('Time to send notification!')
-        else:
-            #continue
-            pass
-        """
         cl.company_name = cl.company
-        cl.allow_credit = cl.allowed_credit
+        cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
         cl.balance = '%.2f' % float(cl.balance)
         cl.notify_balance = '%.2f' % float(cl.notify_client_balance)
 
         subj = process_template(templ.lowbalance_subject, cl)
         content = process_template(templ.lowbalance_content, cl)
         LOG.info("%s : %s subject: %s content: %s" %
-                 (cl.client_id, cl.email, subj, content))
+                 (cl.client_id, cl.billing_email, subj, content))
         try:
             if cl.billing_email and '@' in cl.billing_email :
                 send_mail('fromemail', cl.billing_email, subj, content)
@@ -332,15 +306,19 @@ Select credit from client;
      """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time = SLEEP_TIME
-    clients1=query("""select * from client c,c4_client_balance b
+    clients1=query("""select  b.client_id,name,payment_terms,company,allowed_credit,balance,notify_client_balance,billing_email 
+        from client c,c4_client_balance b
          where c.client_id::text=b.client_id and balance::numeric <= 0
-         and status=true and mode=1 and zero_balance_notice""")
-    clients2=query("""select * from client c,c4_client_balance b
+         and status=true and mode=1 and zero_balance_notice
+         and zero_balance_notice_last_sent < now() - 'interval 24 hour' """)
+    clients2=query("""select  b.client_id,name,payment_terms,company,allowed_credit,balance,notify_client_balance,billing_email 
+        from client c,c4_client_balance b
          where c.client_id::text=b.client_id and balance::numeric <= -allowed_credit
-         and status=true and mode=2 and zero_balance_notice""")
+         and status=true and mode=2 and zero_balance_notice 
+         and zero_balance_notice_last_sent < now() - 'interval 24 hour' """)
     clients = clients1+clients2
     try:
-        templ = query('select * from mail_tmplate')[0]
+        templ = query('select  lowbalance_subject,lowbalance_content  from mail_tmplate')[0]
     except Exception as e:
         LOG.error('no template table:'+str(e))
     for cl in clients:
@@ -360,30 +338,10 @@ Select credit from client;
         cl.date = date.today()
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
-        send_time = time(0, 0, 0, 0, UTC )
-        # TODO tz_from_string(cl.auto_send_zone)) 
-
-        sendtime_a = datetime.combine(
-            cl.date, send_time) - timedelta(seconds=sleep_time*2)
-        sendtime_b = datetime.combine(
-            cl.date, send_time) + timedelta(seconds=sleep_time*2)
-        if cl.zero_balance_notice_last_sent:
-            last_send = datetime.combine(
-                cl.date, cl.zero_balance_notice_last_sent)
-        else:
-            last_send = cl.now - timedelta(hours=24)
-        LOG.info('times:last %s now %s a %s b %s' %
-                 (str(last_send), str(cl.now), str(sendtime_a),
-                 str(sendtime_b)))
-        if cl.now-last_send > timedelta(seconds=sleep_time*2) and cl.now > sendtime_a and cl.now < sendtime_b:
-            LOG.info('Time to send notification!')
-        else:
-            continue
         cl.company_name = cl.company
-        cl.allow_credit = cl.allowed_credit
-        cl.balance = '%20.2f' % float(cl.balance)
+        cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
+        cl.balance = '%.2f' % float(cl.balance)
         cl.notify_balance = cl.notify_client_balance
-
         subj = process_template(templ.low_balance_alert_email_subject, cl)
         content = process_template(templ.low_balance_alert_email_content, cl)
         LOG.info("%s : %s subject: %s content: %s" %
@@ -406,8 +364,8 @@ def do_daily_usage_summary():
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time = SLEEP_TIME
     try:
-        templ = query('select * from mail_tmplate')[0]
-        if templ.auto_summary_subject == '' or templ.auto_summary_content == '':
+        templ = query('select auto_summary_subject,auto_summary_content from mail_tmplate')[0]
+        if templ.auto_summary_subject ==''  or  templ.auto_summary_content == '':
             raise 'Template auto_summary empty!'
     except Exception as e:
         LOG.error('No template:'+str(e))
@@ -415,10 +373,11 @@ def do_daily_usage_summary():
     reportdate = date.today()
     reporttime = datetime.now(UTC).timetz()
     #if reporttime.hour==0:
-    reportdate = reportdate-timedelta(hours=24)
     reportnow = datetime.combine(reportdate, reporttime)
+    reportstart = reportnow-timedelta(hours=24)
     clients = query("""
 select ingress_client_id,
+daily_balance_send_time_zone,billing_email,name
 sum(ingress_total_calls) as total_call_buy,
 sum(not_zero_calls) as total_not_zero_calls_buy,
 sum(ingress_success_calls) as ingress_success_calls,
@@ -435,13 +394,18 @@ where
 client_id=ingress_client_id
 --and ingress_client_id=s
 and status and is_auto_summary
-group by client_id,ingress_client_id order by ingress_client_id;""" % \
-                      reportdate.strftime("%Y%m%d") )
+group by client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,name
+order by ingress_client_id;""" % \
+                      reportstart.strftime("%Y%m%d") )
     for cl in clients:
         cl.client_name = cl.name
         cl.begin_time = '00:00'
         cl.end_time = '23:59'
         cl.customer_gmt = 'UTC'
+        tz=cl.daily_balance_send_time_zone
+        cl.start_date = str(tz_align(report_start, tz))[0:19]
+        cl.end_date =  str(tz_align(report_end, tz))[0:19]
+        cl.customer_gmt = tz
         content = process_template(templ.auto_summary_content, cl)
         subj = process_template(templ.auto_summary_subject, cl)
         try:
@@ -465,6 +429,10 @@ def do_daily_balance_summary():
         cl.date = date.today()
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
+        tz=cl.daily_cdr_generation_zone
+        cl.start_date = str(tz_align(report_start, tz))[0:19]
+        cl.end_date =  str(tz_align(report_end, tz))[0:19]
+        cl.customer_gmt = tz
         balance = query(
             "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
             AND client_id = %d" % str(cl.date), cl.client_id)
@@ -544,7 +512,7 @@ def do_daily_cdr_delivery():
     #if reporttime.hour==0:
     reportdate_start = reportdate-timedelta(hours=24)
     report_start = datetime.combine(reportdate_start, reporttime)
-    report_end=report_start++timedelta(hours=23, minutes=59)
+    report_end=report_start+timedelta(hours=23, minutes=59)
     cdr_clients=query(""" select r.client_id , r.resource_id,r.alias as switch_alias,c.name,i.*,c.* 
     from resource r , client c , resource_ip i 
     where r.resource_id = i.resource_id and c.client_id=r.client_id and daily_cdr_generation""")
