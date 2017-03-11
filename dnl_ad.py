@@ -316,8 +316,8 @@ Select credit from client;
     clients = clients1+clients2
     try:
         templ = query(
-            """select  low_balance_alert_email_subject as
-            content, low_balance_alert_email_subject as subject  from mail_tmplate""")[0]
+            """select  low_balance_subject as
+            content, low_balance_subject as subject  from mail_tmplate""")[0]
     except Exception as e: 
         LOG.error('no template table:'+str(e))
     for cl in clients:
@@ -346,7 +346,7 @@ Select credit from client;
                  (cl.client_id, cl.billing_email, subj, content))
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, content)
+                send_mail('fromemail', cl.billing_email, subj, 'ZERO BALANCE!' +content)
                 #make things after send alert
                 times = int(cl.zero_balance_notice_time)+1
                 query("""update client set
