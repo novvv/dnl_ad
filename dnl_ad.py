@@ -377,28 +377,37 @@ time zone, we need to send out a daily usage summary mail. """
     reportnow=datetime.combine(reportdate, reporttime)
     reportstart=reportnow-timedelta(hours=24)
     clients=query("""
-select ingress_client_id,
+select ingress_client_id, 
 daily_balance_send_time_zone,billing_email,name,
+p.alias as switch_alias,
 sum(ingress_total_calls) as total_call_buy,
 sum(not_zero_calls) as total_not_zero_calls_buy,
 sum(ingress_success_calls) as ingress_success_calls,
+sum(ingress_success_calls) as total_success_call_nuy,
+sum(egress_success_calls) as total_success_call_sell,
 sum(ingress_bill_time_inter) as total_billed_min_buy,
 sum(ingress_call_cost_ij) as total_billed_amount_buy,
 sum(egress_total_calls) as total_call_sell,
 sum(not_zero_calls) as total_not_zero_calls_sell,
 sum(egress_bill_time_inter) as total_billed_min_sell,
 sum(egress_call_cost_ij) as total_billed_amount_sell,
+sum(inter_duration) as buy_total_duration,
+sum(intra_duration) as sell_total_duration,
 client.*
-from cdr_report_detail%s , client
---from cdr_report20170303
+from cdr_report_detail%s , client, products p
 where
 client_id=ingress_client_id
---and ingress_client_id=s
+product_rout_id=p.id
 and status and is_auto_summary
 group by client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,name
 order by ingress_client_id;""" % \
                       reportstart.strftime("%Y%m%d") )
     for cl in clients:
+
+        cl.company_name = cl.company
+        cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
+        cl.remaining_credit='%.2' % -cl.allowed_credit if cl.balance   > 0 else -cl.allowed_credi+cl.balance
+        cl.balance = '%.2f' % float(cl.balance)
         cl.client_name=cl.name
         cl.begin_time='00:00'
         cl.end_time='23:59'
