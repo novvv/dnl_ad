@@ -312,7 +312,7 @@ Select credit from client;"""
     clients = clients1+clients2
     try:
         templ = query(
-            """select  low_balance_content as content, low_balance_subject as subject  
+            """select  lowbalance_content as content, lowbalance_subject as subject  
             from mail_tmplate
             """)[0]
     except Exception as e: 
