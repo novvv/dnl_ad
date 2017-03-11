@@ -397,7 +397,7 @@ client.*
 from cdr_report_detail%s , client, products p
 where
 client_id=ingress_client_id
-product_rout_id=p.id
+and product_rout_id=resource_id
 and status and is_auto_summary
 group by client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,name
 order by ingress_client_id;""" % \
