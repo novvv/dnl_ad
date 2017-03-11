@@ -239,7 +239,6 @@ active: Select status from client ;
 
     """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
-    sleep_time = SLEEP_TIME
     clients = query("""
         select b.client_id,name,payment_term_id,company,allowed_credit,balance,notify_client_balance,billing_email
         from client c,c4_client_balance b where
@@ -305,7 +304,6 @@ Select credit from client;
 
      """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
-    sleep_time = SLEEP_TIME
     clients1=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,
         notify_client_balance,billing_email, zero_balance_notice_time
         from client c,c4_client_balance b
@@ -326,7 +324,6 @@ Select credit from client;
     for cl in clients:
         LOG.warning('NOTIFY ZERO BALANCE ALERT! client_id:%s, name:%s' %
                     (cl.client_id, cl.name))
-
         if cl.payment_term_id:
             try:
                 cl.payment_terms = query(
@@ -351,14 +348,15 @@ Select credit from client;
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, content)
+                #make things after send alert
+                times = int(cl.zero_balance_notice_time)+1
+                query("""update client set 
+                zero_balance_notice_time=%d, 
+                zero_balance_notice_last_sent='%s'  
+                where client_id=%s""" %  ( times, str(cl.now), cl.client_id) )
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
-        #make things after send alert
-        times = int(cl.zero_balance_notice_time)+1
-        query(
-            "update client set zero_balance_notice_time='%s' zero_balance_notice_last_sent='%s'  where client_id=%s" %
-              (times, str(cl.now), cl.client_id))
-
+            
 def do_daily_usage_summary():
     u"""
     For each client who has “daily usage summary” selected, at the client’s GMT
