@@ -246,7 +246,7 @@ active: Select status from client ;
         c.client_id::text=b.client_id and balance::numeric <=
         notify_client_balance and status=true and  last_lowbalance_time < now() - interval '24 hour' """)
     try:
-        templ = query('select lowbalance_subject,lowbalance_content from mail_tmplate')[0]
+        templ = query('select lowbalance_subject as subject,lowbalance_content as content from mail_tmplate')[0]
     except Exception as e:
         LOG.error('no template table:'+str(e))
     for cl in clients:
@@ -270,8 +270,8 @@ active: Select status from client ;
         cl.balance = '%.2f' % float(cl.balance)
         cl.notify_balance = '%.2f' % float(cl.notify_client_balance)
 
-        subj = process_template(templ.lowbalance_subject, cl)
-        content = process_template(templ.lowbalance_content, cl)
+        subj = process_template(templ.subject, cl)
+        content = process_template(templ.content, cl)
         LOG.info("%s : %s subject: %s content: %s" %
                  (cl.client_id, cl.billing_email, subj, content))
         try:
@@ -318,7 +318,7 @@ Select credit from client;
          and zero_balance_notice_last_sent < now() - interval '24 hour' """)
     clients = clients1+clients2
     try:
-        templ = query('select  lowbalance_subject,lowbalance_content  from mail_tmplate')[0]
+        templ = query('select  low_balance_alert_email_subject as content,low_balance_alert_email_subject as subject  from mail_tmplate')[0]
     except Exception as e:
         LOG.error('no template table:'+str(e))
     for cl in clients:
@@ -342,8 +342,8 @@ Select credit from client;
         cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
         cl.balance = '%.2f' % float(cl.balance)
         cl.notify_balance = cl.notify_client_balance
-        subj = process_template(templ.low_balance_alert_email_subject, cl)
-        content = process_template(templ.low_balance_alert_email_content, cl)
+        subj = process_template(templ.subject, cl)
+        content = process_template(templ.content, cl)
         LOG.info("%s : %s subject: %s content: %s" %
                  (cl.client_id, cl.billing_email, subj, content))
         try:
