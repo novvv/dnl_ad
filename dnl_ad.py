@@ -264,12 +264,12 @@ active: Select status from client ;"""
         cl.notify_balance = '%.2f' % float(cl.notify_client_balance)
 
         subj = process_template(templ.subject, cl)
-        content = process_template(templ.content, cl)
+        cont = process_template(templ.content, cl)
         LOG.info("%s : %s subject: %s content: %s" %
                  (cl.client_id, cl.billing_email, subj, content))
         try:
             if cl.billing_email and '@' in cl.billing_email :
-                send_mail('fromemail', cl.billing_email, subj, content)
+                send_mail('fromemail', cl.billing_email, subj, cont)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
         #make things after send alert
@@ -340,7 +340,7 @@ Select credit from client;"""
         subj = process_template(templ.subject, cl)
         cont = process_template(templ.content, cl)
         LOG.info("%s : %s subject: %s content: %s" %
-                 (cl.client_id, cl.billing_email, subj, content))
+                 (cl.client_id, cl.billing_email, subj, cont))
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, 'ZERO BALANCE!' +subj, cont)
@@ -404,11 +404,11 @@ order by ingress_client_id;""" % \
         cl.start_date=str(tz_align(report_start, tz))[0:19]
         cl.end_date=str(tz_align(report_end, tz))[0:19]
         cl.customer_gmt=tz
-        content=process_template(templ.content, cl)
+        cont=process_template(templ.content, cl)
         subj=process_template(templ.subject, cl)
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, content)
+                send_mail('fromemail', cl.billing_email, subj, cont)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
@@ -440,12 +440,11 @@ def do_daily_balance_summary():
             "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
             AND client_id = %d" % str(cl.date), cl.client_id)
         cl.client_name=cl.name
-        subject, content = templ.subject, templ.content
-        content=process_template(content, cl)
-        subject=process_template("<p>Hello {client_name}!</p>", cl)
+        cont=process_template(templ.content, cl)
+        subj=process_template("<p>Hello {client_name}!</p>", cl)
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subject, content)
+                send_mail('fromemail', cl.billing_email, subj, cont)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
