@@ -378,7 +378,7 @@ time zone, we need to send out a daily usage summary mail. """
     reportstart=reportnow-timedelta(hours=24)
     clients=query("""
 select ingress_client_id, 
-daily_balance_send_time_zone,billing_email,name,
+daily_balance_send_time_zone,billing_email,client.name,
 p.alias as switch_alias,
 sum(ingress_total_calls) as total_call_buy,
 sum(not_zero_calls) as total_not_zero_calls_buy,
@@ -399,7 +399,7 @@ where
 client_id=ingress_client_id
 and product_rout_id=resource_id
 and status and is_auto_summary
-group by client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,name
+group by client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,client.name
 order by ingress_client_id;""" % \
                       reportstart.strftime("%Y%m%d") )
     for cl in clients:
