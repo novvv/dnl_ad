@@ -220,18 +220,15 @@ def process_table(data, select=None, style={'table': 'dttable'}):
 
 def do_notify_client_balance():
     u"""
-     Check every 5 minute for each “active” clients’ current balance and “low
-     balance” trigger.  If the “current balance” is below the “low balance”
-     trigger, then send out an alert.
-
-Also, there is a “number of time” that we should send in total before payment
+Check every 5 minute for each “active” clients’ current balance and “low
+balance” trigger.  If the “current balance” is below the “low balance”
+trigger, then send out an alert.Also, there is a “number of time” that we should send in total before payment
 or credit is added. Each day, the low balance should be sent once.  The
 subsequent notification should be sent on 00:00:00 of the client’s GMT timezone
 ( default is gmt+0) Notification Setting of client: select
 notify_client_balance, low_balance_notice from client; To check if client is
-active: Select status from client ;
+active: Select status from client ;"""
 
-    """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
     clients = query("""
         select b.client_id,name,payment_term_id,company,allowed_credit,balance,notify_client_balance,billing_email
@@ -297,9 +294,8 @@ active: Select status from client ;
 Select mode from client ;
 Mode = 1 (prepay)
 Mode = 2 (postpay)
-Select credit from client;
+Select credit from client;"""
 
-     """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
     clients1=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,
         notify_client_balance,billing_email, zero_balance_notice_time
@@ -316,8 +312,9 @@ Select credit from client;
     clients = clients1+clients2
     try:
         templ = query(
-            """select  low_balance_subject as
-            content, low_balance_subject as subject  from mail_tmplate""")[0]
+            """select  low_balance_content as content, low_balance_subject as subject  
+            from mail_tmplate
+            """)[0]
     except Exception as e: 
         LOG.error('no template table:'+str(e))
     for cl in clients:
@@ -341,12 +338,12 @@ Select credit from client;
         cl.balance = '%.2f' % float(cl.balance)
         cl.notify_balance = cl.notify_client_balance
         subj = process_template(templ.subject, cl)
-        content = process_template(templ.content, cl)
+        cont = process_template(templ.content, cl)
         LOG.info("%s : %s subject: %s content: %s" %
                  (cl.client_id, cl.billing_email, subj, content))
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, ZERO BALANCE!' +subj, 'content)
+                send_mail('fromemail', cl.billing_email, 'ZERO BALANCE!' +subj, cont)
                 #make things after send alert
                 times = int(cl.zero_balance_notice_time)+1
                 query("""update client set
@@ -357,11 +354,10 @@ Select credit from client;
             LOG.error('cannot sendmail:'+str(e))
             
 def do_daily_usage_summary():
-    u"""
-    For each client who has “daily usage summary” selected, at the client’s GMT
-    time zone, we need to send out a daily usage summary mail. """
+    u"""For each client who has “daily usage summary” selected, at the client’s GMT
+time zone, we need to send out a daily usage summary mail. """
+    
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
-    sleep_time = SLEEP_TIME
     try:
         templ = query(
             """select auto_summary_subject as subject , auto_summary_content as content
@@ -454,7 +450,6 @@ def do_daily_balance_summary():
             LOG.error('cannot sendmail:'+str(e))
 
 
-
 def create_query_cdr(switch_ip, start, end ):
     "call api for create query"
     data={
@@ -506,7 +501,6 @@ def do_daily_cdr_delivery():
 "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXNzw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa" }
     """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
-    sleep_time=SLEEP_TIME
     try:
         templ=query('select send_cdr_subject as subject,send_cdr_content as content from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
@@ -552,14 +546,14 @@ def do_daily_cdr_delivery():
         cl.filename='None'
         # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
         # cl)
-        content=process_template(fake_daily_cdr_usage_template, cl)
-        subject=process_template(templ.subject, cl)
+        cont=process_template(fake_daily_cdr_usage_template, cl)
+        subj=process_template(templ.subject, cl)
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, content)
+                send_mail('fromemail', cl.billing_email, subj, cont)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
@@ -577,9 +571,8 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
 
     """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
-    sleep_time=SLEEP_TIME
     try:
-        templ=query('select * from mail_tmplate')[0]
+        templ=query('send_cdr_subject as subject,send_cdr_content as content from mail_tmplate')[0]
         if templ.send_cdr_subject == '' or templ.send_cdr_content == '':
             raise 'Template send_cdr!'
     except Exception as e:
@@ -594,15 +587,15 @@ where r.resource_id = d.resource_id and c.client_id=r.client_id
 and d.log_id= l.id and download_deadline - interval '24 hour' < now()
 and l.is_email_alert""" )
     for cl in clients:
-        content=process_template(
-            fake_trunk_pending_suspension_notice_template, cl)
-        subj=process_template(templ.send_cdr_subject, cl)
+        #cont=process_template(templ.content, cl)
+        cont=process_template(fake_trunk_pending_suspension_notice_template, cl)
+        subj=process_template(templ.subject, cl)
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, content)
+                send_mail('fromemail', cl.billing_email, subj, cont)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
@@ -616,7 +609,6 @@ from rate_send_log; Select client_id , resource_id from rate_send_log_detail
 , resource where resource.resource_id = rate_send_log_detail.resource_id
 Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
-    sleep_time=SLEEP_TIME
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
     clients=query("""
 select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_filename,
@@ -625,16 +617,23 @@ from rate_send_log_detail d, resource r , client c,rate_send_log l
 where r.resource_id = d.resource_id and c.client_id=r.client_id
 and d.log_id= l.id and download_deadline < now()
 and l.is_email_alert""")
+    try:
+        templ=query('send_cdr_subject as subject,send_cdr_content as content from mail_tmplate')[0]
+        if templ.send_cdr_subject == '' or templ.send_cdr_content == '':
+            raise 'Template send_cdr!'
+    except Exception as e:
+        LOG.error('no template table:'+str(e))
+        raise
     for cl in clients:
-        content=process_template(
+        cont=process_template(
             fake_trunk_pending_suspension_notice_template, cl)
-        subj=process_template(templ.send_cdr_subject, cl)
+        subj=process_template(templ.subject, cl)
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, content)
+                send_mail('fromemail', cl.billing_email, subj, cont)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
         #do trunk blocking
