@@ -564,7 +564,7 @@ def do_daily_cdr_delivery():
         tz=cl.daily_cdr_generation_zone
         cl.start_date = str(tz_align(report_start, tz))[0:19]
         cl.end_date =  str(tz_align(report_end, tz))[0:19]
-        cl.customer_gmt = ts
+        cl.customer_gmt = tz
         cl.cdrcount = 0 # TODO ?? where is it
         cl.site_name = 'THE SITE NAME'
         
