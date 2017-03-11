@@ -400,7 +400,7 @@ where
 client.client_id=ingress_client_id
 and product_rout_id=resource_id
 and client.status and is_auto_summary
-group by client.client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,client.name
+group by client.client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,client.name,alias 
 order by ingress_client_id;""" % \
                       reportstart.strftime("%Y%m%d") )
     for cl in clients:
