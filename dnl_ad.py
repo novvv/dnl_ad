@@ -565,10 +565,10 @@ def do_daily_cdr_delivery():
         cl.start_date = str(tz_align(report_start, tz))[0:19]
         cl.end_date =  str(tz_align(report_end, tz))[0:19]
         cl.customer_gmt = tz
-        cl.cdrcount = 0 # TODO ?? where is it
+        cl.cdr_count = 0 # TODO ?? where is it
         cl.site_name = 'THE SITE NAME'
-        
-        content = process_template(templ.auto_cdr_content, cl)
+        #file_name,cdr_countcontent = process_template(templ.auto_cdr_content, cl)
+        content = process_template(fake_daily_cdr_usage_template, cl)
         subj = process_template(templ.auto_cdr_subject, cl)
         cl.date = date.today()
         cl.time = datetime.now(UTC).timetz()
