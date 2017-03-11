@@ -573,7 +573,7 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
     try:
         templ=query('select send_cdr_subject as subject,send_cdr_content as content from mail_tmplate')[0]
-        if templ.send_cdr_subject == '' or templ.send_cdr_content == '':
+        if templ.subject == '' or templ.content == '':
             raise 'Template send_cdr!'
     except Exception as e:
         LOG.error('no template table:'+str(e))
@@ -619,7 +619,7 @@ and d.log_id= l.id and download_deadline < now()
 and l.is_email_alert""")
     try:
         templ=query('select send_cdr_subject as subject,send_cdr_content as content from mail_tmplate')[0]
-        if templ.send_cdr_subject == '' or templ.send_cdr_content == '':
+        if templ.subject == '' or templ.content == '':
             raise 'Template send_cdr!'
     except Exception as e:
         LOG.error('no template table:'+str(e))
