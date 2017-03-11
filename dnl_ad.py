@@ -397,7 +397,7 @@ sum(intra_duration) as sell_total_duration,
 client.*
 from cdr_report_detail%s , client, resource,c4_client_balance
 where
-client_id.client_id::text=c4_client_balance.client_id and 
+client.client_id::text=c4_client_balance.client_id and 
 client.client_id=ingress_client_id
 and product_rout_id=resource_id
 and client.status and is_auto_summary
