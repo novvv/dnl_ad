@@ -346,7 +346,7 @@ Select credit from client;
                  (cl.client_id, cl.billing_email, subj, content))
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, 'ZERO BALANCE!' +content)
+                send_mail('fromemail', cl.billing_email, ZERO BALANCE!' +subj, 'content)
                 #make things after send alert
                 times = int(cl.zero_balance_notice_time)+1
                 query("""update client set
