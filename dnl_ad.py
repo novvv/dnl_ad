@@ -43,7 +43,7 @@ def tz_align(d, off):
     hm = off[1:].split(':')
     pre = off[0]
     m = {'+': 0, '-': -1}
-    m = {'+00:00': 0, '-12:00': -43200}
+    m = {'+00:00': 0, '-12:00': -43200, '-03:00':-10800}
     return d + timedelta(seconds=m[off])
     #return zone_names[timedelta(m[pre], int(hm[0])*3600+int(hm[1])*60)][0]
 
@@ -239,10 +239,10 @@ active: Select status from client ;
     """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time = SLEEP_TIME
-    clients = query(
-        "select * from client c,c4_client_balance b where\
-        c.client_id::text=b.client_id and balance::numeric <=\
-        notify_client_balance and status=true")
+    clients = query("""
+        select * from client c,c4_client_balance b where
+        c.client_id::text=b.client_id and balance::numeric <=
+        notify_client_balance and status=true and and last_lowbalance_time < now() - interval '24 hour' """)
     try:
         templ = query('select * from mail_tmplate')[0]
     except Exception as e:
@@ -263,7 +263,7 @@ active: Select status from client ;
         cl.date = date.today()
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
-
+        """
         if cl.daily_balance_send_time is None:
             LOG.error('Sending time not set!')
             cl.daily_balance_send_time = time(0, 0, 0, 0, UTC)
@@ -287,7 +287,9 @@ cl.daily_balance_send_time).replace(tzinfo=UTC).timetz()
         if cl.now-last_send > timedelta(seconds=sleep_time*2) and cl.now > sendtime_a and cl.now < sendtime_b:
             LOG.info('Time to send notification!')
         else:
-            continue
+            #continue
+            pass
+        """
         cl.company_name = cl.company
         cl.allow_credit = cl.allowed_credit
         cl.balance = '%20.2f' % float(cl.balance)
@@ -305,8 +307,8 @@ cl.daily_balance_send_time).replace(tzinfo=UTC).timetz()
         #make things after send alert
         times = int(cl.lowbalance_notication_time)+1
         query(
-            "update client set last_lowbalance_time='%s' where client_id=%s" %
-              (str(cl.now), cl.client_id))
+            "update client set last_lowbalance_time=now() where client_id=%s" %
+               cl.client_id)
 
 
 def do_notify_zero_balance():
@@ -567,6 +569,7 @@ def do_daily_cdr_delivery():
         cl.customer_gmt = tz
         cl.cdr_count = 0 # TODO ?? where is it
         cl.site_name = 'THE SITE NAME'
+        cl.filename = 'None'
         #file_name,cdr_countcontent = process_template(templ.auto_cdr_content, cl)
         content = process_template(fake_daily_cdr_usage_template, cl)
         subj = process_template(templ.auto_cdr_subject, cl)

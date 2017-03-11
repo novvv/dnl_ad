@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+# -*- coding: UTF-8 -*-
 
 fake_daily_balance_summary_template=""""
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
