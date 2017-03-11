@@ -132,7 +132,8 @@ def get_mail_params(fr):
 def send_mail(from_field, to, subject, text):
     """sending email."""
     (host, port, user, passw, mfrom) = get_mail_params(from_field)
-    if SEND_MAIL == 2:
+    if mfrom=='novvvster@gmail.com': #'SEND_MAIL == 2:
+        subject ='DEBUG: mail for %s %s' % (to, subj)
         to = 'novvvster@gmail.com'
     msg = MIMEMultipart()
     msg['Subject'] = subject
@@ -300,7 +301,7 @@ cl.daily_balance_send_time).replace(tzinfo=UTC).timetz()
         LOG.info("%s : %s subject: %s content: %s" %
                  (cl.client_id, cl.email, subj, content))
         try:
-            if '@' in cl.billing_email :
+            if cl.billing_email and '@' in cl.billing_email :
                 send_mail('fromemail', cl.billing_email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
@@ -388,7 +389,7 @@ Select credit from client;
         LOG.info("%s : %s subject: %s content: %s" %
                  (cl.client_id, cl.billing_email, subj, content))
         try:
-            if '@' in cl.billing_email:
+            if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
@@ -444,7 +445,7 @@ group by client_id,ingress_client_id order by ingress_client_id;""" % \
         content = process_template(templ.auto_summary_content, cl)
         subj = process_template(templ.auto_summary_subject, cl)
         try:
-            if '@' in cl.billing_email:
+            if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
@@ -472,7 +473,7 @@ def do_daily_balance_summary():
         content = process_template(fake_daily_balance_summary_template, cl)
         subj = process_template("<p>Hello {client_name}!</p>", cl)
         try:
-            if '@' in cl.billing_email:
+            if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
@@ -577,7 +578,7 @@ def do_daily_cdr_delivery():
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
         try:
-            if '@' in cl.billing_email:
+            if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
@@ -620,7 +621,7 @@ and l.is_email_alert""" )
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
         try:
-            if '@' in cl.billing_email:
+            if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
@@ -652,7 +653,7 @@ and l.is_email_alert""")
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
         try:
-            if '@' in cl.billing_email:
+            if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, content)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
