@@ -401,8 +401,8 @@ order by ingress_client_id;""" % \
         cl.end_time='23:59'
         cl.customer_gmt='UTC'
         tz=cl.daily_balance_send_time_zone
-        cl.start_date=str(tz_align(report_start, tz))[0:19]
-        cl.end_date=str(tz_align(report_end, tz))[0:19]
+        cl.start_date=str(tz_align(reportstart, tz))[0:19]
+        cl.end_date=str(tz_align(reportnow, tz))[0:19]
         cl.customer_gmt=tz
         cont=process_template(templ.content, cl)
         subj=process_template(templ.subject, cl)
