@@ -528,21 +528,22 @@ def do_daily_cdr_delivery():
                 cl.ip, start=str(report_start)[:19], end=str(report_end)[:19])
             q2=show_query_cdr(cl.ip, query_key=q[u'query_key'])
             cl.download_link=q2['query'][0]['url']
-            cl.shared_link=q2['query'][0]['ftp_to']
+            cl.share_link=q2['query'][0]['ftp_to']
         except:
             LOG.error('Query cdr with client_id %d and IP=%s failed' %
                       (cl.client_id, cl.ip))
         if not hasattr(cl, 'download_link'):
             cl.download_link='sorry, link not completed...'
         if not hasattr(cl, 'download_link'):
-            cl.shared_link='shared link not generated...'
+            cl.share_link='shared link not generated...'
         tz=cl.daily_cdr_generation_zone
-        cl.start_date=str(tz_align(report_start, tz))[0:19]
-        cl.end_date=str(tz_align(report_end, tz))[0:19]
+        cl.client_name=cl.company
+        cl.begin_time=str(tz_align(report_start, tz))[0:19]
+        cl.end_time=str(tz_align(report_end, tz))[0:19]
         cl.customer_gmt=tz
         cl.cdr_count=0 # TODO ?? where is it
         cl.site_name='THE SITE NAME'
-        cl.filename='None'
+        cl.file_name='None'
         # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
         # cl)
         cont=process_template(fake_daily_cdr_usage_template, cl)
