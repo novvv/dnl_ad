@@ -241,7 +241,7 @@ active: Select status from client ;
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time = SLEEP_TIME
     clients = query("""
-        select b.client_id,name,payment_terms,company,allowed_credit,balance,notify_client_balance,billing_email
+        select b.client_id,name,payment_term_id,company,allowed_credit,balance,notify_client_balance,billing_email
         from client c,c4_client_balance b where
         c.client_id::text=b.client_id and balance::numeric <=
         notify_client_balance and status=true and  last_lowbalance_time < now() - interval '24 hour' """)
@@ -306,16 +306,16 @@ Select credit from client;
      """
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
     sleep_time = SLEEP_TIME
-    clients1=query("""select  b.client_id,name,payment_terms,company,allowed_credit,balance,notify_client_balance,billing_email 
+    clients1=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,notify_client_balance,billing_email 
         from client c,c4_client_balance b
          where c.client_id::text=b.client_id and balance::numeric <= 0
          and status=true and mode=1 and zero_balance_notice
-         and zero_balance_notice_last_sent < now() - 'interval 24 hour' """)
-    clients2=query("""select  b.client_id,name,payment_terms,company,allowed_credit,balance,notify_client_balance,billing_email 
+         and zero_balance_notice_last_sent < now() - interval '24 hour' """)
+    clients2=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,notify_client_balance,billing_email 
         from client c,c4_client_balance b
          where c.client_id::text=b.client_id and balance::numeric <= -allowed_credit
          and status=true and mode=2 and zero_balance_notice 
-         and zero_balance_notice_last_sent < now() - 'interval 24 hour' """)
+         and zero_balance_notice_last_sent < now() - interval '24 hour' """)
     clients = clients1+clients2
     try:
         templ = query('select  lowbalance_subject,lowbalance_content  from mail_tmplate')[0]
