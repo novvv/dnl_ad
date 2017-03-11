@@ -548,7 +548,7 @@ def do_daily_cdr_delivery():
                 #" and c.client_id=%d" % cl.client_id)
     for cl in cdr_clients:
         #todo make header
-        LOG.waring('Daily cdr delivery client_id %s,IP:%s' %(cl.client_id, cl.ip) )
+        LOG.info('Daily cdr delivery client_id %s,IP:%s' %(cl.client_id, cl.ip) )
         try:
             q = create_query_cdr(cl.ip, start=str(report_start)[:19], end= str(report_end)[:19]) 
             q2 = show_query_cdr(cl.ip, query_key=q[u'query_key'])
@@ -562,10 +562,12 @@ def do_daily_cdr_delivery():
         if not hasattr(cl,'download_link'):
             cl.shared_link = 'shared link not generated...'
         tz=cl.daily_cdr_generation_zone
-        cl.begin_time = str(tz_align(report_start, tz))[0:19]
-        cl.end_time =  str(tz_align(report_end, tz))[0:19]
+        cl.start_date = str(tz_align(report_start, tz))[0:19]
+        cl.end_date =  str(tz_align(report_end, tz))[0:19]
         cl.customer_gmt = ts
         cl.cdrcount = 0 # TODO ?? where is it
+        cl.site_name = 'THE SITE NAME'
+        
         content = process_template(templ.auto_cdr_content, cl)
         subj = process_template(templ.auto_cdr_subject, cl)
         cl.date = date.today()
