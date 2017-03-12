@@ -29,7 +29,7 @@ PIDFILE = '/var/tmp/dnl_ad.pid'
 LOGFILE = '/var/tmp/dnl_ad.log'
 LOGLEVEL = logging.DEBUG
 SLEEP_TIME = 30
-SEND_MAIL = 1
+SEND_MAIL = 2
 
 dt = datetime.now(UTC)  # current time in UTC
 zone_names = defaultdict(list)
@@ -170,7 +170,7 @@ def query(sql, all=True):
     conn = psycopg2.connect(conn_string)
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     #cursor = conn.cursor()
-    LOG.info('query:'+sql)
+    LOG.debug('query:'+sql)
     cursor.execute(sql)
     conn.commit()
     result = []
@@ -198,10 +198,10 @@ def process_template(templ, env):
             if hasattr(env, 'has_key') and env.has_key(f):
                 r = re.compile('{%s}' % f, re.VERBOSE)
                 out = r.sub(str(env[f]), out)
-        LOG.info('RENDERED TEMPLATE:\n'+out)
+        LOG.debug('RENDERED TEMPLATE:\n'+out)
         return out
     except Exception as e:
-        LOG.error('template error:'+str(e))
+        LOG.error('Template error:'+str(e))
         return templ
 
 def process_table(data, select=None, style={'table': 'dttable'}):
@@ -232,7 +232,7 @@ subsequent notification should be sent on 00:00:00 of the client’s GMT timezon
 notify_client_balance, low_balance_notice from client; To check if client is
 active: Select status from client ;"""
 
-    LOG.info("START: %s" % sys._getframe().f_code.co_name)
+    LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     clients = query("""
         select b.client_id,name,payment_term_id,company,allowed_credit,balance,notify_client_balance,billing_email
         from client c,c4_client_balance b where
@@ -244,7 +244,7 @@ active: Select status from client ;"""
             """select lowbalance_subject as subject, lowbalance_content as content
     from mail_tmplate""")[0]
     except Exception as e:
-        LOG.error('no template table:'+str(e))
+        LOG.error('Template table:'+str(e))
     for cl in clients:
         LOG.warning('NOTIFY LOW BALANCE ALERT! client_id:%s, name:%s' %
                     (cl.client_id, cl.name))
@@ -268,7 +268,7 @@ active: Select status from client ;"""
 
         subj = process_template(templ.subject, cl)
         cont = process_template(templ.content, cl)
-        LOG.info("%s : %s subject: %s content: %s" %
+        LOG.debug("%s : %s subject: %s content: %s" %
                  (cl.client_id, cl.billing_email, subj, cont))
         try:
             if cl.billing_email and '@' in cl.billing_email :
@@ -299,7 +299,7 @@ Mode = 1 (prepay)
 Mode = 2 (postpay)
 Select credit from client;"""
 
-    LOG.info("START: %s" % sys._getframe().f_code.co_name)
+    LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     clients1=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,
         notify_client_balance,billing_email, zero_balance_notice_time
         from client c,c4_client_balance b
@@ -405,7 +405,8 @@ group by client.client_id,ingress_client_id,daily_balance_send_time_zone,billing
 order by ingress_client_id;""" % \
                       reportstart.strftime("%Y%m%d") )
     for cl in clients:
-
+        LOG.warning('DAILY USAGE ! client_id:%s, name:%s' %
+                    (cl.client_id, cl.name))
         cl.company_name = cl.company
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
         cl.remaining_credit='%.2' % -cl.allowed_credit if cl.balance   > 0 else -cl.allowed_credi+cl.balance
@@ -432,7 +433,7 @@ def do_daily_balance_summary():
     For each client who has “daily balance summary” selected, at the client’s
     GMT time zone, we need to send out a daily balance summary mail.
     """
-    LOG.info("START: %s" % sys._getframe().f_code.co_name)
+    LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     try:
         templ = query(
             """select  low_balance_alert_email_subject as
@@ -443,6 +444,8 @@ def do_daily_balance_summary():
         "select * from client  where status=true and\
         daily_balance_notification=1")
     for cl in clients:
+        LOG.warning('NOTIFY DAILY BALANCE SUMMARY! client_id:%s, name:%s' %
+                    (cl.client_id, cl.name))
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
@@ -513,7 +516,7 @@ def do_daily_cdr_delivery():
   "query_key":
 "33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXNzw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa" }
     """
-    LOG.info("START: %s" % sys._getframe().f_code.co_name)
+    LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     try:
         templ=query('select send_cdr_subject as subject,send_cdr_content as content from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
@@ -535,7 +538,7 @@ def do_daily_cdr_delivery():
                 #" and c.client_id=%d" % cl.client_id)
     for cl in cdr_clients:
         #todo make header
-        LOG.info('Daily cdr delivery client_id %s,IP:%s' %
+        LOG.warning('DAILY CDR DELIVERY: %s,IP:%s' %
                  (cl.client_id, cl.ip) )
         try:
             q=create_query_cdr(
@@ -584,7 +587,7 @@ Select client_id , resource_id from rate_send_log_detail
 Select * from rate_download_log where client_id = xx and log_detail_id = xx
 
     """
-    LOG.info("START: %s" % sys._getframe().f_code.co_name)
+    LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     try:
         templ=query('select send_cdr_subject as subject,send_cdr_content as content from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
@@ -601,6 +604,8 @@ where r.resource_id = d.resource_id and c.client_id=r.client_id
 and d.log_id= l.id and download_deadline - interval '24 hour' < now()
 and l.is_email_alert""" )
     for cl in clients:
+        LOG.warning('TRUNK NOTICE! trunk:%s, company:%s' %
+                    (cl.trunk_name, cl.company_name))
         #cont=process_template(templ.content, cl)
         cont=process_template(fake_trunk_pending_suspension_notice_template, cl)
         subj=process_template(templ.subject, cl)
@@ -623,7 +628,7 @@ from rate_send_log; Select client_id , resource_id from rate_send_log_detail
 , resource where resource.resource_id = rate_send_log_detail.resource_id
 Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
-    LOG.info("START: %s" % sys._getframe().f_code.co_name)
+    LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     clients=query("""
 select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_filename,
 r.alias as trunk_name,r.resource_id,c.company as company_name,c.billing_email
@@ -639,6 +644,8 @@ and l.is_email_alert""")
         LOG.error('no template table:'+str(e))
         raise
     for cl in clients:
+        LOG.warning('TRUNK SUSPENDED! trunk:%s, company:%s' %
+                    (cl.trunk_name, cl.company_name))
         cont=process_template(
             fake_trunk_pending_suspension_notice_template, cl)
         subj=process_template(templ.subject, cl)
