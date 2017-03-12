@@ -647,6 +647,7 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email
         cl.now=datetime.now(UTC)
 
         cont=process_template(fake_trunk_pending_suspension_notice_template, cl)
+        cont.replace('is suspecded because', 'will suspecded because')
         subj=process_template('TRUNK NOTICE! trunk:{trunk_name}, company:{company_name}', cl)        
         #cont=process_template(templ.content, cl)
         #subj=process_template(templ.subject, cl)       
