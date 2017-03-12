@@ -27,9 +27,9 @@ from templates import *
 CONNECTION_STRING = "host='localhost' dbname='class4_pr' user='postgres'"
 PIDFILE = '/var/tmp/dnl_ad.pid'
 LOGFILE = '/var/tmp/dnl_ad.log'
-LOGLEVEL = logging.DEBUG
+LOGLEVEL = logging.WARN
 SLEEP_TIME = 30
-SEND_MAIL = 2
+SEND_MAIL = 1
 
 dt = datetime.now(UTC)  # current time in UTC
 zone_names = defaultdict(list)
@@ -689,7 +689,7 @@ and l.is_email_alert""")
             LOG.error('cannot sendmail:'+str(e))
         #do trunk blocking
         query(
-            "update resource set active=false,diable_by_alert=true,update_ad='%s',update_by='dnl_ad' where resource_id=%s" %
+            "update resource set active=false,disable_by_alert=true,update_at='%s',update_by='dnl_ad' where resource_id=%s" %
               (cl.now, cl.resource_id))
 
 def fifteen_minute_job():

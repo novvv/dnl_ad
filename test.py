@@ -64,13 +64,16 @@ def daily_balance_summary():
     print '--> Test passed...'
 def daily_cdr_delivery():
     do_daily_cdr_delivery()
+    print '--> Test passed...'
 def trunk_pending_suspension_notice():
     query("update rate_send_log set download_deadline = now() + interval '4 hour' where id = 2; ")
     query("insert into rate_send_log_detail(log_id,resource_id) values(2,2)")
     do_trunk_pending_suspension_notice()
+    print '--> Test passed...'
 def trunk_is_suspended_notice():
     query("update rate_send_log set download_deadline = now() - interval '4 hour' where id = 2;")
     do_trunk_is_suspended_notice()
+    print '--> Test passed...'
 
 
 funmap={
@@ -89,6 +92,8 @@ if __name__ == '__main__':
 press digits from 1 to 7 to fire test
 q - exit
 """
+    LOGLEVEL = logging.DEBUG
+
     while True:
         choice = raw_input("> ")
         if choice in ['q','Q', '0']:
