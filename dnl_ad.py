@@ -380,11 +380,11 @@ time zone, we need to send out a daily usage summary mail. """
 select ingress_client_id, 
 daily_balance_send_time_zone,billing_email,client.name,
 --alias as switch_alias,
-max(balance),max(allowed_credit),
+max(balance) as balance,max(allowed_credit) as allowed_credit,
 sum(ingress_total_calls) as total_call_buy,
 sum(not_zero_calls) as total_not_zero_calls_buy,
 sum(ingress_success_calls) as ingress_success_calls,
-sum(ingress_success_calls) as total_success_call_nuy,
+sum(ingress_success_calls) as total_success_call_buy,
 sum(egress_success_calls) as total_success_call_sell,
 sum(ingress_bill_time_inter) as total_billed_min_buy,
 sum(ingress_call_cost_ij) as total_billed_amount_buy,
@@ -410,9 +410,11 @@ order by ingress_client_id;""" % \
     for cl in clients:
         LOG.warning('DAILY USAGE ! client_id:%s, name:%s' %
                     (cl.client_id, cl.name))
+        sw=query("select alias from resource where client_id =%s" % cl.client_id)
+        cl.switch_alias = ",".join([ x.alias for x in sw])
         cl.company_name = cl.company
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
-        cl.remaining_credit='%.2' % -cl.allowed_credit if cl.balance   > 0 else -cl.allowed_credi+cl.balance
+        cl.remaining_credit='%.2' % -cl.allowed_credit if cl.balance   > 0 else -cl.allowed_credit+cl.balance
         cl.balance = '%.2f' % float(cl.balance)
         cl.client_name=cl.name
         cl.begin_time='00:00'
