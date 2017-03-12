@@ -461,15 +461,24 @@ def do_daily_balance_summary():
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
         tz=cl.daily_cdr_generation_zone
-        cl.start_date=str(tz_align(reportstart, tz))[0:19]
-        cl.end_date=str(tz_align(reportnow, tz))[0:19]
+        cl.beginning_of_day_balance=str(tz_align(reportstart, tz))[0:19]
+        cl.beginning_of_day=str(tz_align(reportnow, tz))[0:19]
         cl.customer_gmt=tz
         balance=query(
             "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
-            AND client_id = %d" % ( str(cl.date), cl.client_id ) )
+            AND client_id = %d" % ( str(reportstart), cl.client_id ) )
+        if len(balance)<1:
+             LOG.error('No balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
+             raise
+        bl=balance[0]
         cl.client_name=cl.name
-        cont=process_template(templ.content, cl)
-        subj=process_template("<p>Hello {client_name}!</p>", cl)
+        cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
+        cl.remaining_credit = '%.2' % cl.allowed_credit if bl.actual_balance   > 0 else cl.allowed_credit-bl.actual_balance
+        cl.balance=bl.actual_balance
+#        cont=process_template(templ.content, cl)
+
+        cont=process_template(fake_daily_balance_summary_template, cl)
+        subj=process_template("<p>Daily balance summary for {client_name}</p>", cl)
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, cont)
