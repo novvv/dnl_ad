@@ -445,9 +445,15 @@ def do_daily_balance_summary():
     content, low_balance_alert_email_subject as subject  from mail_tmplate""")[0]
     except Exception as e: 
         LOG.error('no template table:'+str(e))
+    reportdate=date.today()
+    reporttime=datetime.now(UTC).timetz()
+    #if reporttime.hour==0:
+    reportnow=datetime.combine(reportdate, reporttime)
+    reportstart=reportnow-timedelta(hours=24)
+
     clients=query(
         "select * from client  where status=true and\
-        daily_balance_notification=1")
+        is_daily_balance_notification")
     for cl in clients:
         LOG.warning('NOTIFY DAILY BALANCE SUMMARY! client_id:%s, name:%s' %
                     (cl.client_id, cl.name))
@@ -455,12 +461,12 @@ def do_daily_balance_summary():
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
         tz=cl.daily_cdr_generation_zone
-        cl.start_date=str(tz_align(report_start, tz))[0:19]
-        cl.end_date=str(tz_align(report_end, tz))[0:19]
+        cl.start_date=str(tz_align(reportstart, tz))[0:19]
+        cl.end_date=str(tz_align(reportnow, tz))[0:19]
         cl.customer_gmt=tz
         balance=query(
             "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
-            AND client_id = %d" % str(cl.date), cl.client_id)
+            AND client_id = %d" % ( str(cl.date), cl.client_id ) )
         cl.client_name=cl.name
         cont=process_template(templ.content, cl)
         subj=process_template("<p>Hello {client_name}!</p>", cl)
