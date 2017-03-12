@@ -35,16 +35,17 @@ update rate_send_log set download_deadline = now() + interval '4 hour' where id 
 """
 def notify_client_balance():
     print '--> Prepare data...'
-    query("update client set allowed_credit=-300,status=true,zero_balance_notice_last_sent='2017-03-08 11:18:29.306494+00' where client_id=62;")
-    query("update c4_client_balance set balance=-200.0 where client_id='62'")
-    query("update client set status=true,last_lowbalance_time='2017-03-08 11:18:29.306494+00' where client_id=62;")
+#    query("update client set allowed_credit=-300,status=true,zero_balance_notice_last_sent='2017-03-08 11:18:29.306494+00' where client_id=62;")
+#    query("update c4_client_balance set balance=-200.0 where client_id='62'")
+#    query("update client set billing_email='akash@denovolab.com' where client_id='62'")
+#    query("update client set status=true,last_lowbalance_time='2017-03-08 11:18:29.306494+00' where client_id=62;")
     do_notify_client_balance()
     print '--> Test passed...'
 def notify_zero_balance():
     print '--> Prepare data...'
-    query("update client set allowed_credit=-300,status=true,zero_balance_notice_last_sent='2017-03-08 11:18:29.306494+00' where client_id=62;")
-    query("update c4_client_balance set balance=-345.0 where client_id='62'")
-    query("update client set status=true,last_lowbalance_time='2017-03-08 11:18:29.306494+00' where client_id=62;")
+#    query("update client set allowed_credit=-300,status=true,zero_balance_notice_last_sent='2017-03-08 11:18:29.306494+00' where client_id=62;")
+#    query("update c4_client_balance set balance=-345.0 where client_id='62'")
+#    query("update client set status=true,last_lowbalance_time='2017-03-08 11:18:29.306494+00' where client_id=62;")
     do_notify_zero_balance()
     print '--> Test passed...'
 
@@ -69,7 +70,7 @@ def daily_cdr_delivery():
     print '--> Test passed...'
 def trunk_pending_suspension_notice():
     print '--> Prepare data...'
-    query("update client set company='Acme ltd.',  billing_email='sourav@denovolab.com'  where client_id =2")
+    query("update client set company='Acme ltd.',  billing_email='akash@denovolab.com'  where client_id =2")
     query("update rate_send_log set download_deadline = now() + interval '4 hour' where id = 2; ")
     query("insert into rate_send_log_detail(log_id,resource_id) values(2,2)")
     print '--> test...'
