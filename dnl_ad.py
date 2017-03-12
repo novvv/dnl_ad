@@ -309,7 +309,7 @@ Select credit from client;"""
     clients2=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,
         notify_client_balance,billing_email,zero_balance_notice_time
         from client c,c4_client_balance b
-         where c.client_id::text=b.client_id and balance::numeric <= -allowed_credit
+         where c.client_id::text=b.client_id and balance::numeric < allowed_credit
          and status=true and mode=2 and zero_balance_notice
          and zero_balance_notice_last_sent < now() - interval '24 hour' """)
     clients = clients1+clients2
@@ -626,12 +626,15 @@ and l.is_email_alert""" )
     for cl in clients:
         LOG.warning('TRUNK NOTICE! trunk:%s, company:%s' %
                     (cl.trunk_name, cl.company_name))
-        #cont=process_template(templ.content, cl)
-        cont=process_template(fake_trunk_pending_suspension_notice_template, cl)
-        subj=process_template(templ.subject, cl)
+
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
+
+        cont=process_template(fake_trunk_pending_suspension_notice_template, cl)
+        subj=process_template('TRUNK NOTICE! trunk:{trunk_name}, company:{company_name}', cl)        
+        #cont=process_template(templ.content, cl)
+        #subj=process_template(templ.subject, cl)       
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, cont)
@@ -653,7 +656,9 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
 select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_filename,
 r.alias as trunk_name,r.resource_id,c.company as company_name,c.billing_email
 from rate_send_log_detail d, resource r , client c,rate_send_log l
-where r.resource_id = d.resource_id and c.client_id=r.client_id
+where 
+r.resource_id = d.resource_id and c.client_id=r.client_id 
+and r.active
 and d.log_id= l.id and download_deadline < now()
 and l.is_email_alert""")
     try:
@@ -666,12 +671,17 @@ and l.is_email_alert""")
     for cl in clients:
         LOG.warning('TRUNK SUSPENDED! trunk:%s, company:%s' %
                     (cl.trunk_name, cl.company_name))
-        cont=process_template(
-            fake_trunk_pending_suspension_notice_template, cl)
+
         subj=process_template(templ.subject, cl)
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
+
+        cont=process_template(
+            fake_trunk_pending_suspension_notice_template, cl)
+        subj=process_template('TRUNK SUSPENDED! trunk:{trunk_name}, company:{company_name}', cl)        
+        #cont=process_template(templ.content, cl)
+        #subj=process_template(templ.subject, cl) 
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, cont)
@@ -679,7 +689,7 @@ and l.is_email_alert""")
             LOG.error('cannot sendmail:'+str(e))
         #do trunk blocking
         query(
-            "update resource set active=false,diable_by_alert=true,update_ad='%s',update_by='dnl_ad' where resource_id=" %
+            "update resource set active=false,diable_by_alert=true,update_ad='%s',update_by='dnl_ad' where resource_id=%s" %
               (cl.now, cl.resource_id))
 
 def fifteen_minute_job():

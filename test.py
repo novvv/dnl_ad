@@ -66,6 +66,7 @@ def daily_cdr_delivery():
     do_daily_cdr_delivery()
 def trunk_pending_suspension_notice():
     query("update rate_send_log set download_deadline = now() + interval '4 hour' where id = 2; ")
+    query("insert into rate_send_log_detail(log_id,resource_id) values(2,2)")
     do_trunk_pending_suspension_notice()
 def trunk_is_suspended_notice():
     query("update rate_send_log set download_deadline = now() - interval '4 hour' where id = 2;")
