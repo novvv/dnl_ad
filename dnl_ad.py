@@ -10,6 +10,7 @@ import gzip
 import logging
 import logging.handlers
 from logging import config
+import traceback
 from time import sleep, gmtime
 from datetime import date, datetime, timedelta, time
 from pytz import UTC
@@ -120,7 +121,7 @@ def get_mail_params(fr):
     try:
         p = query("select * from system_parameter")[0]
     except Exception as e:
-        LOG.error("system_parameters not ready: %s", str(e))
+        LOG.error("system_parameters not ready: %s", str(e)+traceback.format_exc())
         raise e
     return (
         (p.smtphost, p.smtpport, p.emailusername, \
@@ -132,7 +133,7 @@ def send_mail(from_field, to, subject, text):
     """sending email."""
     (host, port, user, passw, mfrom) = get_mail_params(from_field)
     if mfrom == 'novvvster@gmail.com': #'SEND_MAIL == 2:
-        subject = 'DEBUG: mail for %s %s' % (to, subj)
+        subject = 'DEBUG: mail for %s %s' % (to, subject)
         to = 'novvvster@gmail.com'
     msg = MIMEMultipart()
     msg['Subject'] = subject
@@ -186,6 +187,10 @@ def query(sql, all=True):
 
 def process_template(templ, env):
     """Render template on environment dictionary."""
+    if templ=='' or templ is None:
+        raise Exception('Empty template')
+    if env is None:
+        raise Exception('No object in template to render!')
     try:
         r = re.compile('{ (?P<name> [^}]* ) }', re.VERBOSE)
         fields = r.findall(templ)
@@ -201,7 +206,7 @@ def process_template(templ, env):
         LOG.debug('RENDERED TEMPLATE:\n'+out)
         return out
     except Exception as e:
-        LOG.error('Template error:'+str(e))
+        LOG.error('Template error:'+str(e)+traceback.format_exc())
         return templ
 
 def process_table(data, select=None, style={'table': 'dttable'}):
@@ -584,7 +589,9 @@ def do_daily_cdr_delivery():
         # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
         # cl)
         cont=process_template(fake_daily_cdr_usage_template, cl)
-        subj=process_template(templ.subject, cl)
+        subj=process_template('DAILY CDR DELIVERY: {client_name},IP:{ip}', cl)
+        #cont=process_template(templ.content, cl)
+        #subj=process_template(templ.subject, cl)
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
