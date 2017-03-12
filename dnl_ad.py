@@ -475,8 +475,8 @@ def do_daily_balance_summary():
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
         cl.remaining_credit = '%.2' % cl.allowed_credit if bl.actual_balance   > 0 else cl.allowed_credit-bl.actual_balance
         cl.balance=bl.actual_balance
-#        cont=process_template(templ.content, cl)
-
+        cont=process_template(templ.content, cl)
+        subj=process_template(templ.subject, cl)
         cont=process_template(fake_daily_balance_summary_template, cl)
         subj=process_template("<p>Daily balance summary for {client_name}</p>", cl)
         try:
