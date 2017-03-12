@@ -128,7 +128,11 @@ def get_mail_params(fr):
          p.emailpassword, p.__dict__[fr])
     )
 
-
+def cleanhtml(raw_html):
+  cleanr = re.compile('<.*?>')
+  cleantext = re.sub(cleanr, '', raw_html)
+  return cleantext
+  
 def send_mail(from_field, to, subject, text):
     """sending email."""
     (host, port, user, passw, mfrom) = get_mail_params(from_field)
@@ -152,6 +156,7 @@ def send_mail(from_field, to, subject, text):
             server.login(user, passw)
             server.sendmail(mfrom, to, msg.as_string())
             server.quit()
+            LOG.warning('MAIL SENT: from: %s to: subj: %s %s body:%s' % (mfrom, to, subject,  cleanhtml(text)))
         except Exception as e:
             LOG.error("sending mail: %s", str(e))
 
@@ -624,7 +629,7 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
         raise
     tm=datetime.now(UTC)
     clients=query("""
-select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_filename,
+select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_file_name,
 r.alias as trunk_name,c.company as company_name,c.billing_email
 from rate_send_log_detail d, resource r , client c,rate_send_log l
 where r.resource_id = d.resource_id and c.client_id=r.client_id
@@ -660,7 +665,7 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
     LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     clients=query("""
-select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_filename,
+select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_file_name,
 r.alias as trunk_name,r.resource_id,c.company as company_name,c.billing_email
 from rate_send_log_detail d, resource r , client c,rate_send_log l
 where 
