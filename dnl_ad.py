@@ -636,8 +636,7 @@ where r.resource_id = d.resource_id and c.client_id=r.client_id
 and d.log_id= l.id and download_deadline - interval '24 hour' < now()
 and l.is_email_alert
 group by
-l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_file_name,
-r.alias as trunk_name,c.company as company_name,c.billing_email
+l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email
 """ )
     for cl in clients:
         LOG.warning('TRUNK NOTICE! trunk:%s, company:%s' %
@@ -678,8 +677,7 @@ and r.active
 and d.log_id= l.id and download_deadline < now()
 and l.is_email_alert
 group by 
-l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_file_name,
-r.alias as trunk_name,r.resource_id,c.company as company_name,c.billing_email
+l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email
 """)
     try:
         templ=query('select send_cdr_subject as subject,send_cdr_content as content from mail_tmplate')[0]
