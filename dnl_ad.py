@@ -686,7 +686,7 @@ def fifteen_minute_job():
     "call this each 15 minutes"
     do_notify_client_balance()
     do_notify_zero_balance()
-    
+
 def daily_job():
     "processing all daily report"
     do_daily_usage_summary()
