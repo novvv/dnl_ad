@@ -71,6 +71,7 @@ def trunk_pending_suspension_notice():
     do_trunk_pending_suspension_notice()
     print '--> Test passed...'
 def trunk_is_suspended_notice():
+    query("update resource set active=True where resource_id=2")
     query("update rate_send_log set download_deadline = now() - interval '4 hour' where id = 2;")
     do_trunk_is_suspended_notice()
     print '--> Test passed...'

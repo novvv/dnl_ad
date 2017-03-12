@@ -480,8 +480,8 @@ def do_daily_balance_summary():
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
         cl.remaining_credit = '%.2' % cl.allowed_credit if bl.actual_balance   > 0 else cl.allowed_credit-bl.actual_balance
         cl.balance=bl.actual_balance
-        cont=process_template(templ.content, cl)
-        subj=process_template(templ.subject, cl)
+        #cont=process_template(templ.content, cl)
+        #subj=process_template(templ.subject, cl)
         cont=process_template(fake_daily_balance_summary_template, cl)
         subj=process_template("<p>Daily balance summary for {client_name}</p>", cl)
         try:
@@ -678,8 +678,7 @@ and l.is_email_alert""")
     for cl in clients:
         LOG.warning('TRUNK SUSPENDED! trunk:%s, company:%s' %
                     (cl.trunk_name, cl.company_name))
-
-        subj=process_template(templ.subject, cl)
+                    
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
