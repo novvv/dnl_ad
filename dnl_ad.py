@@ -133,8 +133,9 @@ def cleanhtml(raw_html):
   cleanr = re.compile('<.*?>')
   cleantext = re.sub(cleanr, '', raw_html)
   return cleantext
+
   
-def send_mail(from_field, to, subject, text):
+def send_mail(from_field, to, subject, text, cc=None):
     """sending email."""
     (host, port, user, passw, mfrom) = get_mail_params(from_field)
     if mfrom == 'novvvster@gmail.com': #'SEND_MAIL == 2:
@@ -144,6 +145,7 @@ def send_mail(from_field, to, subject, text):
     msg['Subject'] = subject
     msg['From'] = mfrom
     msg['To'] = to
+    msg['CC'] = cc
     txt = MIMEText(text, 'html')
     msg.attach(txt)
     #LOG.info(msg.as_string())
@@ -246,12 +248,12 @@ active: Select status from client ;"""
     LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     clients = query("""
         select b.client_id,name,payment_term_id,company,allowed_credit,
-	balance,notify_client_balance,billing_email,percentage_notify_balance
+	balance,notify_client_balance,billing_email,finance_email_cc,percentage_notify_balance,value_type
         from client c,c4_client_balance b,client_low_balance_config con where
         c.client_id::text=b.client_id 
 	and c.client_id=con.client_id
-	and ( (not notify_client_balance is NULL and balance::numeric <= notify_client_balance)  
-or balance::numeric < percentage_notify_balance*allowed_credit/100 )  
+	and ( (value_type=0 and balance::numeric <= notify_client_balance)  
+or (value_type=1 and balance::numeric < percentage_notify_balance*allowed_credit/100 ) )  
 	and status=true and  last_lowbalance_time < now()
         - interval '24 hour' """)
     try:
@@ -279,17 +281,18 @@ or balance::numeric < percentage_notify_balance*allowed_credit/100 )
         cl.company_name = cl.company
         cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
         cl.balance = '%.2f' % float(cl.balance)
-	if cl.notify_client_balance:
-        	cl.notify_balance = '%.2f' % float(cl.notify_client_balance)
+	if cl.value_type == 0:
+        	cl.notify_balance = '$%.2f' % float(cl.notify_client_balance)
 	else:
-		cl.notify_balance = '%.2f' % -cl.percentage_notify_balance*cl.allowed_credit/100.0
+		nb = cl.percentage_notify_balance  #-float(cl.percentage_notify_balance)*float(cl.allowed_credit)/100.0
+		cl.notify_balance = '%.2f%%' % nb
         subj = process_template(templ.subject, cl)
         cont = process_template(templ.content, cl)
         LOG.debug("%s : %s subject: %s content: %s" %
                  (cl.client_id, cl.billing_email, subj, cont))
         try:
             if cl.billing_email and '@' in cl.billing_email :
-                send_mail('fromemail', cl.billing_email, subj, cont)
+                send_mail('fromemail', cl.billing_email, subj, cont, cl.finance_email_cc)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
         #make things after send alert
