@@ -597,7 +597,7 @@ def do_daily_cdr_delivery():
     """
     LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     try:
-        templ=query('select send_cdr_subject as subject,send_cdr_content as content from mail_tmplate')[0]
+        templ=query('select download_cdr_subject as subject,download_cdr_content as content from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
             raise 'Template send_cdr!'
     except Exception as e:
@@ -642,10 +642,10 @@ def do_daily_cdr_delivery():
         cl.file_name='None'
         # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
         # cl)
-        cont=process_template(fake_daily_cdr_usage_template, cl)
-        subj=process_template('DAILY CDR DELIVERY: {client_name},IP:{ip}', cl)
-        #cont=process_template(templ.content, cl)
-        #subj=process_template(templ.subject, cl)
+        #cont=process_template(fake_daily_cdr_usage_template, cl)
+        #subj=process_template('DAILY CDR DELIVERY: {client_name},IP:{ip}', cl)
+        cont=process_template(templ.content, cl)
+        subj=process_template(templ.subject, cl)
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
@@ -670,7 +670,7 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
     LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     try:
-        templ=query('select send_cdr_subject as subject,send_cdr_content as content from mail_tmplate')[0]
+        templ=query('select download_rate_notice_subject as subject,download_rate_notice_content as content from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
             raise 'Template send_cdr!'
     except Exception as e:
@@ -695,11 +695,11 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
 
-        cont=process_template(fake_trunk_pending_suspension_notice_template, cl)
-        cont.replace('is suspecded', 'will suspecded')
-        subj=process_template('TRUNK NOTICE! trunk:{trunk_name}, company:{company_name}', cl)        
-        #cont=process_template(templ.content, cl)
-        #subj=process_template(templ.subject, cl)       
+        #cont=process_template(fake_trunk_pending_suspension_notice_template, cl)
+        #cont.replace('is suspecded', 'will suspecded')
+        #subj=process_template('TRUNK NOTICE! trunk:{trunk_name}, company:{company_name}', cl)        
+        cont=process_template(templ.content, cl)
+        subj=process_template(templ.subject, cl)       
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, cont)
@@ -744,11 +744,11 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
 
-        cont=process_template(
-            fake_trunk_pending_suspension_notice_template, cl)
-        subj=process_template('TRUNK SUSPENDED! trunk:{trunk_name}, company:{company_name}', cl)        
-        #cont=process_template(templ.content, cl)
-        #subj=process_template(templ.subject, cl) 
+        #cont=process_template(
+        #fake_trunk_pending_suspension_notice_template, cl)
+        #subj=process_template('TRUNK SUSPENDED! trunk:{trunk_name}, company:{company_name}', cl)        
+        cont=process_template(templ.content, cl)
+        subj=process_template(templ.subject, cl) 
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, cont)
