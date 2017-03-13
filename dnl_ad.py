@@ -282,7 +282,7 @@ or balance::numeric < percentage_notify_balance*allowed_credit/100 )
 	if cl.notify_client_balance:
         	cl.notify_balance = '%.2f' % float(cl.notify_client_balance)
 	else:
-		cl.notify_balance = '%.2f%%' % cl.percentage_notify_balance
+		cl.notify_balance = '%.2f' % -cl.percentage_notify_balance*cl.allowed_credit/100.0
         subj = process_template(templ.subject, cl)
         cont = process_template(templ.content, cl)
         LOG.debug("%s : %s subject: %s content: %s" %
