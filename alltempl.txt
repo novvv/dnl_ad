@@ -1,0 +1,763 @@
+---->rate_mail_fail_subject<-----
+Notice of Rate Upload Failure
+---->fraud_detection_subject<-----
+Fraud Detection notification
+---->regletter_content<-----
+<p>{company_name}{client_name}</p>
+
+---->rate_mail_fail_from<-----
+Default
+---->route_update_alert_email_content<-----
+None
+---->payment_content<-----
+<span>
+&nbsp;
+
+<span>
+<span>
+&nbsp;
+
+<h2>Payment Notice for {client_name}</h2>
+</span>
+
+
+&nbsp;
+
+{client_name}:
+
+&nbsp;
+
+&nbsp;
+
+{amount}, {receiving_time}
+
+&nbsp;
+
+</span>
+
+
+&nbsp;
+
+</span>
+---->payment_subject<-----
+Payment Notice
+---->retrieve_password_subject<-----
+Password Reset for DENOVO Switch
+---->sell_qos_alert_subject<-----
+None
+---->retrieve_password_content<-----
+<div style="background-color:#F7F9FA;width: 1024px; height: auto;padding-bottom:40px; margin: 0 auto 0;">
+<div style="height: 40px;"> </div>
+
+<div style="background-color:#ffffff;width: 600px; margin: 0 auto 0;">
+<div style="background-color:#51A351;width: 600px;height: 80px;">
+<div style="height: 10px;"> </div>
+
+<h2 style="text-align:center"><strong><span style="color:white; font-size:22px">Password Reset for DENOVO Switch</span></strong></h2>
+</div>
+
+<div style="margin-left: 30px;">
+<div style="height: 30px;"> </div>
+
+<div><span style="font-size:16px"><strong>Dear {username}</strong></span>:</div>
+
+<div style="height: 15px;"> </div>
+
+<div><span style="font-size:16px"><strong>Forgot your password? </strong></span></div>
+
+<div style="height: 15px;"> </div>
+
+<div style="font-size:16px"><span style="font-size:16px">Please click the button below to reset your password within 60 minutes:</span></div>
+
+<div style="height: 60px;"> </div>
+</div>
+
+<div style="width: 200px;margin: 0 auto 0;">
+<div style="padding:10px 25px 10px 25px;border-radius:3px;text-align:center;text-decoration:none;background-color:#51A351;color:#ffffff;font-size:17px;margin:0;white-space:nowrap"><a href="{url}" style="text-decoration:none;color:#ffffff;" target="_blank">Reset Password </a></div>
+</div>
+
+<div style="margin: 0 30px 0 30px;">
+<div style="height: 60px;"> </div>
+
+<div style="font-size:16px">If you can not open the button above, please copy the following link into your browser address bar to open:</div>
+
+<div style="height: 15px;"> </div>
+
+<div style="font-size:16px;word-break:break-all;">{url}</div>
+
+<div style="height: 15px;"> </div>
+</div>
+</div>
+</div>
+
+---->auto_summary_cc<-----
+sourav27091992@gmail.com
+---->route_update_alert_email_from<-----
+None
+---->select_route_up_email_from<-----
+None
+---->payment_received_subject<-----
+Payment Received Email Template
+---->auto_summary_content<-----
+<p>&nbsp; &nbsp;</p>
+
+<h2>Daily Summary Email for {switch_alias}</h2>
+
+<h2>Daily Summary Email for {switch_alias}</h2>
+
+<p>&nbsp; {client_name}: &nbsp; &nbsp; client_name</p>
+
+<p>{begin_time} : begin time</p>
+
+<p>{end_time} :ENd time</p>
+
+<p>{customer_gmt} : Customer GMT</p>
+
+<p>{total_call_buy} : total call ingress</p>
+
+<p>{total_not_zero_calls_buy} : total_non_zero calls ingress</p>
+
+<p>{total_success_call_buy} : total success ingress</p>
+
+<p>{total_billed_min_buy} : totak bill min</p>
+
+<p>{total_billed_amount_buy} : total cost</p>
+
+<p>{credit_limit} : credit limit</p>
+
+<p>{remaining_credit} : remaining credit</p>
+
+<p>{balance} : balance</p>
+
+<p>{total_call_sell} : total term call</p>
+
+<p>{total_not_zero_calls_sell} : total non zero term</p>
+
+<p>{total_success_call_sell} : toal success term</p>
+
+<p>{total_billed_min_sell} : billed min term</p>
+
+<p>{total_billed_amount_sell} : bill cost term</p>
+
+<p>{buy_total_duration} : orig&nbsp;total duration</p>
+
+<p>{sell_total_duration} : term total duration</p>
+
+<p>{switch_alias}&nbsp;: switch alias</p>
+
+<p>can&#39;t change. &nbsp; &nbsp;</p>
+
+---->daily_payment_content<-----
+None
+---->welcom_subject<-----
+Welcome Letter
+---->vendor_invoice_dispute_subject<-----
+None
+---->trunk_change_from<-----
+Default
+---->paymresvd_content<-----
+None
+---->retrieve_password_from<-----
+Default
+---->payment_sent_from<-----
+Default
+---->low_balance_alert_email_from<-----
+None
+---->payment_sent_subject<-----
+Payment Sent Email Template
+---->registration_content<-----
+<p>test</p>
+
+---->buy_qos_alert_subject<-----
+None
+---->rate_watch_alert_email_content<-----
+None
+---->no_route_available_alert_email_subject<-----
+None
+---->send_cdr_content<-----
+None
+---->auto_cdr_content<-----
+<p>&nbsp; &nbsp;</p>
+
+<h2>Daily Cdr&nbsp;Email for {switch_alias}</h2>
+
+<p>&nbsp; switch_alias}{start_date}{end_date}{customer_gmt}{file_name}{cdr_count}{site_name}{download_link}&nbsp;and&nbsp;{share_link}&nbsp;can&#39;t change. &nbsp; &nbsp;</p>
+
+---->alert_email_content<-----
+<span>
+&nbsp;
+
+<span>
+<span>
+&nbsp;
+
+<h2>Alert Route for {switch_alias}</h2>
+</span>
+
+
+&nbsp;
+
+{Carrier Name}:
+
+&nbsp;
+
+&nbsp;
+
+{Code Name},{ASR},{ACD},{TT Number},{IP Address},{Ticket Number},{Start Date},{Start Time},{End Date},{End Time},{Carrier Name},{PDD},{switch_alias},{ABR},{Margin},{GMT},{Cdr} can't change.
+
+&nbsp;
+
+</span>
+
+
+&nbsp;
+
+</span>
+---->rate_watch_alert_email_subject<-----
+None
+---->trouble_ticket_subject<-----
+None
+---->paymresvd_subject<-----
+None
+---->rate_mail_success_content<-----
+<span>
+&nbsp;
+
+<span>
+<span>
+&nbsp;
+
+<h2>Notice of Receipt</h2>
+</span>
+
+
+&nbsp;
+
+{to}
+
+&nbsp;
+
+</span>
+
+
+&nbsp;
+
+</span>
+---->rate_mail_success_from<-----
+Default
+---->target_match_alert_email_content<-----
+None
+---->invoice_from<-----
+default
+---->fraud_detection_from<-----
+Default
+---->rate_subject<-----
+None
+---->invoice_cc<-----
+sourav27091992@gmail.com
+---->registration_subject<-----
+Registration for DENOVO Switch
+---->buy_qos_alert_from<-----
+None
+---->invoice_subject<-----
+Invoice testing in .113
+---->finance_alert_subject<-----
+None
+---->auto_balance_content<-----
+<p>&nbsp; &nbsp;</p>
+
+<p>&nbsp; &nbsp;</p>
+
+<h2>Daily Balance&nbsp;Email for {switch_alias}</h2>
+
+<p>&nbsp;&nbsp;{company_name} : company name</p>
+
+<p>{client_name} : client name</p>
+
+<p>{end_time} :end time</p>
+
+<p>{start_time} :start time</p>
+
+<p>{beginning_balance}: beginning balance</p>
+
+<p>{buy_amount} : buy amount</p>
+
+<p>{sell_amount} : sell amt</p>
+
+<p>{ending_balance} : ending bal</p>
+
+<p>{allowed_credit} : allowed credit</p>
+
+<p>{remaining_credit} : remaining credit</p>
+
+---->lowbalance_content<-----
+<p>&nbsp; &nbsp;</p>
+
+<p><strong>{company_name}&nbsp;Insufficient Balance</strong></p>
+
+<p>Hello {company_name},<br />
+This is a notification that you have reached your low balance threshold of ${notify_balance}.<br />
+As per our contractual agreement, terms are {payment_terms}.</p>
+
+<p>Your Credit limit is ${allow_credit}.<br />
+Your current running balance is at ${balance}.</p>
+
+<p>We recommend that you make payment as soon as possible to avoid any interruptions in service.</p>
+
+<p><br />
+<br />
+<em><strong>We Thank You for your Business</strong></em></p>
+
+<p>&nbsp;</p>
+
+---->alert_email_subject<-----
+Alert Emai
+---->select_route_up_email_subject<-----
+None
+---->auto_balance_cc<-----
+sourav27091992@gmail.com
+---->vendor_invoice_dispute_cc<-----
+None
+---->download_cdr_subject<-----
+Test of CDR download Template
+---->rate_update_alert_email_subject<-----
+None
+---->no_download_rate_content<-----
+None
+---->noc_email_subject<-----
+None
+---->registration_from<-----
+1
+---->select_route_up_email_content<-----
+None
+---->trouble_ticket_content<-----
+None
+---->carrier_email_from<-----
+None
+---->dialer_detection_content<-----
+None
+---->target_match_alert_email_from<-----
+None
+---->new_invoice_posted_mail_alert_email_subject<-----
+None
+---->auto_balance_from<-----
+3
+---->vendor_invoice_dispute_content<-----
+None
+---->alert_email_cc<-----
+
+---->rate_mail_success_subject<-----
+Notice of Receipt Template
+---->regletter_subject<-----
+
+---->fraud_detection_content<-----
+<div style="background-color:#F7F9FA;width: 1024px; height: 600px; margin: 0 auto 0;">
+<div style="height: 40px;">&nbsp;</div>
+
+<div style="background-color:#ffffff;width: 600px; margin: 0 auto 0;">
+<div style="background-color:#51A351;width: 600px;height: 80px;">
+<div style="height: 10px;">&nbsp;</div>
+
+<h2 style="text-align:center"><strong><span style="color:white; font-size:22px">Fraud detection&nbsp;for {switch_alias} Switch</span></strong></h2>
+</div>
+
+<div style="margin-left: 30px;">
+<div style="height: 30px;">&nbsp;</div>
+
+<div><span style="font-size:16px">Dear {username}</span>:<span style="font-size:16px"><strong> </strong></span></div>
+
+<div style="height: 15px;">&nbsp;</div>
+
+<div style="font-size:16px">This email is to notify you of a fraud detection[{rule_name}]&nbsp;take effect&nbsp;within the class4 swicth.&nbsp;</div>
+
+<div style="font-size:16px">&nbsp;</div>
+
+<div style="height: 60px;">
+<table border="1" cellpadding="1" cellspacing="1" style="width:500px">
+	<thead>
+		<tr>
+			<td><span style="font-size:18px"><strong>Client name</strong></span></td>
+			<td><span style="font-size:18px"><strong>ingress name</strong></span></td>
+			<td><span style="font-size:18px"><strong>type</strong></span></td>
+			<td><span style="font-size:18px"><strong>limit value</strong></span></td>
+			<td><span style="font-size:18px"><strong>actual value</strong></span></td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>{client_name}</td>
+			<td>{ingress_name}</td>
+			<td>{type}</td>
+			<td>{limit_value}</td>
+			<td>{actual_value}</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>&nbsp;</p>
+</div>
+</div>
+
+<div style="margin: 0 30px 0 30px;">
+<div style="font-size:16px">&nbsp;</div>
+
+<div style="height: 15px;">&nbsp;</div>
+
+<div style="height: 15px;">&nbsp;</div>
+</div>
+</div>
+</div>
+
+---->rate_watch_alert_email_from<-----
+None
+---->alert_email_from<-----
+Default
+---->download_cdr_from<-----
+default
+---->download_rate_notice_subject<-----
+None
+---->payment_sent_content<-----
+<span>
+&nbsp;
+
+<span>
+<span>
+&nbsp;
+
+<h2>Payment Send for {client_name}</h2>
+</span>
+
+
+&nbsp;
+
+{client_name}:
+
+&nbsp;
+
+&nbsp;
+
+{amount}, {receiving_time}
+
+&nbsp;
+
+</span>
+
+
+&nbsp;
+
+</span>
+---->auto_balance_subject<-----
+Daily Balance Email Template
+---->download_rate_notice_content<-----
+None
+---->trouble_ticket_from<-----
+None
+---->rate_update_alert_email_content<-----
+None
+---->noc_email_from<-----
+None
+---->invoice_to<-----
+None
+---->rate_from<-----
+None
+---->download_rate_notice_from<-----
+None
+---->registration_success<-----
+yes
+---->rate_update_alert_email_from<-----
+None
+---->low_balance_alert_email_content<-----
+None
+---->auto_cdr_subject<-----
+Daily CDR Email Template
+---->exchange_auto_summary_content<-----
+None
+---->finance_alert_from<-----
+None
+---->exchange_auto_summary_subject<-----
+None
+---->carrier_email_subject<-----
+None
+---->no_route_available_alert_email_content<-----
+None
+---->paymresvd_from<-----
+None
+---->trunk_interop_subject<-----
+None
+---->welcom_content<-----
+<div style="background-color:#F7F9FA;width: 1024px; height: auto;padding-bottom:40px; margin: 0 auto 0;">
+<div style="height: 40px;">&nbsp;</div>
+
+<div style="background-color:#ffffff;width: 600px; margin: 0 auto 0;">
+<div style="background-color:#51A351;width: 600px;height: 80px;">
+<div style="height: 10px;">&nbsp;</div>
+
+<h2 style="text-align:center"><span style="color:#FFFFFF"><span style="font-size:22px"><strong>Welcom to {company_name}</strong></span></span></h2>
+</div>
+
+<div style="margin-left: 30px;">
+<div>&nbsp;</div>
+
+<div><span style="font-size:16px"><strong>Dear {username}</strong></span>:</div>
+
+<div style="height: 15px;">&nbsp;</div>
+
+<div><span style="font-size:16px">Thank you for signing up with {company_name}.&nbsp;</span></div>
+
+<div>{client_name}</div>
+
+<div>{url}</div>
+
+<div>&nbsp;</div>
+
+<div><span style="font-size:16px">Your account is now approved and you can now login to the portal and configure your account.&nbsp;</span></div>
+
+<div style="height: 60px;">&nbsp;</div>
+</div>
+
+<div style="width: 200px;margin: 0 auto 0;">
+<p>&nbsp;</p>
+
+<div style="padding:10px 25px 10px 25px;border-radius:3px;text-align:center;text-decoration:none;background-color:#51A351;color:#ffffff;font-size:17px;margin:0;white-space:nowrap">Login Now</div>
+</div>
+
+<div style="margin: 0 30px 0 30px;">
+<div style="height: 60px;">&nbsp;</div>
+
+<div style="font-size:16px">&nbsp;{company_name}</div>
+</div>
+</div>
+</div>
+
+---->daily_payment_subject<-----
+None
+---->auto_summary_subject<-----
+Daily Summary Email Template
+---->route_update_alert_email_subject<-----
+None
+---->download_cdr_content<-----
+<p>Hi,</p>
+
+<p>Greetings from DENOVOLAB LIMITED.</p>
+
+<p>Please click on the below link to get your CDR</p>
+
+<p>{download_link}</p>
+
+---->carrier_invoice_subject<-----
+Invoice form {start_Date} – {end_date}
+---->welcom_from<-----
+4
+---->auto_cdr_cc<-----
+sourav27091992@gmail.com
+---->auto_delivery_content<-----
+test
+---->trunk_change_subject<-----
+safsadf
+---->trunk_interop_content<-----
+None
+---->regletter_from<-----
+3
+---->payment_from_cc<-----
+
+---->paymresvd_cc<-----
+None
+---->trunk_interop_from<-----
+None
+---->payment_sent_cc<-----
+
+---->vendor_invoice_dispute_from<-----
+None
+---->daily_payment_from<-----
+None
+---->buy_qos_alert_content<-----
+None
+---->carrier_email_content<-----
+None
+---->no_route_available_alert_email_from<-----
+None
+---->id<-----
+1
+---->no_download_rate_subject<-----
+None
+---->payment_received_content<-----
+<span>
+&nbsp;
+
+<span>
+<span>
+&nbsp;
+
+<h2>Payment Receiving&nbsp;for {client_name}</h2>
+</span>
+
+
+&nbsp;
+
+{client_name}:
+
+&nbsp;
+
+&nbsp;
+
+{amount}, {receiving_time}
+
+&nbsp;
+
+</span>
+
+
+&nbsp;
+
+</span>
+---->low_balance_alert_email_subject<-----
+None
+---->new_invoice_posted_mail_alert_email_content<-----
+None
+---->auto_delivery_subject<-----
+test
+---->dialer_detection_subject<-----
+None
+---->send_cdr_subject<-----
+None
+---->lowbalance_subject<-----
+Insufficient Balance {company_name}, {date}
+---->trunk_change_content<-----
+<div style="background-color:#F7F9FA;width: 1024px; height: 600px; margin: 0 auto 0;">
+<div style="height: 40px;"> </div>
+
+<div style="background-color:#ffffff;width: 600px; margin: 0 auto 0;">
+<div style="background-color:#51A351;width: 600px;height: 80px;">
+<div style="height: 10px;"> </div>
+
+<h2 style="text-align:center"><strong><span style="color:white; font-size:22px">Notice of Trunk Change</span></strong></h2>
+</div>
+
+<div style="margin-left: 30px;">
+<div style="height: 30px;"> </div>
+
+<div><span style="font-size:16px"><strong>Dear </strong>{username}</span>:</div>
+
+<div style="height: 15px;"> </div>
+
+<div style="font-size:16px"><span style="font-size:16px">    This email is to notify you of a recent change to your trunk setting within the DENOVO Switch. </span></div>
+
+<div style="height: 30px;"> </div>
+
+<div style="font-size:16px"><span style="font-size:16px">Please review the following changes as follows: </span></div>
+
+<div style="height: 15px;"> </div>
+</div>
+
+<div style="width: 500px;margin: 0 auto 0;">
+<div style="float:left"><span style="font-size:14px"><strong>Company: </strong>{company}</span></div>
+
+<div style="float:left"><strong><span style="font-size:14px">  Trunk: </span></strong><span style="font-size:14px">{trunk_name}</span></div>
+
+<div style="float:left"><strong><span style="font-size:14px">  </span></strong></div>
+
+<div style="height: 15px;clear:both"> </div>
+</div>
+
+<div style="text-align: center;">{detail_table}</div>
+
+<p> </p>
+</div>
+
+<div style="margin: 0 30px 0 30px;">
+<div style="height: 60px;"> </div>
+
+<div style="height: 15px;"> </div>
+</div>
+</div>
+
+---->payment_from<-----
+Default
+---->send_cdr_from<-----
+None
+---->finance_alert_content<-----
+None
+---->rate_mail_fail_content<-----
+<span>
+&nbsp;
+
+<span>
+<span>
+&nbsp;
+
+<h2>Notice of&nbsp;Rate Upload Failure</h2>
+</span>
+
+
+&nbsp;
+
+{to}
+
+&nbsp;
+
+</span>
+
+
+&nbsp;
+
+</span>
+---->sell_qos_alert_content<-----
+None
+---->regletter_cc<-----
+
+---->registration_failure<-----
+no
+---->lowbalance_from<-----
+default
+---->trunk_interop_cc<-----
+None
+---->invoice_content<-----
+<p>Hello {company_name},<br />
+{client_name}&nbsp;have received a new&nbsp;invoice from {switch_alias}<br />
+Please refer to attachment for weekly billing period of - {start_date} to&nbsp;{end_date} - invoice # {invoice_number}.</p>
+
+<p>&nbsp;</p>
+
+<p>Pls click on&nbsp;{invoice_link} to get Invoice and&nbsp;{cdr_url} to get CDR</p>
+
+<p><em><strong>We Thank You for your Business</strong></em></p>
+
+<p>&nbsp;</p>
+
+---->target_match_alert_email_subject<-----
+None
+---->exchange_auto_summary_from<-----
+None
+---->payment_received_cc<-----
+
+---->sell_qos_alert_from<-----
+None
+---->auto_cdr_from<-----
+3
+---->lowbalance_cc<-----
+sourav27091992@yahoo.com
+---->noc_email_content<-----
+None
+---->send_cdr_cc<-----
+None
+---->carrier_invoice_content<-----
+Dear {carrier_name},
+	  This is invoice {invoice_number} for {start_date} – {end_date}.
+	Please remit your due balance within the terms of your contractual
+	agreement to avoid disconnection of service.
+--
+Autogenerated by billing system
+---->auto_summary_from<-----
+3
+---->payment_to<-----
+None
+---->download_cdr_cc<-----
+sourav27091992@gmail.com
+---->new_invoice_posted_mail_alert_email_from<-----
+None
+---->rate_content<-----
+None
+---->payment_received_from<-----
+Default
+---->no_download_rate_from<-----
+None

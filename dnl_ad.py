@@ -467,44 +467,74 @@ def do_daily_balance_summary():
     LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     try:
         templ = query(
-            """select  low_balance_alert_email_subject as
-    content, low_balance_alert_email_subject as subject  from mail_tmplate""")[0]
+            """select  auto_balance_content as
+    content, auto_balance_subject as subject  from mail_tmplate""")[0]
     except Exception as e: 
         LOG.error('no template table:'+str(e))
+
     reportdate=date.today()
-    reporttime=datetime.now(UTC).timetz()
+    #reporttime = datetime.now(UTC).timetz()
+    reporttime=time(0, 0, 0, 0,UTC)
     #if reporttime.hour==0:
-    reportnow=datetime.combine(reportdate, reporttime)
-    reportstart=reportnow-timedelta(hours=24)
+    reportdate_start=reportdate-timedelta(hours=48)#24)
+    report_start=datetime.combine(reportdate_start, reporttime)
+    report_end=report_start+timedelta(hours=23, minutes=59)
 
     clients=query(
-        "select * from client  where status=true and\
-        is_daily_balance_notification")
+        """select c.client_id,name,company,daily_cdr_generation_zone,balance,allowed_credit,billing_email
+ from client c,c4_client_balance b  where status=true and
+        c.client_id::text=b.client_id and
+        is_daily_balance_notification
+	group by c.client_id,name,company,daily_cdr_generation_zone,balance,allowed_credit,billing_email
+""")
     for cl in clients:
         LOG.warning('NOTIFY DAILY BALANCE SUMMARY! client_id:%s, name:%s' %
                     (cl.client_id, cl.name))
+        sw=query("select alias from resource where client_id =%s" % cl.client_id)
+        cl.switch_alias = ",".join([ x.alias for x in sw])
+	cl.company_name=cl.company
+
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
         tz=cl.daily_cdr_generation_zone
-        cl.beginning_of_day_balance=str(tz_align(reportstart, tz))[0:19]
-        cl.beginning_of_day=str(tz_align(reportnow, tz))[0:19]
+        cl.start_time=str(tz_align(report_start, tz))[0:19]
+        cl.beginning_of_day=cl.start_time
+        cl.end_time=str(tz_align(report_end, tz))[0:19]
         cl.customer_gmt=tz
-        balance=query(
+	cl.balance = '%.2f' % float(cl.balance)
+        b0=query(
+            "SELECT * FROM balance_history_actual  WHERE  date = '%s'::date- interval '1 day'\
+            AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
+	if len(b0)<1:
+		continue
+        b1=query(
             "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
-            AND client_id = %d" % ( str(reportstart), cl.client_id ) )
-        if len(balance)<1:
+            AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
+        if len(b1)<1:
              LOG.error('No balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
-             raise
-        bl=balance[0]
+             continue
+		#raise
+        bl=b1[0]
+	cl.beginning_balance=b0[0].actual_balance
+	cl.ending_balance=b1[0].actual_balance
+	cl.buy_amount=bl.unbilled_incoming_traffic
+	cl.sell_amount=bl.unbilled_outgoing_traffic
         cl.client_name=cl.name
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
-        cl.remaining_credit = '%.2' % cl.allowed_credit if bl.actual_balance   > 0 else cl.allowed_credit-bl.actual_balance
-        cl.balance=bl.actual_balance
-        #cont=process_template(templ.content, cl)
-        #subj=process_template(templ.subject, cl)
-        cont=process_template(fake_daily_balance_summary_template, cl)
-        subj=process_template("<p>Daily balance summary for {client_name}</p>", cl)
+        
+	if bl.actual_balance   > 0 :
+		rem=cl.allowed_credit
+	else:
+		rem= cl.allowed_credit-bl.actual_balance
+
+        cl.remaining_credit = '%.2f' % rem
+        cl.beginning_of_day_balance=bl.actual_balance
+        
+        cont=process_template(templ.content, cl)
+        subj=process_template(templ.subject, cl)
+        #cont=process_template(fake_daily_balance_summary_template, cl)
+        #subj=process_template("<p>Daily balance summary for {client_name}</p>", cl)
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, cont)
@@ -697,7 +727,7 @@ group by
 l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email
 """)
     try:
-        templ=query('select send_cdr_subject as subject,send_cdr_content as content from mail_tmplate')[0]
+        templ=query('select no_download_rate_subject as subject,no_download_rate_content as content from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
             raise 'Template send_cdr!'
     except Exception as e:
