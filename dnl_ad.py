@@ -476,7 +476,7 @@ def do_daily_balance_summary():
     #reporttime = datetime.now(UTC).timetz()
     reporttime=time(0, 0, 0, 0,UTC)
     #if reporttime.hour==0:
-    reportdate_start=reportdate-timedelta(hours=48)#24)
+    reportdate_start=reportdate-timedelta(hours=24)
     report_start=datetime.combine(reportdate_start, reporttime)
     report_end=report_start+timedelta(hours=23, minutes=59)
 
