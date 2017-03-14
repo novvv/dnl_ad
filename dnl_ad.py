@@ -336,6 +336,17 @@ Mode = 2 (postpay)
 Select credit from client;"""
 
     LOG.debug("START: %s" % sys._getframe().f_code.co_name)
+    #clear if paid
+    query(""" update client c set zero_balance_notice_last_sent = Null where client_id in
+( select  c.client_id from client c,c4_client_balance b
+  where c.client_id::text=b.client_id and not unlimited_credit 
+    and status and zero_balance_notice and
+    ( (balance::numeric <= 0  and mode=1 )
+    or
+      (balance::numeric < allowed_credit and mode=2)
+    )
+)"""     )
+      
     clients1=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,
         notify_client_balance,billing_email, zero_balance_notice_time
         from client c,c4_client_balance b
