@@ -1,6 +1,6 @@
 # dnl_ad is denovolab alert daemon.
 
-dnl_ad is a deamon for send mail to providers clients.
+dnl_ad is a daemon for send mail to providers clients.
 
 # Purpose
 
@@ -36,7 +36,7 @@ If file (item 6) not download, daemon wil send email to client and set in databa
 
 User story you can read in AlertScriptRequriement.odt  document.
 
-# System requerements
+# System requriements
 The dnl_ad requre for properly work installed python 2.7.
 Also must be installed listed python libraries:
 
