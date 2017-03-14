@@ -90,10 +90,10 @@ LOGGING = {
         'rotated': {
             '()': rotating_file_handler,
             'level': LOGLEVEL,
-            'formatter': 'verbose',
+            #'formatter': 'verbose',
             'filename': LOGFILE,
-            'maxBytes': 20000,
-            'backupCount': 50,
+            'maxBytes': 160000,
+            'backupCount': 32,
         },
         'sys-logger6': {
             'class': 'logging.handlers.SysLogHandler',
@@ -105,7 +105,7 @@ LOGGING = {
     'loggers': {
         'my-logger': {
             #            'handlers': ['sys-logger6','rotated','stdout'],
-            'handlers': ['stdout'],
+            'handlers': ['rotated'],
             'level': LOGLEVEL,
             'propagate': True,
             },
@@ -246,6 +246,16 @@ notify_client_balance, low_balance_notice from client; To check if client is
 active: Select status from client ;"""
 
     LOG.debug("START: %s" % sys._getframe().f_code.co_name)
+#Check if payd ws made and clear las_lowbalance_time
+    query(""" update client set last_lowbalance_time=Null where client_id in
+    (  select c.client_id
+        from client c,c4_client_balance b,client_low_balance_config con where
+    c.client_id::text=b.client_id 
+	and c.client_id=con.client_id
+	and ( (value_type=0 and balance::numeric > notify_client_balance)  
+    or (value_type=1 and balance::numeric > percentage_notify_balance*allowed_credit/100 ) )  
+	and status=true ) """)
+    #query bad clients
     clients = query("""
         select b.client_id,name,payment_term_id,company,allowed_credit,
 	balance,notify_client_balance,billing_email,finance_email_cc,percentage_notify_balance,value_type
@@ -254,8 +264,8 @@ active: Select status from client ;"""
 	and c.client_id=con.client_id
 	and ( (value_type=0 and balance::numeric <= notify_client_balance)  
 or (value_type=1 and balance::numeric < percentage_notify_balance*allowed_credit/100 ) )  
-	and status=true and  last_lowbalance_time < now()
-        - interval '24 hour' """)
+	and status and  (last_lowbalance_time is Null or last_lowbalance_time < now()
+        - interval '24 hour') """)
     try:
         templ = query(
             """select lowbalance_subject as subject, lowbalance_content as content
