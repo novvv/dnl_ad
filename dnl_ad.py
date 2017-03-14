@@ -1,5 +1,14 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+import logging
+
+#configuration
+CONNECTION_STRING = "host='localhost' dbname='class4_pr' user='postgres'"
+PIDFILE = '/var/tmp/dnl_ad.pid'
+LOGFILE = '/var/tmp/dnl_ad.log'
+LOGLEVEL = logging.WARN
+#/configuration
+
 from daemon import runner
 import psycopg2
 import psycopg2.extras
@@ -7,7 +16,7 @@ import smtplib
 import sys
 import os
 import gzip
-import logging
+
 import logging.handlers
 from logging import config
 import traceback
@@ -24,12 +33,7 @@ import json
 #local imports
 import schedule
 from templates import *
-#configuration
-CONNECTION_STRING = "host='localhost' dbname='class4_pr' user='postgres'"
-PIDFILE = '/var/tmp/dnl_ad.pid'
-LOGFILE = '/var/tmp/dnl_ad.log'
-LOGLEVEL = logging.WARN
-LOGLEVEL = logging.DEBUG
+
 SLEEP_TIME = 30
 SEND_MAIL = 1
 
@@ -104,7 +108,7 @@ LOGGING = {
         },
     'loggers': {
         'my-logger': {
-            #            'handlers': ['sys-logger6','rotated','stdout'],
+            #            'handlers': ['stdout'],
             'handlers': ['rotated'],
             'level': LOGLEVEL,
             'propagate': True,

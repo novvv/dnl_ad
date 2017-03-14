@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project dnl_ad -->
-<!-- Saved: 2017-03-12, 15:44:59 -->
+<!-- Saved: 2017-03-14, 23:46:31 -->
 <!-- Copyright (C) 2017 Valentin Novikov, novvvster@gmail.com -->
 <Project version="5.1">
   <Language>en_US</Language>
@@ -24,7 +24,10 @@
   <Translations/>
   <Resources/>
   <Interfaces/>
-  <Others/>
+  <Others>
+    <Other>README.md</Other>
+    <Other>doc</Other>
+  </Others>
   <Vcs>
     <VcsType>Git</VcsType>
     <VcsOptions>
@@ -136,6 +139,31 @@
     <FiletypeAssociation pattern="*.pyw" type="SOURCES"/>
     <FiletypeAssociation pattern="*.pyw2" type="SOURCES"/>
   </FiletypeAssociations>
+  <Documentation>
+    <DocumentationParams>
+      <dict>
+        <key>
+          <string>ERIC4DOC</string>
+        </key>
+        <value>
+          <dict>
+            <key>
+              <string>outputDirectory</string>
+            </key>
+            <value>
+              <string></string>
+            </value>
+            <key>
+              <string>qtHelpEnabled</string>
+            </key>
+            <value>
+              <bool>False</bool>
+            </value>
+          </dict>
+        </value>
+      </dict>
+    </DocumentationParams>
+  </Documentation>
   <Checkers>
     <CheckersParams>
       <dict>

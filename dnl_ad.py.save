@@ -1,9 +1,0 @@
-#!/usr/bin/python
-import daemon
-import psycopg2
-import smtplib
-
-if __name__ == '__main__':
-    print 'This is a Dnl Alert Daemon'
-    
-
