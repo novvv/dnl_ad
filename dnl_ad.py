@@ -124,9 +124,13 @@ def get_mail_params(fr):
     except Exception as e:
         LOG.error("system_parameters not ready: %s", str(e)+traceback.format_exc())
         raise e
+    if  p.__dict__.has_key(fr):
+       frm=p.__dict__[fr]
+    else:
+        frm=fr
     return (
         (p.smtphost, p.smtpport, p.emailusername, \
-         p.emailpassword, p.__dict__[fr])
+         p.emailpassword, frm)
     )
 
 def cleanhtml(raw_html):
@@ -215,7 +219,7 @@ def process_template(templ, env):
         return out
     except Exception as e:
         LOG.error('Template error:'+str(e)+traceback.format_exc())
-        return templ
+        return 'Notice to staff: the template for this letter is emty or damaged'
 
 def process_table(data, select=None, style={'table': 'dttable'}):
     """Render html table from record set."""
@@ -362,7 +366,7 @@ Select credit from client;"""
     clients = clients1+clients2
     try:
         templ = query(
-            """select  lowbalance_content as content, lowbalance_subject as subject  
+            """select  zerobalance_content as content, zerobalance_subject as subject,*  
             from mail_tmplate
             """)[0]
     except Exception as e: 
@@ -396,7 +400,7 @@ Select credit from client;"""
                  (cl.client_id, cl.billing_email, subj, cont))
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, 'ZERO BALANCE!' +subj, cont)
+                send_mail(templ.zerobalance_from, cl.billing_email,subj, cont)
                 #make things after send alert
                 times = int(cl.zero_balance_notice_time)+1
                 query("""update client set
@@ -527,6 +531,7 @@ def do_daily_balance_summary():
         cl.end_time=str(tz_align(report_end, tz))[0:19]
         cl.customer_gmt=tz
 	cl.balance = '%.2f' % float(cl.balance)
+        
         b0=query(
             "SELECT * FROM balance_history_actual  WHERE  date = '%s'::date- interval '1 day'\
             AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
@@ -540,12 +545,12 @@ def do_daily_balance_summary():
              continue
 		#raise
         bl=b1[0]
-	cl.beginning_balance=b0[0].actual_balance
-	cl.ending_balance=b1[0].actual_balance
+	cl.beginning_balance='%.2f' % b0[0].actual_balance
+	cl.ending_balance='%.2f' % b1[0].actual_balance
 	cl.buy_amount=bl.unbilled_incoming_traffic
 	cl.sell_amount=bl.unbilled_outgoing_traffic
         cl.client_name=cl.name
-        cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
+        cl.credit_limit = '%.2f' % -float(cl.allowed_credit)
         
 	if bl.actual_balance   > 0 :
 		rem=cl.allowed_credit
@@ -553,8 +558,8 @@ def do_daily_balance_summary():
 		rem= cl.allowed_credit-bl.actual_balance
 
         cl.remaining_credit = '%.2f' % rem
-        cl.beginning_of_day_balance=bl.actual_balance
-        
+        cl.beginning_of_day_balance='%.2f' % bl.actual_balance
+        cl.allowed_credit = '%.2f' % -float(cl.allowed_credit)
         cont=process_template(templ.content, cl)
         subj=process_template(templ.subject, cl)
         #cont=process_template(fake_daily_balance_summary_template, cl)
@@ -715,12 +720,15 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
-
-        #cont=process_template(fake_trunk_pending_suspension_notice_template, cl)
-        #cont.replace('is suspecded', 'will suspecded')
-        #subj=process_template('TRUNK NOTICE! trunk:{trunk_name}, company:{company_name}', cl)        
-        cont=process_template(templ.content, cl)
-        subj=process_template(templ.subject, cl)       
+        try:
+            cont=process_template(templ.content, cl)
+        except:
+            cont=process_template(fake_trunk_pending_suspension_notice_template, cl)
+            cont.replace('is suspecded', 'will suspecded')
+        try:
+            subj=process_template(templ.subject, cl)
+        except:       
+            subj=process_template('TRUNK NOTICE! trunk:{trunk_name}, company:{company_name}', cl)        
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, cont)
@@ -764,12 +772,15 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
-
-        #cont=process_template(
-        #fake_trunk_pending_suspension_notice_template, cl)
-        #subj=process_template('TRUNK SUSPENDED! trunk:{trunk_name}, company:{company_name}', cl)        
-        cont=process_template(templ.content, cl)
-        subj=process_template(templ.subject, cl) 
+        try:
+          cont=process_template(templ.content, cl)
+        except:
+            cont=process_template(
+            fake_trunk_pending_suspension_notice_template, cl)
+        try:
+            subj=process_template(templ.subject, cl)
+        except: 
+            subj=process_template('TRUNK SUSPENDED! trunk:{trunk_name}, company:{company_name}', cl)        
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, cont)
