@@ -1,17 +1,18 @@
-#dnl_ad is denovolab alert daemon
+# dnl_ad is denovolab alert daemon.
+
 dnl_ad is a deamon for send mail to providers clients.
 
-#Purpose
+# Purpose
 It's constanly run a foreground mode and regularly check some conditions in provider's database.
 If conditions for some client gone true, a dnl_ad send email to  that client.
 
-#Features
+# Features
 * Simplicity.  The code take small number of python libraries
 * Configurability. Very simple configure this daemon.
 * Small resources. In foregroun daemon will chek schedule event every second and on event query database for only needed clients.
 That is why it will need small of processor time
 
-#Functions
+# Functions
 Now, the daemon will fire 7 types of alerts:
 1. Notify client balance
 when client balance go lower than limits.
@@ -31,7 +32,7 @@ If file (item 6) not download, daemon wil send email to client and set in databa
 
 User story you can read in AlertScriptRequriement.odt  document.
 
-#System requerements
+# System requerements
 The dnl_ad requre for properly work installed python 2.7.
 Also must be installed listed python libraries:
 
@@ -43,12 +44,12 @@ json
 The bundle include library "schedule" for event processing
 
 
-#Downloading
+# Downloading
 
 You can download it from git:
 git clone http://stash.denovolab.com/scm/ta/class4-alert---valentin.git   
 
-#Configuration
+# Configuration
 
 On top in file dnl_ad.py you can check and edit basic configuration parameters:
 \#configuration
@@ -70,7 +71,7 @@ $./dnl_ad.py start
 Quickly restart very simple:
 ./dnl_ad.py restart
 
-#Testing and debugging
+# Testing and debugging
 There is utility in bundle for manual testing:
 $./test.py
 After start it waits user input.
@@ -85,10 +86,10 @@ Also, will be helpfull setting debus output in console, uncomment string 112
 And, for run in foreground mode you can do:
 ./dnl_ad.py debug
  
-#Release notes
+# Release notes
 version 1.0  need to preproduction  testing
 
-#Contributors
+# Contributors
 dnl_ad was originaly written by Valentin Novikov (novvvster@gmail.com) for denovolab.
 Very thanks Anne Kwong, Sourav (sourav@denovolab.com) and Akash (akash@denovolab.com) for requerements, testing and help.
 
