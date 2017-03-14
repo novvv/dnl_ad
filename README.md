@@ -3,17 +3,21 @@
 dnl_ad is a deamon for send mail to providers clients.
 
 # Purpose
+
 It's constanly run a foreground mode and regularly check some conditions in provider's database.
 If conditions for some client gone true, a dnl_ad send email to  that client.
 
 # Features
+
 * Simplicity.  The code take small number of python libraries
 * Configurability. Very simple configure this daemon.
 * Small resources. In foregroun daemon will chek schedule event every second and on event query database for only needed clients.
+
 That is why it will need small of processor time
 
 # Functions
-Now, the daemon will fire 7 types of alerts:
+
+##Now, the daemon will fire 7 types of alerts:
 1. Notify client balance
 when client balance go lower than limits.
 2. Notify zero balance
@@ -61,6 +65,7 @@ LOGLEVEL = logging.WARN
 Other parameters for properly run set in provider database.
 
 # Command line
+
 You can start dnl_ad  by following command in the product directory:
 $./dnl_ad.py start
 The daemon will start and write all messages to logfile, listed on configuration
@@ -72,6 +77,7 @@ Quickly restart very simple:
 ./dnl_ad.py restart
 
 # Testing and debugging
+
 There is utility in bundle for manual testing:
 $./test.py
 After start it waits user input.
@@ -87,9 +93,11 @@ And, for run in foreground mode you can do:
 ./dnl_ad.py debug
  
 # Release notes
+
 version 1.0  need to preproduction  testing
 
 # Contributors
+
 dnl_ad was originaly written by Valentin Novikov (novvvster@gmail.com) for denovolab.
 Very thanks Anne Kwong, Sourav (sourav@denovolab.com) and Akash (akash@denovolab.com) for requerements, testing and help.
 
