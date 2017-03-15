@@ -602,44 +602,6 @@ def do_daily_balance_summary():
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
-
-def create_query_cdr(switch_ip, start, end ):
-    "call api for create query"
-    data={
-    "switch_ip":  switch_ip,
-    "start": start,
-    "end": end,
-    "search_filter" :
-        "origination_call_id=80DF2626-13C1-E611-AEFA-C79B2B8A31F1@149.56.44.190,origination_destination_number<>12345650601",
-    "result_filter" : """trunk_id_termination,answer_time_of_date,
-   call_duration,termination_call_id,release_cause,origination_source_number,
-   origination_source_host_name,origination_destination_number,pdd,
-   ingress_client_rate,egress_rate,orig_code,term_code""" ,
-   "email_to": "sourav27091992@gmail.com",#?? what this
-   "cdr_subject": "CDR parsing testing",
-   "cdr_body":
-       "CDR parsing {from_time} {to_time} {search_parameter} completed with" \
-           "status {status} . URL is {url}."
-    }
-    req=urllib2.Request(
-        "http://192.99.10.113:8000/api/v1.0/create_query_cdr")
-    req.add_header('Content-Type', 'application/json')
-    resp=urllib2.urlopen(req, json.JSONEncoder().encode(data))
-    dt=json.JSONDecoder().decode(resp.read())
-    return dt
-
-def show_query_cdr(switch_ip, query_key):
-    "call api for getting query results"
-    data={
-    "switch_ip":  switch_ip,
-    "query_key": query_key
-    }
-    req=urllib2.Request("http://192.99.10.113:8000/api/v1.0/show_query_cdr")
-    req.add_header('Content-Type', 'application/json')
-    resp=urllib2.urlopen(req, json.JSONEncoder().encode(data))
-    dt=json.JSONDecoder().decode(resp.read())
-    return dt
-    
 def do_daily_cdr_delivery():
     u"""
     For each client who has “daily CDR delivery” selected, at the client’s GMT
@@ -862,7 +824,8 @@ class App():
             schedule.every(1).minutes.do(daily_job)
         else:
             schedule.every(60).minutes.do(fifteen_minute_job)
-            schedule.every(1).hours.do(daily_job)
+            schedule.every().hours.at(':00').do(daily_job)
+        #initial one run;
         while True:
             try:
                 schedule.run_pending()
