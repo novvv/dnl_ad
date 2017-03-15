@@ -305,8 +305,8 @@ active: Select status from client ;"""
     and c.client_id=con.client_id
     and ( (value_type=0 and balance::numeric <= notify_client_balance)  
     or (value_type=1 and balance::numeric < percentage_notify_balance*allowed_credit/100 ) )  
-    and status and  (last_lowbalance_time is Null or last_lowbalance_time < now()
-    - interval '24 hour') """)
+    and status and  (last_lowbalance_time is Null or ( last_lowbalance_time < now()
+    - interval '24 hour'  and   extract(day from now()- last_lowbalance_time)  < duplicate_days ) )""")
     try:
         templ = query(
             """select lowbalance_subject as subject, lowbalance_content as content
