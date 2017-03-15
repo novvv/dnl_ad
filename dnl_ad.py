@@ -286,7 +286,7 @@ subsequent notification should be sent on 00:00:00 of the client’s GMT timezon
 notify_client_balance, low_balance_notice from client; To check if client is
 active: Select status from client ;"""
 
-    LOG.debug("START: %s" % sys._getframe().f_code.co_name)
+    LOG.warning("START: %s" % sys._getframe().f_code.co_name)
 #Check if payd ws made and clear las_lowbalance_time
     query(""" update client set last_lowbalance_time=Null where client_id in
     (  select c.client_id
@@ -375,7 +375,7 @@ Mode = 1 (prepay)
 Mode = 2 (postpay)
 Select credit from client;"""
 
-    LOG.debug("START: %s" % sys._getframe().f_code.co_name)
+    LOG.warning("START: %s" % sys._getframe().f_code.co_name)
     #clear if paid
     query(""" update client c set zero_balance_notice_last_sent = Null where client_id in
 ( select  c.client_id from client c,c4_client_balance b
@@ -450,7 +450,7 @@ def do_daily_usage_summary():
     u"""For each client who has “daily usage summary” selected, at the client’s GMT
 time zone, we need to send out a daily usage summary mail. """
     # auto_summary_not_zero
-    LOG.info("START: %s" % sys._getframe().f_code.co_name)
+    LOG.warning("START: %s" % sys._getframe().f_code.co_name)
     tz=get_systz()
     nowh=datetime.now(UTC).hour
     if ((nowh+tz_to_hdelta(tz))  % 24) != 0:
@@ -537,7 +537,7 @@ def do_daily_balance_summary():
     For each client who has “daily balance summary” selected, at the client’s
     GMT time zone, we need to send out a daily balance summary mail.
     """
-    LOG.debug("START: %s" % sys._getframe().f_code.co_name)
+    LOG.warning("START: %s" % sys._getframe().f_code.co_name)
     tz=get_systz()
     nowh=datetime.now(UTC).hour
     if ((nowh+tz_to_hdelta(tz))  % 24) != 0:
@@ -627,7 +627,7 @@ def do_daily_cdr_delivery():
 
     request POST   with header json
     """
-    LOG.debug("START: %s" % sys._getframe().f_code.co_name)
+    LOG.warning("START: %s" % sys._getframe().f_code.co_name)
     try:
         templ=query('select download_cdr_subject as subject,download_cdr_content as content from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
@@ -696,7 +696,7 @@ Select client_id , resource_id from rate_send_log_detail
 , resource where resource.resource_id = rate_send_log_detail.resource_id
 Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
-    LOG.debug("START: %s" % sys._getframe().f_code.co_name)
+    LOG.warning("START: %s" % sys._getframe().f_code.co_name)
     tz=get_systz()
     nowh=datetime.now(UTC).hour
     if ((nowh+tz_to_hdelta(tz))  % 24) != 0:
@@ -752,7 +752,7 @@ from rate_send_log; Select client_id , resource_id from rate_send_log_detail
 , resource where resource.resource_id = rate_send_log_detail.resource_id
 Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
-    LOG.debug("START: %s" % sys._getframe().f_code.co_name)
+    LOG.warning("START: %s" % sys._getframe().f_code.co_name)
     tz=get_systz()
     nowh=datetime.now(UTC).hour
     if ((nowh+tz_to_hdelta(tz))  % 24) != 0:
@@ -805,11 +805,13 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,
 
 def fifteen_minute_job():
     "call this each 15 minutes"
+    LOG.warning('5 MINUTES JOB AWAKEN!')
     do_notify_client_balance()
     do_notify_zero_balance()
 
 def daily_job():
     "processing all daily report"
+    LOG.warning('DAILY JOB AWAKEN!')
     do_daily_usage_summary()
     do_daily_balance_summary()
     do_daily_cdr_delivery()
