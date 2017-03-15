@@ -55,6 +55,14 @@ def tz_to_delta(off):
             raise Exception('Bad timezone offset!')
         return sign*timedelta(hours=hdelta,minutes=mdelta)
     return timedelta(hours=0)
+
+def tz_to_hdelta(off):
+    if off in[None, '', '+00:00']:
+        return 0
+    else:
+        hdelta=int(off[1:].split(':')[0])
+    sign=-1 if off[1]=='-' else 1
+    return sign*hdelta 
     
 def tz_align(d, off):
     """Return datetime, converted by given offset.Time zone info from""" \
@@ -492,8 +500,8 @@ order by ingress_client_id;""" % \
         cl.customer_gmt='UTC'
         tz=cl.daily_balance_send_time_zone
         #tz=cl.daily_cdr_generation_zone
-        nowh=time(datetime.now(UTC).hour,0,0)
-        if nowh+tz_to_delta(tz) != time(0, 0):
+        nowh=datetime.now(UTC).hour
+        if nowh+tz_to_hdelta(tz) != 0:
                 continue
         tz=tz if tz else '+00:00'
         cl.start_date=str(tz_align(reportstart, tz))[0:19]
@@ -547,8 +555,8 @@ def do_daily_balance_summary():
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
         tz=cl.daily_cdr_generation_zone
-        nowh=time(datetime.now(UTC).hour,0,0)
-        if nowh+tz_to_delta(tz) != time(0, 0):
+        nowh=datetime.now(UTC).hour
+        if nowh+tz_to_hdelta(tz) != 0:
                 continue
         cl.start_time=str(tz_align(report_start, tz))[0:19]
         cl.beginning_of_day=cl.start_time
@@ -674,8 +682,8 @@ def do_daily_cdr_delivery():
         for cl in cdr_clients:
             #todo make header
             tz=cl.daily_cdr_generation_zone
-            nowh=time(datetime.now(UTC).hour,0,0)
-            if nowh+tz_to_delta(tz) != time(0, 0):
+            nowh=datetime.now(UTC).hour
+            if nowh+tz_to_hdelta(tz) != 0:
                 continue
             cl.client_name=cl.company
             cl.begin_time=str(tz_align(report_start, tz))[0:19]
@@ -713,7 +721,6 @@ Select download_deadline from rate_send_log;
 Select client_id , resource_id from rate_send_log_detail
 , resource where resource.resource_id = rate_send_log_detail.resource_id
 Select * from rate_download_log where client_id = xx and log_detail_id = xx
-
     """
     LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     try:
@@ -726,13 +733,13 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
     tm=datetime.now(UTC)
     clients=query("""
 select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_file_name,
-r.alias as trunk_name,c.company as company_name,c.billing_email
+r.alias as trunk_name,c.company as company_name,c.billing_email,daily_cdr_generation_zone
 from rate_send_log_detail d, resource r , client c,rate_send_log l
 where r.resource_id = d.resource_id and c.client_id=r.client_id
 and d.log_id= l.id and download_deadline - interval '24 hour' < now()
 and l.is_email_alert
 group by
-l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email
+l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,daily_cdr_generation_zone
 """ )
     for cl in clients:
         LOG.warning('TRUNK NOTICE! trunk:%s, company:%s' %
@@ -741,6 +748,12 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
+        
+        tz=cl.daily_cdr_generation_zone
+        nowh=datetime.now(UTC).hour
+        if nowh+tz_to_hdelta(tz) != 0:
+                continue
+        
         try:
             cont=process_template(templ.content, cl)
         except:
@@ -769,7 +782,7 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
     LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     clients=query("""
 select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_file_name,
-r.alias as trunk_name,r.resource_id,c.company as company_name,c.billing_email
+r.alias as trunk_name,r.resource_id,c.company as company_name,c.billing_email,daily_cdr_generation_zone
 from rate_send_log_detail d, resource r , client c,rate_send_log l
 where 
 r.resource_id = d.resource_id and c.client_id=r.client_id 
@@ -793,6 +806,12 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
+        
+        tz=cl.daily_cdr_generation_zone
+        nowh=datetime.now(UTC).hour
+        if nowh+tz_to_hdelta(tz) != 0:
+                continue
+        
         try:
           cont=process_template(templ.content, cl)
         except:
