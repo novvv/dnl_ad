@@ -505,7 +505,7 @@ order by ingress_client_id;""" % \
         tz=cl.daily_balance_send_time_zone
         #tz=cl.daily_cdr_generation_zone
         nowh=datetime.now(UTC).hour
-        if nowh-tz_to_hdelta(tz) != 0:
+        if ((nowh-tz_to_hdelta(tz))  % 24) != 0:
                 continue
         tz=tz if tz else '+00:00'
         cl.start_date=str(tz_align(reportstart, tz))[0:19]
@@ -560,7 +560,7 @@ def do_daily_balance_summary():
         cl.now=datetime.now(UTC)
         tz=cl.daily_cdr_generation_zone
         nowh=datetime.now(UTC).hour
-        if nowh-tz_to_hdelta(tz) != 0:
+        if ((nowh-tz_to_hdelta(tz))  % 24) != 0:
                 continue
         cl.start_time=str(tz_align(report_start, tz))[0:19]
         cl.beginning_of_day=cl.start_time
@@ -649,7 +649,7 @@ def do_daily_cdr_delivery():
             #todo make header
             tz=cl.daily_cdr_generation_zone
             nowh=datetime.now(UTC).hour
-            if nowh-tz_to_hdelta(tz) != 0:
+            if ((nowh-tz_to_hdelta(tz))  % 24) != 0:
                 continue
             cl.client_name=cl.company
             cl.begin_time=str(tz_align(report_start, tz))[0:19]
@@ -717,7 +717,7 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,
         
         tz=cl.daily_cdr_generation_zone
         nowh=datetime.now(UTC).hour
-        if nowh-tz_to_hdelta(tz) != 0:
+        if ((nowh-tz_to_hdelta(tz))  % 24) != 0:
                 continue
         
         try:
@@ -775,7 +775,7 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,
         
         tz=cl.daily_cdr_generation_zone
         nowh=datetime.now(UTC).hour
-        if nowh-tz_to_hdelta(tz) != 0:
+        if ((nowh-tz_to_hdelta(tz))  % 24) != 0:
                 continue
         
         try:
