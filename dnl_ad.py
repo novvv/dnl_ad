@@ -81,7 +81,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(module)s P%(process)d \
+            'format': '%(asctime)-15s %(levelname)s %(module)s P%(process)d \
             T%(thread)d %(message)s'
             },
         },
@@ -94,7 +94,7 @@ LOGGING = {
         'rotated': {
             '()': rotating_file_handler,
             'level': LOGLEVEL,
-            #'formatter': 'verbose',
+            'formatter': 'verbose',
             'filename': LOGFILE,
             'maxBytes': 160000,
             'backupCount': 32,
@@ -187,7 +187,7 @@ def query(sql, all=True):
     conn = psycopg2.connect(conn_string)
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     #cursor = conn.cursor()
-    LOG.debug('query:'+sql)
+    LOG.info('query:'+sql)
     cursor.execute(sql)
     conn.commit()
     result = []
@@ -825,7 +825,7 @@ class App():
             schedule.every(1).minutes.do(fifteen_minute_job)
             schedule.every(1).minutes.do(daily_job)
         else:
-            schedule.every(15).minutes.do(fifteen_minute_job)
+            schedule.every(60).minutes.do(fifteen_minute_job)
             schedule.every().day.at("00:00").do(daily_job)
         while True:
             try:
