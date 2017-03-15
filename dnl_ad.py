@@ -4,6 +4,7 @@ import logging
 
 #configuration
 CONNECTION_STRING = "host='localhost' dbname='class4_pr' user='postgres'"
+CDR_DOWNLOAD_URL ="http://192.99.10.113:8888"
 PIDFILE = '/var/tmp/dnl_ad.pid'
 LOGFILE = '/var/tmp/dnl_ad.log'
 LOGLEVEL = logging.WARN
@@ -20,7 +21,7 @@ import gzip
 import logging.handlers
 from logging import config
 import traceback
-from time import sleep, gmtime
+from time import sleep, gmtime, mktime
 from datetime import date, datetime, timedelta, time
 from pytz import UTC
 from collections import defaultdict
@@ -43,16 +44,22 @@ zone_names = defaultdict(list)
 for tz in pytz.common_timezones:
     zone_names[dt.astimezone(pytz.timezone(tz)).utcoffset()].append(tz)
 
-
+def tz_to_delta(off):
+    if off in[None, '', '+00:00']:
+        return timedelta(hours=0)
+    else:
+        hdelta=int(off[1:].split(':')[0])
+        mdelta=int(off[1:].split(':')[1])
+        sign=-1 if off[1]=='-' else 1
+        if hdelta > 24 or mdelta >60:
+            raise Exception('Bad timezone offset!')
+        return sign*timedelta(hours=hdelta,minutes=mdelta)
+    return timedelta(hours=0)
+    
 def tz_align(d, off):
     """Return datetime, converted by given offset.Time zone info from""" \
         """string -12:00 ."""
-    m = {'+00:00': 0, '-12:00': -43200, '-03:00': -10800}
-    if off in m.keys():
-        return d + timedelta(seconds=m[off])
-    else:
-        return d
-    #return zone_names[timedelta(m[pre], int(hm[0])*3600+int(hm[1])*60)][0]
+    return d+tz_to_delta(off)
 
 class GZipRotator:
 
@@ -113,6 +120,12 @@ LOGGING = {
             'level': LOGLEVEL,
             'propagate': True,
             },
+        'debug-logger': {
+            'handlers': ['stdout'],
+            'level': logging.DEBUG,
+            'propagate': True,
+            },
+        
         }
     }
 
@@ -478,7 +491,11 @@ order by ingress_client_id;""" % \
         cl.end_time='23:59'
         cl.customer_gmt='UTC'
         tz=cl.daily_balance_send_time_zone
-	tz=tz if tz else '+00:00'
+        #tz=cl.daily_cdr_generation_zone
+        nowh=time(datetime.now(UTC).hour,0,0)
+        if nowh+tz_to_delta(tz) != time(0, 0):
+                continue
+        tz=tz if tz else '+00:00'
         cl.start_date=str(tz_align(reportstart, tz))[0:19]
         cl.end_date=str(tz_align(reportnow, tz))[0:19]
         cl.customer_gmt=tz
@@ -530,6 +547,9 @@ def do_daily_balance_summary():
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
         tz=cl.daily_cdr_generation_zone
+        nowh=time(datetime.now(UTC).hour,0,0)
+        if nowh+tz_to_delta(tz) != time(0, 0):
+                continue
         cl.start_time=str(tz_align(report_start, tz))[0:19]
         cl.beginning_of_day=cl.start_time
         cl.end_time=str(tz_align(report_end, tz))[0:19]
@@ -639,51 +659,48 @@ def do_daily_cdr_delivery():
     #if reporttime.hour==0:
     reportdate_start=reportdate-timedelta(hours=24)
     report_start=datetime.combine(reportdate_start, reporttime)
-    report_end=report_start+timedelta(hours=23, minutes=59)
-    cdr_clients=query(""" select r.client_id , r.resource_id,r.alias as switch_alias,c.name,i.*,c.*
-    from resource r , client c , resource_ip i
-    where r.resource_id = i.resource_id and c.client_id=r.client_id and
-    daily_cdr_generation""")
-                #" and c.client_id=%d" % cl.client_id)
-    for cl in cdr_clients:
-        #todo make header
-        LOG.warning('DAILY CDR DELIVERY: %s,IP:%s' %
-                 (cl.client_id, cl.ip) )
-        try:
-            q=create_query_cdr(
-                cl.ip, start=str(report_start)[:19], end=str(report_end)[:19])
-            q2=show_query_cdr(cl.ip, query_key=q[u'query_key'])
-            cl.download_link=q2['query'][0]['url']
-            cl.share_link=q2['query'][0]['ftp_to']
-        except:
-            LOG.error('Query cdr with client_id %d and IP=%s failed' %
-                      (cl.client_id, cl.ip))
-        if not hasattr(cl, 'download_link'):
-            cl.download_link='sorry, link not completed...'
-        if not hasattr(cl, 'download_link'):
-            cl.share_link='shared link not generated...'
-        tz=cl.daily_cdr_generation_zone
-        cl.client_name=cl.company
-        cl.begin_time=str(tz_align(report_start, tz))[0:19]
-        cl.end_time=str(tz_align(report_end, tz))[0:19]
-        cl.customer_gmt=tz
-        cl.cdr_count=0 # TODO ?? where is it
-        cl.site_name='THE SITE NAME'
-        cl.file_name='None'
-        # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
-        # cl)
-        #cont=process_template(fake_daily_cdr_usage_template, cl)
-        #subj=process_template('DAILY CDR DELIVERY: {client_name},IP:{ip}', cl)
-        cont=process_template(templ.content, cl)
-        subj=process_template(templ.subject, cl)
-        cl.date=date.today()
-        cl.time=datetime.now(UTC).timetz()
-        cl.now=datetime.now(UTC)
-        try:
-            if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, cont)
-        except Exception as e:
-            LOG.error('cannot sendmail:'+str(e))
+    report_end=report_start+timedelta(hours=24)
+    unix_start = mktime(report_start.timetuple())
+    unix_end = mktime(report_end.timetuple())
+    cdr_tab0=query("""select ingress_client_id as id,ingress_id  as rid,'i' as dir from cdr_report_detail  
+    where not ingress_client_id is NULL and
+    report_time between '%s' and '%s' group by ingress_client_id,ingress_id ;"""  % (report_start, report_end))
+    cdr_tab1=query("""select egress_client_id as id,egress_id as rid,'e' as dir from cdr_report_detail  
+    where not egress_client_id is NULL and
+    report_time between '%s' and '%s' group by egress_client_id,egress_id ;"""  % (report_start, report_end))
+    for cli in cdr_tab0+cdr_tab1:
+        cdr_clients=query(""" select * from client 
+        where client_id=%d""" % cli.id)
+        for cl in cdr_clients:
+            #todo make header
+            tz=cl.daily_cdr_generation_zone
+            nowh=time(datetime.now(UTC).hour,0,0)
+            if nowh+tz_to_delta(tz) != time(0, 0):
+                continue
+            cl.client_name=cl.company
+            cl.begin_time=str(tz_align(report_start, tz))[0:19]
+            cl.end_time=str(tz_align(report_end, tz))[0:19]
+            cl.customer_gmt=tz
+            cl.download_link=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d' % (unix_start, unix_end, cli.dir,  cli.rid )
+            LOG.warning('DAILY CDR DELIVERY: %s,RID:%s,url=%s' %
+                     (cl.client_id, cli.rid, cl.download_link) )
+            cl.cdr_count=0 # TODO ?? where is it
+            cl.site_name='THE SITE NAME'
+            cl.file_name='None'
+            # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
+            # cl)
+            #cont=process_template(fake_daily_cdr_usage_template, cl)
+            #subj=process_template('DAILY CDR DELIVERY: {client_name},IP:{ip}', cl)
+            cont=process_template(templ.content, cl)
+            subj=process_template(templ.subject, cl)
+            cl.date=date.today()
+            cl.time=datetime.now(UTC).timetz()
+            cl.now=datetime.now(UTC)
+            try:
+                if cl.billing_email and '@' in cl.billing_email:
+                    send_mail('fromemail', cl.billing_email, subj, cont)
+            except Exception as e:
+                LOG.error('cannot sendmail:'+str(e))
 
 def do_trunk_pending_suspension_notice():
     u"""
@@ -826,7 +843,7 @@ class App():
             schedule.every(1).minutes.do(daily_job)
         else:
             schedule.every(60).minutes.do(fifteen_minute_job)
-            schedule.every().day.at("00:00").do(daily_job)
+            schedule.every(1).hours.do(daily_job)
         while True:
             try:
                 schedule.run_pending()

@@ -1,6 +1,8 @@
+#!/usr/bin/python
+import dnl_ad
 from dnl_ad import *
 import sys
-
+import logging
 """
 How to create test conditions:
 
@@ -101,8 +103,8 @@ if __name__ == '__main__':
 press digits from 1 to 7 to fire test
 q - exit
 """
-    LOGLEVEL = logging.DEBUG
-
+    dnl_ad.LOGLEVEL = logging.DEBUG
+    dnl_ad.LOG = logging.getLogger("debug-logger")
     while True:
         choice = raw_input("> ")
         if choice in ['q','Q', '0']:
