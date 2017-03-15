@@ -186,7 +186,11 @@ def send_mail(from_field, to, subject, text, cc=None):
             if port == '587':
                 server.starttls()
             server.login(user, passw)
-            server.sendmail(mfrom, to, msg.as_string())
+            for t in to.split(';'):
+                try:
+                    server.sendmail(mfrom, t, msg.as_string())
+                except:
+                    LOG.error('MAIL ERR: to: %t' % t)
             server.quit()
             LOG.warning('MAIL SENT: from: %s to: subj: %s %s body:%s' % (mfrom, to, subject,  cleanhtml(text)))
         except Exception as e:
