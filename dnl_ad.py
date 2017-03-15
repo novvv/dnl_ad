@@ -21,7 +21,7 @@ import gzip
 import logging.handlers
 from logging import config
 import traceback
-from time import sleep, gmtime, mktime
+from time import sleep,  mktime
 from datetime import date, datetime, timedelta, time
 from pytz import UTC
 from collections import defaultdict
@@ -29,8 +29,8 @@ import pytz
 import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import urllib2
-import json
+#import urllib2
+#import json
 #local imports
 import schedule
 from templates import *
@@ -68,6 +68,14 @@ def tz_align(d, off):
     """Return datetime, converted by given offset.Time zone info from""" \
         """string -12:00 ."""
     return d+tz_to_delta(off)
+
+def get_systz():
+    systz=query('select sys_timezone from system_parameter offset 0 limit 1')[0].sys_timezone
+    if systz:
+        systz=systz[0:3]+':'+systz[3:]
+    else:
+        systz='+00:00'
+    return systz
 
 class GZipRotator:
 
@@ -167,7 +175,7 @@ def cleanhtml(raw_html):
 def send_mail(from_field, to, subject, text, cc=None):
     """sending email."""
     (host, port, user, passw, mfrom) = get_mail_params(from_field)
-    if mfrom == 'novvvster@gmail.com': #'SEND_MAIL == 2:
+    if LOGLEVEL == logging.DEBUG:
         subject = 'DEBUG: mail for %s %s' % (to, subject)
         to = 'novvvster@gmail.com'
     msg = MIMEMultipart()
@@ -282,23 +290,23 @@ active: Select status from client ;"""
 #Check if payd ws made and clear las_lowbalance_time
     query(""" update client set last_lowbalance_time=Null where client_id in
     (  select c.client_id
-        from client c,c4_client_balance b,client_low_balance_config con where
+    from client c,c4_client_balance b,client_low_balance_config con where
     c.client_id::text=b.client_id 
-	and c.client_id=con.client_id
-	and ( (value_type=0 and balance::numeric > notify_client_balance)  
+    and c.client_id=con.client_id
+    and ( (value_type=0 and balance::numeric > notify_client_balance)  
     or (value_type=1 and balance::numeric > percentage_notify_balance*allowed_credit/100 ) )  
-	and status=true ) """)
+    and status=true ) """)
     #query bad clients
     clients = query("""
-        select b.client_id,name,payment_term_id,company,allowed_credit,
-	balance,notify_client_balance,billing_email,finance_email_cc,percentage_notify_balance,value_type
-        from client c,c4_client_balance b,client_low_balance_config con where
-        c.client_id::text=b.client_id 
-	and c.client_id=con.client_id
-	and ( (value_type=0 and balance::numeric <= notify_client_balance)  
-or (value_type=1 and balance::numeric < percentage_notify_balance*allowed_credit/100 ) )  
-	and status and  (last_lowbalance_time is Null or last_lowbalance_time < now()
-        - interval '24 hour') """)
+    select b.client_id,name,payment_term_id,company,allowed_credit,
+    balance,notify_client_balance,billing_email,finance_email_cc,percentage_notify_balance,value_type
+    from client c,c4_client_balance b,client_low_balance_config con where
+    c.client_id::text=b.client_id 
+    and c.client_id=con.client_id
+    and ( (value_type=0 and balance::numeric <= notify_client_balance)  
+    or (value_type=1 and balance::numeric < percentage_notify_balance*allowed_credit/100 ) )  
+    and status and  (last_lowbalance_time is Null or last_lowbalance_time < now()
+    - interval '24 hour') """)
     try:
         templ = query(
             """select lowbalance_subject as subject, lowbalance_content as content
@@ -324,11 +332,11 @@ or (value_type=1 and balance::numeric < percentage_notify_balance*allowed_credit
         cl.company_name = cl.company
         cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
         cl.balance = '%.2f' % float(cl.balance)
-	if cl.value_type == 0:
+        if cl.value_type == 0:
         	cl.notify_balance = '$%.2f' % float(cl.notify_client_balance)
-	else:
-		nb = cl.percentage_notify_balance  #-float(cl.percentage_notify_balance)*float(cl.allowed_credit)/100.0
-		cl.notify_balance = '%.2f%%' % nb
+        else:
+            nb = cl.percentage_notify_balance  #-float(cl.percentage_notify_balance)*float(cl.allowed_credit)/100.0
+            cl.notify_balance = '%.2f%%' % nb
         subj = process_template(templ.subject, cl)
         cont = process_template(templ.content, cl)
         LOG.debug("%s : %s subject: %s content: %s" %
@@ -341,14 +349,13 @@ or (value_type=1 and balance::numeric < percentage_notify_balance*allowed_credit
         #make things after send alert
         #times = int(cl.lowbalance_notication_time)+1
         if cl.notify_client_balance:
-		query(
+            query(
             "update client set last_lowbalance_time=now() where client_id=%s" %
                cl.client_id)
-	else:
-		query(
+        else:
+            query(
             "update client_low_balance_config set last_alert_time=now() where client_id=%s" %
                cl.client_id)
-		
 
 
 def do_notify_zero_balance():
@@ -419,9 +426,9 @@ Select credit from client;"""
         cl.company_name = cl.company
         cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
         cl.balance = '%.2f' % float(cl.balance)
-	if not cl.notify_client_balance:
-		cl.notify_balance=''
-	else:
+        if not cl.notify_client_balance:
+            cl.notify_balance=''
+        else:
         	cl.notify_balance = cl.notify_client_balance
         subj = process_template(templ.subject, cl)
         cont = process_template(templ.content, cl)
@@ -442,8 +449,13 @@ Select credit from client;"""
 def do_daily_usage_summary():
     u"""For each client who has “daily usage summary” selected, at the client’s GMT
 time zone, we need to send out a daily usage summary mail. """
-    
+    # auto_summary_not_zero
     LOG.info("START: %s" % sys._getframe().f_code.co_name)
+    tz=get_systz()
+    nowh=datetime.now(UTC).hour
+    if ((nowh+tz_to_hdelta(tz))  % 24) != 0:
+        LOG.info('Skipped time nowh %d tz %s delta %d tz+delta %d' % (nowh, tz, tz_to_hdelta(tz),  ( (nowh+tz_to_hdelta(tz))  % 24 )  ) )
+        return
     try:
         templ = query(
             """select auto_summary_subject as subject , auto_summary_content as content
@@ -461,7 +473,7 @@ time zone, we need to send out a daily usage summary mail. """
     reportstart=reportnow-timedelta(hours=24)
     clients=query("""
 select ingress_client_id, 
-daily_balance_send_time_zone,billing_email,client.name,
+daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero,
 --alias as switch_alias,
 max(balance) as balance,max(allowed_credit) as allowed_credit,
 sum(ingress_total_calls) as total_call_buy,
@@ -485,13 +497,16 @@ client.client_id::text=c4_client_balance.client_id and
 client.client_id=ingress_client_id
 --and product_rout_id=resource_id
 and client.status and is_auto_summary
-group by client.client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,client.name
+group by client.client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero
 --,alias
 order by ingress_client_id;""" % \
                       reportstart.strftime("%Y%m%d") )
     for cl in clients:
         LOG.warning('DAILY USAGE ! client_id:%s, name:%s' %
                     (cl.client_id, cl.name))
+        if cl.auto_summary_not_zero and cl.total_not_zero_calls == 0:
+            LOG.info('Skip auto_summary_not_zero for %s' % cl.client_id)
+            continue
         sw=query("select alias from resource where client_id =%s" % cl.client_id)
         cl.switch_alias = ",".join([ x.alias for x in sw])
         cl.company_name = cl.company
@@ -502,12 +517,9 @@ order by ingress_client_id;""" % \
         cl.begin_time='00:00'
         cl.end_time='23:59'
         cl.customer_gmt='UTC'
-        tz=cl.daily_balance_send_time_zone
+        #tz=cl.daily_balance_send_time_zone
         #tz=cl.daily_cdr_generation_zone
-        nowh=datetime.now(UTC).hour
-        if ((nowh-tz_to_hdelta(tz))  % 24) != 0:
-                continue
-        tz=tz if tz else '+00:00'
+        #tz=tz if tz else '+00:00'
         cl.start_date=str(tz_align(reportstart, tz))[0:19]
         cl.end_date=str(tz_align(reportnow, tz))[0:19]
         cl.customer_gmt=tz
@@ -526,13 +538,17 @@ def do_daily_balance_summary():
     GMT time zone, we need to send out a daily balance summary mail.
     """
     LOG.debug("START: %s" % sys._getframe().f_code.co_name)
+    tz=get_systz()
+    nowh=datetime.now(UTC).hour
+    if ((nowh+tz_to_hdelta(tz))  % 24) != 0:
+        LOG.info('Skipped time nowh %d tz %s delta %d tz+delta %d' % (nowh, tz, tz_to_hdelta(tz),  ( (nowh+tz_to_hdelta(tz))  % 24 )  ) )
+        return
     try:
         templ = query(
             """select  auto_balance_content as
     content, auto_balance_subject as subject  from mail_tmplate""")[0]
     except Exception as e: 
         LOG.error('no template table:'+str(e))
-
     reportdate=date.today()
     #reporttime = datetime.now(UTC).timetz()
     reporttime=time(0, 0, 0, 0,UTC)
@@ -546,52 +562,49 @@ def do_daily_balance_summary():
  from client c,c4_client_balance b  where status=true and
         c.client_id::text=b.client_id and
         is_daily_balance_notification
-	group by c.client_id,name,company,daily_cdr_generation_zone,balance,allowed_credit,billing_email
+        group by c.client_id,name,company,daily_cdr_generation_zone,balance,allowed_credit,billing_email
 """)
     for cl in clients:
         LOG.warning('NOTIFY DAILY BALANCE SUMMARY! client_id:%s, name:%s' %
                     (cl.client_id, cl.name))
+        
         sw=query("select alias from resource where client_id =%s" % cl.client_id)
         cl.switch_alias = ",".join([ x.alias for x in sw])
-	cl.company_name=cl.company
+        cl.company_name=cl.company
 
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
-        tz=cl.daily_cdr_generation_zone
-        nowh=datetime.now(UTC).hour
-        if ((nowh-tz_to_hdelta(tz))  % 24) != 0:
-                continue
+        #tz=cl.daily_cdr_generation_zone
         cl.start_time=str(tz_align(report_start, tz))[0:19]
         cl.beginning_of_day=cl.start_time
         cl.end_time=str(tz_align(report_end, tz))[0:19]
         cl.customer_gmt=tz
-	cl.balance = '%.2f' % float(cl.balance)
-        
+        cl.balance = '%.2f' % float(cl.balance)
         b0=query(
             "SELECT * FROM balance_history_actual  WHERE  date = '%s'::date- interval '1 day'\
             AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
-	if len(b0)<1:
-		continue
+        if len(b0)<1:
+            continue
         b1=query(
             "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
             AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
         if len(b1)<1:
              LOG.error('No balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
              continue
-		#raise
+        #raise
         bl=b1[0]
-	cl.beginning_balance='%.2f' % b0[0].actual_balance
-	cl.ending_balance='%.2f' % b1[0].actual_balance
-	cl.buy_amount=bl.unbilled_incoming_traffic
-	cl.sell_amount=bl.unbilled_outgoing_traffic
+        cl.beginning_balance='%.2f' % b0[0].actual_balance
+        cl.ending_balance='%.2f' % b1[0].actual_balance
+        cl.buy_amount=bl.unbilled_incoming_traffic
+        cl.sell_amount=bl.unbilled_outgoing_traffic
         cl.client_name=cl.name
         cl.credit_limit = '%.2f' % -float(cl.allowed_credit)
         
-	if bl.actual_balance   > 0 :
-		rem=cl.allowed_credit
-	else:
-		rem= cl.allowed_credit-bl.actual_balance
+        if bl.actual_balance   > 0 :
+            rem=cl.allowed_credit
+        else:
+            rem= cl.allowed_credit-bl.actual_balance
 
         cl.remaining_credit = '%.2f' % rem
         cl.beginning_of_day_balance='%.2f' % bl.actual_balance
@@ -613,11 +626,6 @@ def do_daily_cdr_delivery():
     large attachment, it should be a CDR link.
 
     request POST   with header json
-    http://192.99.10.113:8000/api/v1.0/show_query_cdr
-{
-  "switch_ip" :  "192.99.10.113",
-  "query_key":
-"33ZvPfHH0ukPpMCl6NZZ4oWQsiySJWtLVvedsPBBGGiUwzuBPjerOXSS6shfzXNzw5ajvlMZHAUu0bozyc776mN0YLAyQZHnVupa" }
     """
     LOG.debug("START: %s" % sys._getframe().f_code.co_name)
     try:
@@ -649,7 +657,7 @@ def do_daily_cdr_delivery():
             #todo make header
             tz=cl.daily_cdr_generation_zone
             nowh=datetime.now(UTC).hour
-            if ((nowh-tz_to_hdelta(tz))  % 24) != 0:
+            if ((nowh+tz_to_hdelta(tz))  % 24) != 0:
                 continue
             cl.client_name=cl.company
             cl.begin_time=str(tz_align(report_start, tz))[0:19]
@@ -689,6 +697,11 @@ Select client_id , resource_id from rate_send_log_detail
 Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
     LOG.debug("START: %s" % sys._getframe().f_code.co_name)
+    tz=get_systz()
+    nowh=datetime.now(UTC).hour
+    if ((nowh+tz_to_hdelta(tz))  % 24) != 0:
+        LOG.info('Skipped time nowh %d tz %s delta %d tz+delta %d' % (nowh, tz, tz_to_hdelta(tz),  ( (nowh+tz_to_hdelta(tz))  % 24 )  ) )
+        return
     try:
         templ=query('select download_rate_notice_subject as subject,download_rate_notice_content as content from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
@@ -696,7 +709,7 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
     except Exception as e:
         LOG.error('no template table:'+str(e))
         raise
-    tm=datetime.now(UTC)
+    #tm=datetime.now(UTC)
     clients=query("""
 select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_file_name,
 r.alias as trunk_name,c.company as company_name,c.billing_email,daily_cdr_generation_zone
@@ -714,12 +727,6 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
-        
-        tz=cl.daily_cdr_generation_zone
-        nowh=datetime.now(UTC).hour
-        if ((nowh-tz_to_hdelta(tz))  % 24) != 0:
-                continue
-        
         try:
             cont=process_template(templ.content, cl)
         except:
@@ -746,6 +753,11 @@ from rate_send_log; Select client_id , resource_id from rate_send_log_detail
 Select * from rate_download_log where client_id = xx and log_detail_id = xx
     """
     LOG.debug("START: %s" % sys._getframe().f_code.co_name)
+    tz=get_systz()
+    nowh=datetime.now(UTC).hour
+    if ((nowh+tz_to_hdelta(tz))  % 24) != 0:
+        LOG.info('Skipped time nowh %d tz %s delta %d tz+delta %d' % (nowh, tz, tz_to_hdelta(tz),  ( (nowh+tz_to_hdelta(tz))  % 24 )  ) )
+        return
     clients=query("""
 select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_file_name,
 r.alias as trunk_name,r.resource_id,c.company as company_name,c.billing_email,daily_cdr_generation_zone
@@ -772,12 +784,6 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
-        
-        tz=cl.daily_cdr_generation_zone
-        nowh=datetime.now(UTC).hour
-        if ((nowh-tz_to_hdelta(tz))  % 24) != 0:
-                continue
-        
         try:
           cont=process_template(templ.content, cl)
         except:
