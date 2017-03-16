@@ -522,7 +522,7 @@ sum(duration) as buy_total_duration,
 0 as total_billed_min_sell,
 -- sum(egress_call_cost_ij) 
 0 as total_billed_amount_sell,
-- sum(duration) 
+-- sum(duration) 
 0 as sell_total_duration,
 client.*
 from cdr_report_detail%s , client, c4_client_balance
