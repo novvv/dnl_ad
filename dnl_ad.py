@@ -382,9 +382,9 @@ Select credit from client;"""
 ( select  c.client_id from client c,c4_client_balance b
   where c.client_id::text=b.client_id and not unlimited_credit 
     and status and zero_balance_notice and
-    ( (balance::numeric <= 0  and mode=1 )
+    ( (balance::numeric >= 0  and mode=1 )
     or
-      (balance::numeric < allowed_credit and mode=2)
+      (balance::numeric > allowed_credit and mode=2)
     )
 )"""     )
       
