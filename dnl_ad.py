@@ -348,12 +348,12 @@ active: Select status from client ;"""
             LOG.error('cannot sendmail:'+str(e))
         #make things after send alert
         #times = int(cl.lowbalance_notication_time)+1
-        if cl.notify_client_balance:
-            query(
+        #if cl.notify_client_balance:
+        query(
             "update client set last_lowbalance_time=now() where client_id=%s" %
                cl.client_id)
-        else:
-            query(
+        #else:
+        query(
             "update client_low_balance_config set last_alert_time=now() where client_id=%s" %
                cl.client_id)
 
