@@ -500,36 +500,73 @@ time zone, we need to send out a daily usage summary mail. """
     #if reporttime.hour==0:
     report_end=datetime.combine(reportdate, reporttime)
     report_start=report_end-timedelta(hours=24)
-    clients=query("""
-select ingress_client_id, 
+    clients_buy=query("""
+select client.client_id, 
 daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero,
---alias as switch_alias,
-sum(balance) as balance,max(allowed_credit) as allowed_credit,
+
+max(balance) as balance,max(allowed_credit) as allowed_credit,
+
 sum(ingress_total_calls) as total_call_buy,
 sum(not_zero_calls) as total_not_zero_calls_buy,
-sum(ingress_success_calls) as ingress_success_calls,
 sum(ingress_success_calls) as total_success_call_buy,
-sum(egress_success_calls) as total_success_call_sell,
 sum(ingress_bill_time) as total_billed_min_buy,
 sum(ingress_call_cost_ij) as total_billed_amount_buy,
+sum(duration) as buy_total_duration,
+--sum(egress_success_calls) 
+0  as total_success_call_sell,
+--sum(egress_total_calls) 
+0 as total_call_sell,
+--sum(not_zero_calls) as 
+0 astotal_not_zero_calls_sell,
+--sum(egress_bill_time) 
+0 as total_billed_min_sell,
+-- sum(egress_call_cost_ij) 
+0 as total_billed_amount_sell,
+- sum(duration) 
+0 as sell_total_duration,
+client.*
+from cdr_report_detail%s , client, c4_client_balance
+where
+client.client_id::text=c4_client_balance.client_id and 
+client.client_id=ingress_client_id
+and client.status and is_auto_summary
+group by client.client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero
+order by client.client_id;""" % \
+                      report_start.strftime("%Y%m%d") )
+    clients_sell=query("""
+select c.client_id , 
+daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero,
+
+max(balance) as balance,max(allowed_credit) as allowed_credit,
+
+--sum(ingress_total_calls) 
+0 as total_call_buy,
+-- sum(not_zero_calls) 
+0 as total_not_zero_calls_buy,
+-- sum(ingress_success_calls) 
+0 as total_success_call_buy,
+-- sum(ingress_bill_time) 
+0 as  total_billed_min_buy,
+-- sum(ingress_call_cost_ij) 
+0 as total_billed_amount_buy,
+--sum(duration) 
+0 as buy_total_duration,
+sum(egress_success_calls) as total_success_call_sell,
 sum(egress_total_calls) as total_call_sell,
 sum(not_zero_calls) as total_not_zero_calls_sell,
 sum(egress_bill_time) as total_billed_min_sell,
 sum(egress_call_cost_ij) as total_billed_amount_sell,
-sum(duration) as buy_total_duration,
-sum(intra_duration) as sell_total_duration,
+sum(iduration) as sell_total_duration,
 client.*
 from cdr_report_detail%s , client, c4_client_balance
---,resource
 where
 client.client_id::text=c4_client_balance.client_id and 
-client.client_id=ingress_client_id
---and product_rout_id=resource_id
+client.client_id=egress_client_id
 and client.status and is_auto_summary
-group by client.client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero
---,alias
-order by ingress_client_id;""" % \
+group by client.client_id,egress_client_id,daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero
+order by client.client_id;""" % \
                       report_start.strftime("%Y%m%d") )
+    clients=clients_buy+clients_sell
     for cl in clients:
         LOG.warning('DAILY USAGE ! client_id:%s, name:%s' %
                     (cl.client_id, cl.name))
@@ -606,9 +643,10 @@ def do_daily_balance_summary():
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
         #tz=cl.daily_cdr_generation_zone
-        cl.start_time=str(tz_align(report_start, tz))[0:19]
+        #cl.start_time=str(tz_align(report_start, tz))[0:19]
+        cl.start_time=str(report_start)[0:19]
         cl.beginning_of_day=cl.start_time
-        cl.end_time=str(tz_align(report_end, tz))[0:19]
+        cl.end_time=str(report_end)[0:19]
         cl.customer_gmt=tz
         cl.balance = '%.2f' % float(cl.balance)
         b0=query(
@@ -630,13 +668,7 @@ def do_daily_balance_summary():
         cl.sell_amount=bl.unbilled_outgoing_traffic
         cl.client_name=cl.name
         cl.credit_limit = '%.2f' % -float(cl.allowed_credit)
-        
-        if bl.actual_balance   > 0 :
-            rem=cl.allowed_credit
-        else:
-            rem= cl.allowed_credit-bl.actual_balance
-
-        cl.remaining_credit = '%.2f' % rem
+        cl.remaining_credit = '%.2f' % cl.allowed_credit+abs(bl.actual_balance)
         cl.beginning_of_day_balance='%.2f' % bl.actual_balance
         cl.allowed_credit = '%.2f' % -float(cl.allowed_credit)
         cont=process_template(templ.content, cl)
@@ -710,9 +742,10 @@ def do_daily_cdr_delivery():
             cl.date=date.today()
             cl.time=datetime.now(UTC).timetz()
             cl.now=datetime.now(UTC)
+            finance_email=query("select * from system_parameter")[0].finance_email
             try:
                 if cl.billing_email and '@' in cl.billing_email:
-                    send_mail('fromemail', cl.billing_email, subj, cont, templ.auto_cdr_cc,  5, alert_rule, cl.client_id)
+                    send_mail('fromemail', cl.billing_email+';'+finance_email, subj, cont, templ.auto_cdr_cc,  5, alert_rule, cl.client_id)
             except Exception as e:
                 LOG.error('cannot sendmail:'+str(e))
 
