@@ -517,7 +517,7 @@ sum(duration) as buy_total_duration,
 --sum(egress_total_calls) 
 0 as total_call_sell,
 --sum(not_zero_calls) as 
-0 astotal_not_zero_calls_sell,
+0 as total_not_zero_calls_sell,
 --sum(egress_bill_time) 
 0 as total_billed_min_sell,
 -- sum(egress_call_cost_ij) 
