@@ -225,7 +225,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
   alert_rule character varying(500),
   CONSTRAINT daily_email_log_id PRIMARY KEY (id)
         """
-        email_addresses=json.dumps(to+cc)
+        email_addresses=json.dumps(to+';'+cc)
         text=json.dumps(text)
         subject=json.dumps(subject)
         query("""insert into email_log(send_time,client_id,email_addresses,type,status,error,subject,content,alert_rule )
@@ -685,7 +685,8 @@ def do_daily_cdr_delivery():
         where client_id=%d""" % cli.id)
         for cl in cdr_clients:
             #todo make header
-            tz=cl.daily_cdr_generation_zone
+            #tz=cl.daily_cdr_generation_zone
+            tz=cl.auto_send_zone
             nowh=datetime.now(UTC).hour
             if ((nowh+tz_to_hdelta(tz))  % 24) != 0:
                 continue
