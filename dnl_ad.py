@@ -177,7 +177,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
     """sending email."""
     (host, port, user, passw, mfrom) = get_mail_params(from_field)
     if LOGLEVEL == logging.DEBUG:
-        subject = 'DEBUG: mail for %s %s' % (to, subject)
+        subject = 'DEBUG mail for %s %s' % (to, subject)
         to = 'novvvster@gmail.com'
     msg = MIMEMultipart()
     msg['Subject'] = subject
@@ -203,7 +203,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
             server.quit()
         except Exception as e:
             LOG.error("MAIL EROR: %s", str(e))
-            errors = str(e)
+            errors = errors+str(e)
             status=1
         LOG.warning('MAIL SENT: from: %s to: %s subj: %s body:%s' % (mfrom, to, subject,  cleanhtml(text)))
         """
@@ -228,6 +228,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
         email_addresses=json.dumps(to+';'+cc)
         text=json.dumps(text)
         subject=json.dumps(subject)
+        errors=json.dumps(errors)
         query("""insert into email_log(send_time,client_id,email_addresses,type,status,error,subject,content,alert_rule )
                 values(now(),%d,'%s',%d,%d,'%s','%s','%s','%s')  """ %  (client_id, email_addresses, type, status, errors, subject, text, alert_rule) )
         if status!=0:
@@ -716,9 +717,11 @@ def do_daily_cdr_delivery():
             raise 'Template send_cdr!'
     except Exception as e:
         LOG.error('no template table:'+str(e))
-        raise        
+        raise 
+    text=''
     fields=query("SELECT field, label FROM daily_cdr_fields WHERE type = 0 ORDER BY id ASC")
-    
+    for f in fields:
+        text=text+'<p>%s:%s</p>\n' % ( f.label, f.field)
     reportdate=date.today()
     reporttime = time(datetime.now(UTC).hour, 0, 0)
     #reporttime=time(0, 0, 0, 0, UTC)
@@ -748,7 +751,9 @@ def do_daily_cdr_delivery():
             cl.begin_time=str(tz_align(report_start, tz))[0:19]
             cl.end_time=str(tz_align(report_end, tz))[0:19]
             cl.customer_gmt=tz
-            cl.download_link=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d' % (unix_start, unix_end, cli.dir,  cli.rid )
+            url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d' % (unix_start, unix_end, cli.dir,  cli.rid )
+            link='<a href="%s">%s</a>' % (url, url)
+            cl.download_link=link
             LOG.warning('DAILY CDR DELIVERY: %s,RID:%s,url=%s' %
                      (cl.client_id, cli.rid, cl.download_link) )
             cl.cdr_count=0 # TODO ?? where is it
@@ -756,10 +761,14 @@ def do_daily_cdr_delivery():
             cl.file_name='None'
             # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
             # cl)
-            #cont=process_template(fake_daily_cdr_usage_template, cl)
+            #
             #subj=process_template('DAILY CDR DELIVERY: {client_name},IP:{ip}', cl)
             cont=process_template(templ.content, cl)
+            if not cont or cont=='':
+                cont=process_template("<p>{download_link}</p>"+text, cl)
             subj=process_template(templ.subject, cl)
+            if not subj or subj=='':
+                subj='DAILY CDR DELIVERY'
             cl.date=date.today()
             cl.time=datetime.now(UTC).timetz()
             cl.now=datetime.now(UTC)
@@ -829,7 +838,7 @@ rate_update_file_name:{rate_update_file_name}
         try:
             subj=process_template(templ.subject, cl)
         except:       
-            subj=process_template('TRUNK NOTICE! trunk{trunk_name}, company {company_name}', cl)        
+            subj=process_template('TRUNK {trunk_name}, company {company_name}', cl)        
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, cont, '',  35, alert_rule, cl.client_id)
@@ -875,7 +884,7 @@ c.client_id
         LOG.error('no template table:'+str(e))
         raise
     for cl in clients:
-        LOG.warning('TRUNK SUSPENDED! trunk:%s, company:%s' %
+        LOG.warning('TRUNK SUSPENDED! %s, company %s' %
                     (cl.trunk_name, cl.company_name))
                     
         cl.date=date.today()
@@ -894,7 +903,7 @@ rate_update_file_name:{rate_update_file_name}
         try:
             subj=process_template(templ.subject, cl)
         except: 
-            subj=process_template('TRUNK SUSPENDED! trunk {trunk_name}, company {company_name}', cl)        
+            subj=process_template('TRUNK SUSPENDED {trunk_name}, company {company_name}', cl)        
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, cont, '',  35, alert_rule, cl.client_id)
