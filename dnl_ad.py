@@ -657,7 +657,6 @@ def do_daily_balance_summary():
         sw=query("select alias from resource where client_id =%s" % cl.client_id)
         cl.switch_alias = ",".join([ x.alias for x in sw])
         cl.company_name=cl.company
-
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
@@ -765,19 +764,16 @@ def do_daily_cdr_delivery():
             #subj=process_template('DAILY CDR DELIVERY: {client_name},IP:{ip}', cl)
             cont=process_template(templ.content, cl)
             if not cont or cont=='':
-                cont=process_template("<p>{download_link}</p>"+text, cl)
+                cont=process_template("</p>No template<p><p>{download_link}</p>"+text, cl)
             subj=process_template(templ.subject, cl)
             if not subj or subj=='':
-                subj='DAILY CDR DELIVERY'
+                subj='DAILY CDR DELIVERY (no template)'
             cl.date=date.today()
             cl.time=datetime.now(UTC).timetz()
             cl.now=datetime.now(UTC)
-            finance_email=query("select * from system_parameter")[0].finance_email
-            try:
-                if cl.billing_email and '@' in cl.billing_email:
-                    send_mail('fromemail', cl.billing_email+';'+finance_email, subj, cont, templ.auto_cdr_cc,  5, alert_rule, cl.client_id)
-            except Exception as e:
-                LOG.error('cannot sendmail:'+str(e))
+            finance_email=query("select * from system_parameter")[0].finance_email            
+            send_mail('fromemail', cl.billing_email+';'+finance_email, subj, cont, templ.auto_cdr_cc,  5, alert_rule, cl.client_id)
+
 
 def do_trunk_pending_suspension_notice():
     u"""
