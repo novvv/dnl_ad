@@ -594,7 +594,7 @@ order by client.client_id;""" % \
         cl.beginning_balance='%.2f' % b0[0].actual_balance
         cl.ending_balance='%.2f' % b1[0].actual_balance
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
-        rem=cl.allowed_credit - abs( float(cl.ending_balance) )
+        rem=float(cl.allowed_credit) - abs( float(cl.ending_balance) )
         cl.remaining_credit='%.2f' % rem
         cl.balance = '%.2f' % float(cl.balance)
         cl.client_name=cl.name
@@ -686,7 +686,7 @@ def do_daily_balance_summary():
         cl.sell_amount=bl.unbilled_outgoing_traffic
         cl.client_name=cl.name
         cl.credit_limit = '%.2f' % -float(cl.allowed_credit)
-        rem= cl.allowed_credit-abs(float(cl.ending_balance))
+        rem= float(cl.allowed_credit)-abs(float(cl.ending_balance))
         cl.remaining_credit = '%.2f' %  rem
         cl.beginning_of_day_balance='%.2f' % bl.actual_balance
         cl.allowed_credit = '%.2f' % -float(cl.allowed_credit)
