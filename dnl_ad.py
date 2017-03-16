@@ -687,7 +687,7 @@ def do_daily_balance_summary():
         cl.sell_amount=bl.unbilled_outgoing_traffic
         cl.client_name=cl.name
         cl.credit_limit = '%.2f' % -float(cl.allowed_credit)
-        cl.remaining_credit = '%.2f' % float(cl.allowed_credit)-abs(float(bl.ending_balance))
+        cl.remaining_credit = '%.2f' % float(cl.allowed_credit)-abs(float(cl.ending_balance))
         cl.beginning_of_day_balance='%.2f' % bl.actual_balance
         cl.allowed_credit = '%.2f' % -float(cl.allowed_credit)
         cont=process_template(templ.content, cl)
