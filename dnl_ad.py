@@ -495,15 +495,16 @@ time zone, we need to send out a daily usage summary mail. """
         LOG.error('No template:'+str(e))
         raise
     reportdate=date.today()
-    reporttime=datetime.now(UTC).timetz()
+    #reporttime=datetime.now(UTC).timetz()
+    reporttime=time(0, 0, 0, 0,UTC)
     #if reporttime.hour==0:
-    reportnow=datetime.combine(reportdate, reporttime)
-    reportstart=reportnow-timedelta(hours=24)
+    report_end=datetime.combine(reportdate, reporttime)
+    report_start=report_end-timedelta(hours=24)
     clients=query("""
 select ingress_client_id, 
 daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero,
 --alias as switch_alias,
-max(balance) as balance,max(allowed_credit) as allowed_credit,
+sum(balance) as balance,max(allowed_credit) as allowed_credit,
 sum(ingress_total_calls) as total_call_buy,
 sum(not_zero_calls) as total_not_zero_calls_buy,
 sum(ingress_success_calls) as ingress_success_calls,
@@ -528,7 +529,7 @@ and client.status and is_auto_summary
 group by client.client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero
 --,alias
 order by ingress_client_id;""" % \
-                      reportstart.strftime("%Y%m%d") )
+                      report_start.strftime("%Y%m%d") )
     for cl in clients:
         LOG.warning('DAILY USAGE ! client_id:%s, name:%s' %
                     (cl.client_id, cl.name))
@@ -539,18 +540,18 @@ order by ingress_client_id;""" % \
         cl.switch_alias = ",".join([ x.alias for x in sw])
         cl.company_name = cl.company
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
-        cl.remaining_credit='%.2' % -cl.allowed_credit if cl.balance   > 0 else -cl.allowed_credit+cl.balance
+        cl.remaining_credit='%.2' % cl.allowed_credit - abs( cl.balance )
         cl.balance = '%.2f' % float(cl.balance)
         cl.client_name=cl.name
-        cl.begin_time='00:00'
-        cl.end_time='23:59'
-        cl.customer_gmt='UTC'
+        cl.begin_time=report_start.strftime("%Y-%m-%d 00:00:00")
+        cl.end_time=report_start.strftime("%Y-%m-%d 23:59:59")
+        cl.customer_gmt='+00:00'
+        cl.customer_gmt=tz
         #tz=cl.daily_balance_send_time_zone
         #tz=cl.daily_cdr_generation_zone
         #tz=tz if tz else '+00:00'
-        cl.start_date=str(tz_align(reportstart, tz))[0:19]
-        cl.end_date=str(tz_align(reportnow, tz))[0:19]
-        cl.customer_gmt=tz
+        #cl.start_date=str(tz_align(reportstart, tz))[0:19]
+        #cl.end_date=str(tz_align(reportnow, tz))[0:19]
         cont=process_template(templ.content, cl)
         subj=process_template(templ.subject, cl)
         try:
@@ -735,7 +736,7 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
         LOG.info('Skipped time nowh %d tz %s delta %d tz+delta %d' % (nowh, tz, tz_to_hdelta(tz),  ( (nowh+tz_to_hdelta(tz))  % 24 )  ) )
         return
     try:
-        templ=query('select download_rate_notice_subject as subject,download_rate_notice_content as content,* from mail_tmplate')[0]
+            templ=query('select download_rate_notice_subject as subject,download_rate_notice_content as content,* from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
             raise 'Template send_cdr!'
     except Exception as e:
@@ -764,12 +765,17 @@ c.client_id
         try:
             cont=process_template(templ.content, cl)
         except:
-            cont=process_template(fake_trunk_pending_suspension_notice_template, cl)
-            cont.replace('is suspecded', 'will suspecded')
+            cont=process_template("""no template download_rate_notice_content!
+company_name:{company_name}
+trunk_name:{trunk_name}
+rate_download_deadline:{rate_download_deadline}
+rate_update_file_name:{rate_update_file_name}
+""", cl)
+            #cont.replace('is suspecded', 'will suspecded')
         try:
             subj=process_template(templ.subject, cl)
         except:       
-            subj=process_template('TRUNK NOTICE! trunk:{trunk_name}, company:{company_name}', cl)        
+            subj=process_template('TRUNK NOTICE! trunk{trunk_name}, company {company_name}', cl)        
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, cont, '',  35, alert_rule, cl.client_id)
@@ -824,12 +830,17 @@ c.client_id
         try:
           cont=process_template(templ.content, cl)
         except:
-            cont=process_template(
-            fake_trunk_pending_suspension_notice_template, cl)
+            #cont=process_template(fake_trunk_pending_suspension_notice_template, cl)
+            cont=process_template("""no template download_rate_notice_content!
+company_name:{company_name}
+trunk_name:{trunk_name}
+rate_download_deadline:{rate_download_deadline}
+rate_update_file_name:{rate_update_file_name}
+""")
         try:
             subj=process_template(templ.subject, cl)
         except: 
-            subj=process_template('TRUNK SUSPENDED! trunk:{trunk_name}, company:{company_name}', cl)        
+            subj=process_template('TRUNK SUSPENDED! trunk {trunk_name}, company {company_name}', cl)        
         try:
             if cl.billing_email and '@' in cl.billing_email:
                 send_mail('fromemail', cl.billing_email, subj, cont, '',  35, alert_rule, cl.client_id)

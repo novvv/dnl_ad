@@ -154,7 +154,7 @@ Canton Road, Tsim Sha Tsui, Kowloon, Hong Kong</p>
 
 
 fake_trunk_pending_suspension_notice_template="""
-  <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
 <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8"/>

@@ -80,7 +80,7 @@ Quickly restart very simple:
 
 # Testing and debugging
 
-There is utility in bundle for manual testing:
+There is utility in bundle for interactive testing:
 $./test.py
 After start it waits user input.
 You can press digits from 1 to 7
@@ -97,7 +97,8 @@ And, for run in foreground mode you can do:
 # Release notes
 
 version 1.1  default settings to productive.
-version 1.0  need to preproduction  testing
+
+version 1.0  need to preproduction  testing.
 
 # Contributors
 
