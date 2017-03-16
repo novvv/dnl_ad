@@ -226,7 +226,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
   CONSTRAINT daily_email_log_id PRIMARY KEY (id)
         """
         query("""insert into email_log(send_time,client_id,email_addresses,type,status,error,subject,content,alert_rule )
-                values(now(),%d,'%s',%d,%d,'%s','%s','%s','%')  """ %  (client_id, to+cc, type, status, errors, subject, text, alert_rule) )
+                values(now(),%d,'%s',%d,%d,'%s','%s','%s','%s')  """ %  (client_id, to+cc, type, status, errors, subject, text, alert_rule) )
         if status!=0:
             raise Exception('MAIL ERROR! %d,%s' % (client_id, alert_rule))
 
