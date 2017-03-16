@@ -11,12 +11,6 @@ fake_daily_balance_summary_template=""""
         <meta name="generator" content="LibreOffice 5.2.3.3 (Linux)"/>
         <meta name="created" content="2017-03-10T23:25:04.463028870"/>
         <meta name="changed" content="2017-03-10T23:27:40.858763822"/>
-        <style type="text/css">
-                h2 { margin-top: 0.64cm; direction: ltr; line-height: 100%; text-align: left; page-break-inside: avoid; orphans: 2; widows: 2 }
-                h2.western { font-family: "Liberation Serif", serif; font-size: 16pt; font-weight: normal }
-                h2.cjk { font-family: "DejaVu Sans"; font-size: 16pt; font-weight: normal }
-                h2.ctl { font-family: "Noto Sans Devanagari"; font-size: 16pt; font-weight: normal }
-        </style>
 </head>
 <body lang="ru-RU" dir="ltr">
 <h2 class="western" align="center" style="margin-bottom: 0.14cm; line-height: 100%; page-break-inside: auto; page-break-after: auto">
@@ -96,12 +90,6 @@ fake_daily_usage_summary_template="""
 	<meta name="created" content="2017-03-12T13:34:07.973570009"/>
 	<meta name="changedby" content="Валентин Владимирович Новиков"/>
 	<meta name="changed" content="2017-03-12T13:34:42.566223502"/>
-	<style type="text/css">
-		h2 { margin-top: 0.64cm; direction: ltr; line-height: 100%; text-align: left; page-break-inside: avoid; orphans: 2; widows: 2 }
-		h2.western { font-family: "Liberation Serif", serif; font-size: 16pt; font-weight: normal }
-		h2.cjk { font-family: "DejaVu Sans"; font-size: 16pt; font-weight: normal }
-		h2.ctl { font-family: "Noto Sans Devanagari"; font-size: 16pt; font-weight: normal }
-	</style>
 </head>
 <body lang="ru-RU" dir="ltr">
 <h2 class="western" align="center" style="margin-bottom: 0.14cm; line-height: 100%; page-break-inside: auto; page-break-after: auto">
@@ -174,12 +162,6 @@ fake_trunk_pending_suspension_notice_template="""
         <meta name="generator" content="LibreOffice 5.2.3.3 (Linux)"/>
         <meta name="created" content="2017-03-11T02:08:06.582818841"/>
         <meta name="changed" content="2017-03-11T02:08:56.531572963"/>
-        <style type="text/css">
-                h2 { margin-top: 0.64cm; direction: ltr; line-height: 100%; text-align: left; page-break-inside: avoid; orphans: 2; widows: 2 }
-                h2.western { font-family: "Liberation Serif", serif; font-size: 16pt; font-weight: normal }
-                h2.cjk { font-family: "DejaVu Sans"; font-size: 16pt; font-weight: normal }
-                h2.ctl { font-family: "Noto Sans Devanagari"; font-size: 16pt; font-weight: normal }
-        </style>
 </head>
 <body lang="ru-RU" dir="ltr">
 <h2 class="western" align="center" style="margin-bottom: 0.14cm; line-height: 100%; page-break-inside: auto; page-break-after: auto">
@@ -227,12 +209,7 @@ fake_daily_cdr_usage_template="""
         <meta name="created" content="2017-03-11T11:45:07.047391640"/>
         <meta name="changedby" content="Валентин Владимирович Новиков"/>
         <meta name="changed" content="2017-03-11T11:46:05.290665278"/>
-        <style type="text/css">
-                h2 { margin-top: 0.64cm; direction: ltr; line-height: 100%; text-align: left; page-break-inside: avoid; orphans: 2; widows: 2 }
-                h2.western { font-family: "Liberation Serif", serif; font-size: 16pt; font-weight: normal }
-                h2.cjk { font-family: "DejaVu Sans"; font-size: 16pt; font-weight: normal }
-                h2.ctl { font-family: "Noto Sans Devanagari"; font-size: 16pt; font-weight: normal }
-        </style>
+
 </head>
 <body lang="ru-RU" dir="ltr">
 <h2 class="western" align="center" style="margin-bottom: 0.14cm; line-height: 100%; page-break-inside: auto; page-break-after: auto">
