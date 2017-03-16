@@ -30,7 +30,7 @@ import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 #import urllib2
-#import json
+import json
 #local imports
 import schedule
 from templates import *
@@ -225,8 +225,11 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
   alert_rule character varying(500),
   CONSTRAINT daily_email_log_id PRIMARY KEY (id)
         """
+        email_addresses=json.dumps(to+cc)
+        text=json.dumps(text)
+        subject=json.dumps(subject)
         query("""insert into email_log(send_time,client_id,email_addresses,type,status,error,subject,content,alert_rule )
-                values(now(),%d,'%s',%d,%d,'%s','%s','%s','%s')  """ %  (client_id, to+cc, type, status, errors, subject, text, alert_rule) )
+                values(now(),%d,'%s',%d,%d,'%s','%s','%s','%s')  """ %  (client_id, email_addresses, type, status, errors, subject, text, alert_rule) )
         if status!=0:
             raise Exception('MAIL ERROR! %d,%s' % (client_id, alert_rule))
 
