@@ -226,7 +226,9 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
   CONSTRAINT daily_email_log_id PRIMARY KEY (id)
         """
         query("""insert into email_log(send_time,client_id,email_addresses,type,status,error,subject,content,alert_rule )
-                values(now(),%d,'%s',%d,%d,'%s','%s','%s')  """ %  (client_id, to+cc, type, status, errors, subject, text, alert_rule) )
+                values(now(),%d,'%s',%d,%d,'%s','%s','%s','%')  """ %  (client_id, to+cc, type, status, errors, subject, text, alert_rule) )
+        if status!=0:
+            raise Exception('MAIL ERROR! %d,%s' % (client_id, alert_rule))
 
 def query(sql, all=True):
     """Call postgresql query, return record array."""
@@ -738,13 +740,15 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
     #tm=datetime.now(UTC)
     clients=query("""
 select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_file_name,
-r.alias as trunk_name,c.company as company_name,c.billing_email,daily_cdr_generation_zone
+r.alias as trunk_name,c.company as company_name,c.billing_email,daily_cdr_generation_zone,
+c.client_id
 from rate_send_log_detail d, resource r , client c,rate_send_log l
 where r.resource_id = d.resource_id and c.client_id=r.client_id
 and d.log_id= l.id and download_deadline - interval '24 hour' < now()
 and l.is_email_alert
 group by
-l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,daily_cdr_generation_zone
+l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,daily_cdr_generation_zone,
+c.client_id
 """ )
     for cl in clients:
         LOG.warning('TRUNK NOTICE! trunk:%s, company:%s' %
@@ -787,7 +791,8 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
         return
     clients=query("""
 select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_file_name,
-r.alias as trunk_name,r.resource_id,c.company as company_name,c.billing_email,daily_cdr_generation_zone
+r.alias as trunk_name,r.resource_id,c.company as company_name,c.billing_email,daily_cdr_generation_zone,
+c.client_id
 from rate_send_log_detail d, resource r , client c,rate_send_log l
 where 
 r.resource_id = d.resource_id and c.client_id=r.client_id 
@@ -795,7 +800,8 @@ and r.active
 and d.log_id= l.id and download_deadline < now()
 and l.is_email_alert
 group by 
-l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,daily_cdr_generation_zone
+l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,daily_cdr_generation_zone,
+c.client_id
 """)
     try:
         templ=query('select no_download_rate_subject as subject,no_download_rate_content as content from mail_tmplate')[0]
