@@ -58,10 +58,12 @@ git clone http://stash.denovolab.com/scm/ta/class4-alert---valentin.git
 On top in file dnl_ad.py you can check and edit basic configuration parameters:
 \#configuration
 CONNECTION_STRING = "host='localhost' dbname='class4_pr' user='postgres'"
+CDR_DOWNLOAD_URL ="http://xx.xx.xx.xx:8888"
 PIDFILE = '/var/tmp/dnl_ad.pid'
 LOGFILE = '/var/tmp/dnl_ad.log'
 LOGLEVEL = logging.WARN
 \#/configuration
+
 Other parameters for properly run set in provider database.
 
 # Command line
@@ -94,6 +96,7 @@ And, for run in foreground mode you can do:
  
 # Release notes
 
+version 1.1  default settings to productive.
 version 1.0  need to preproduction  testing
 
 # Contributors

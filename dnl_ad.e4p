@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-5.1.dtd">
 <!-- eric project file for project dnl_ad -->
-<!-- Saved: 2017-03-15, 17:03:17 -->
+<!-- Saved: 2017-03-16, 13:14:57 -->
 <!-- Copyright (C) 2017 Valentin Novikov, novvvster@gmail.com -->
 <Project version="5.1">
   <Language>en_US</Language>
   <Hash>e0520f1905e12b426b6add12e93f57663dcfbb26</Hash>
   <ProgLanguage mixed="1">Python2</ProgLanguage>
   <ProjectType>Console</ProjectType>
-  <Version>1.0</Version>
+  <Version>1.1</Version>
   <Author>Valentin Novikov</Author>
   <Email>novvvster@gmail.com</Email>
   <Eol index="0"/>

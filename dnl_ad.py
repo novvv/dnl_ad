@@ -168,6 +168,7 @@ def get_mail_params(fr):
 
 def cleanhtml(raw_html):
   cleanr = re.compile('<.*?>')
+  raw_html=raw_html.replace('\r', '').replace('\n', '').replace('\t', '')
   cleantext = re.sub(cleanr, '', raw_html)
   return cleantext
 
@@ -200,7 +201,7 @@ def send_mail(from_field, to, subject, text, cc=None):
                 except:
                     LOG.error('MAIL ERR: to: %t' % t)
             server.quit()
-            LOG.warning('MAIL SENT: from: %s to: subj: %s %s body:%s' % (mfrom, to, subject,  cleanhtml(text)))
+            LOG.warning('MAIL SENT: from: %s to: %s subj: %s body:%s' % (mfrom, to, subject,  cleanhtml(text)))
         except Exception as e:
             LOG.error("sending mail: %s", str(e))
 
@@ -835,7 +836,7 @@ class App():
             schedule.every(1).minutes.do(fifteen_minute_job)
             schedule.every(1).minutes.do(daily_job)
         else:
-            schedule.every(60).minutes.do(fifteen_minute_job)
+            schedule.every(15).minutes.do(fifteen_minute_job)
             schedule.every().hours.at(':00').do(daily_job)
         #initial one run;
         while True:
