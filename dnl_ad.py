@@ -576,8 +576,27 @@ order by client.client_id;""" % \
         sw=query("select alias from resource where client_id =%s" % cl.client_id)
         cl.switch_alias = ",".join([ x.alias for x in sw])
         cl.company_name = cl.company
+        
+        b0=query(
+            "SELECT * FROM balance_history_actual  WHERE  date = '%s'::date- interval '1 day'\
+            AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
+        if len(b0)<1:
+            LOG.error('No balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
+            continue
+        b1=query(
+            "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
+            AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
+        if len(b1)<1:
+             LOG.error('No balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
+             continue
+        #raise
+        bl=b1[0]
+        cl.beginning_balance='%.2f' % b0[0].actual_balance
+        cl.ending_balance='%.2f' % b1[0].actual_balance
+        
+        
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
-        cl.remaining_credit='%.2f' % float( cl.allowed_credit - abs( cl.balance ))
+        cl.remaining_credit='%.2f' % float( cl.allowed_credit - abs( cl.ending_balance ))
         cl.balance = '%.2f' % float(cl.balance)
         cl.client_name=cl.name
         cl.begin_time=report_start.strftime("%Y-%m-%d 00:00:00")
@@ -668,7 +687,7 @@ def do_daily_balance_summary():
         cl.sell_amount=bl.unbilled_outgoing_traffic
         cl.client_name=cl.name
         cl.credit_limit = '%.2f' % -float(cl.allowed_credit)
-        cl.remaining_credit = '%.2f' % cl.allowed_credit+abs(bl.actual_balance)
+        cl.remaining_credit = '%.2f' % float(cl.allowed_credit)-abs(float(bl.ending_balance))
         cl.beginning_of_day_balance='%.2f' % bl.actual_balance
         cl.allowed_credit = '%.2f' % -float(cl.allowed_credit)
         cont=process_template(templ.content, cl)
@@ -698,6 +717,9 @@ def do_daily_cdr_delivery():
     except Exception as e:
         LOG.error('no template table:'+str(e))
         raise
+        
+    fields=query("SELECT field, label FROM daily_cdr_fields WHERE type = 0 ORDER BY id ASC")
+    
     reportdate=date.today()
     reporttime = time(datetime.now(UTC).hour, 0, 0)
     #reporttime=time(0, 0, 0, 0, UTC)
