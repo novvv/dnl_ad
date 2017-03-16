@@ -534,7 +534,7 @@ group by client.client_id,ingress_client_id,daily_balance_send_time_zone,billing
 order by client.client_id;""" % \
                       report_start.strftime("%Y%m%d") )
     clients_sell=query("""
-select c.client_id , 
+select client.client_id , 
 daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero,
 
 max(balance) as balance,max(allowed_credit) as allowed_credit,
