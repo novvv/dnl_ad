@@ -463,7 +463,7 @@ Select credit from client;"""
                  (cl.client_id, cl.billing_email, subj, cont))
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail(templ.zerobalance_from, cl.billing_email,subj, cont, templ.lowbalance_cc,  2, alert_rule, cl.client_id)
+                send_mail(templ.zerobalance_from, cl.billing_email,subj, cont, templ.lowbalance_cc,  1, alert_rule, cl.client_id)
                 #make things after send alert
                 times = int(cl.zero_balance_notice_time)+1
                 query("""update client set
@@ -555,7 +555,7 @@ order by ingress_client_id;""" % \
         subj=process_template(templ.subject, cl)
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, cont, templ.auto_summary_cc,  3, alert_rule, cl.client_id)
+                send_mail('fromemail', cl.billing_email, subj, cont, templ.auto_summary_cc,  2, alert_rule, cl.client_id)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
@@ -644,7 +644,7 @@ def do_daily_balance_summary():
         #subj=process_template("<p>Daily balance summary for {client_name}</p>", cl)
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, cont, templ.auto_balance_cc,  4, alert_rule, cl.client_id)
+                send_mail('fromemail', cl.billing_email, subj, cont, templ.auto_balance_cc,  8, alert_rule, cl.client_id)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
@@ -772,7 +772,7 @@ c.client_id
             subj=process_template('TRUNK NOTICE! trunk:{trunk_name}, company:{company_name}', cl)        
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, cont, '',  6, alert_rule, cl.client_id)
+                send_mail('fromemail', cl.billing_email, subj, cont, '',  35, alert_rule, cl.client_id)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
@@ -832,7 +832,7 @@ c.client_id
             subj=process_template('TRUNK SUSPENDED! trunk:{trunk_name}, company:{company_name}', cl)        
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, cont, '',  7, alert_rule, cl.client_id)
+                send_mail('fromemail', cl.billing_email, subj, cont, '',  35, alert_rule, cl.client_id)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
         #do trunk blocking
