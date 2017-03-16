@@ -556,7 +556,7 @@ sum(egress_total_calls) as total_call_sell,
 sum(not_zero_calls) as total_not_zero_calls_sell,
 sum(egress_bill_time) as total_billed_min_sell,
 sum(egress_call_cost_ij) as total_billed_amount_sell,
-sum(iduration) as sell_total_duration,
+sum(duration) as sell_total_duration,
 client.*
 from cdr_report_detail%s , client, c4_client_balance
 where
