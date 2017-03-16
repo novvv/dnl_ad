@@ -550,7 +550,7 @@ order by ingress_client_id;""" % \
         subj=process_template(templ.subject, cl)
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, cont, templ.autosummary_cc,  3, alert_rule, cl.client_id)
+                send_mail('fromemail', cl.billing_email, subj, cont, templ.auto_summary_cc,  3, alert_rule, cl.client_id)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
@@ -639,7 +639,7 @@ def do_daily_balance_summary():
         #subj=process_template("<p>Daily balance summary for {client_name}</p>", cl)
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, cont, templ.autobalance_cc,  4, alert_rule, cl.client_id)
+                send_mail('fromemail', cl.billing_email, subj, cont, templ.auto_balance_cc,  4, alert_rule, cl.client_id)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
