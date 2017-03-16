@@ -736,7 +736,7 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
         LOG.info('Skipped time nowh %d tz %s delta %d tz+delta %d' % (nowh, tz, tz_to_hdelta(tz),  ( (nowh+tz_to_hdelta(tz))  % 24 )  ) )
         return
     try:
-            templ=query('select download_rate_notice_subject as subject,download_rate_notice_content as content,* from mail_tmplate')[0]
+        templ=query('select download_rate_notice_subject as subject,download_rate_notice_content as content,* from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
             raise 'Template send_cdr!'
     except Exception as e:
