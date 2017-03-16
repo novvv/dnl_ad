@@ -540,7 +540,7 @@ order by ingress_client_id;""" % \
         cl.switch_alias = ",".join([ x.alias for x in sw])
         cl.company_name = cl.company
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
-        cl.remaining_credit='%.2' % cl.allowed_credit - abs( cl.balance )
+        cl.remaining_credit='%.2f' % float( cl.allowed_credit - abs( cl.balance ))
         cl.balance = '%.2f' % float(cl.balance)
         cl.client_name=cl.name
         cl.begin_time=report_start.strftime("%Y-%m-%d 00:00:00")
