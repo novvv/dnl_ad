@@ -191,6 +191,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
     if SEND_MAIL:
         errors=''
         status=0
+        lastto=''
         try:
             server = smtplib.SMTP(host+':'+port)
             server.ehlo()
@@ -199,10 +200,11 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
             server.login(user, passw)
             cc = '' if not cc else cc
             for t in to.split(';')+cc.split(';'):
+                lastto=t
                 server.sendmail(mfrom, t, msg.as_string())
             server.quit()
         except Exception as e:
-            LOG.error("MAIL EROR: %s", str(e))
+            LOG.error("MAIL EROR: to:%s %s", (lastto,  str(e)) )
             errors = errors+str(e)
             status=1
         LOG.warning('MAIL SENT: from: %s to: %s status: %d subj: %s body:%s ' % (mfrom, to, status, subject,  cleanhtml(text)[0:500]))
@@ -232,7 +234,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
         query("""insert into email_log(send_time,client_id,email_addresses,type,status,error,subject,content,alert_rule )
                 values(now(),%d,'%s',%d,%d,'%s','%s','%s','%s')  """ %  (int(client_id), email_addresses[0:500], type, status, errors, subject[0:100], text, alert_rule[0:500]) )
         if status!=0:
-            raise Exception('MAIL ERROR! %d,%s' % (client_id, alert_rule))
+            raise Exception('MAIL ERROR! to:%s,%d,%s' % (lastto, client_id, alert_rule))
 
 def query(sql, all=True):
     """Call postgresql query, return record array."""
