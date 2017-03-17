@@ -228,7 +228,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
         email_addresses=json.dumps(to+';'+cc)
         text=json.dumps(text)
         subject=json.dumps(subject)
-        errors=json.dumps(errors)
+        errors=json.dumps(errors).replace("'", '"')
         query("""insert into email_log(send_time,client_id,email_addresses,type,status,error,subject,content,alert_rule )
                 values(now(),%d,'%s',%d,%d,'%s','%s','%s','%s')  """ %  (int(client_id), email_addresses[0:500], type, status, errors, subject[0:100], text, alert_rule[0:500]) )
         if status!=0:
