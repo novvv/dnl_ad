@@ -198,6 +198,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
             to_set=set([x for x in to.split(';')+cc.split(';') if x !='' and '@' in x])
             for t in to_set:
                     lastto=t
+                    server.connect()
                     server.ehlo()
                     if port == '587':
                         server.starttls()
