@@ -195,9 +195,11 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
         try:
             server = smtplib.SMTP(host+':'+port)
             cc = '' if not cc else cc
+            sendlist=[]
             for t in to.split(';')+cc.split(';'):
-                if '@' in t:
+                if '@' in t and not t in sendlist:
                     lastto=t
+                    sendlist.append(t)
                     server.ehlo()
                     if port == '587':
                         server.starttls()
