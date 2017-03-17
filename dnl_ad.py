@@ -198,13 +198,19 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
             to_set=set([x for x in to.split(';')+cc.split(';') if x !='' and '@' in x])
             for t in to_set:
                     lastto=t
+                    print t
                     server.connect()
+                    print 'connect'
                     server.ehlo()
+                    print 'ehlo'
                     if port == '587':
                         server.starttls()
                     server.login(user, passw)
+                    print 'login'
                     server.sendmail(mfrom, t, msg.as_string())
+                    print 'sent'
                     server.quit()
+                    print 'quit'
                     sleep(1)
         except Exception as e:
             server.quit()
