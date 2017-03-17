@@ -305,6 +305,19 @@ def process_table(data, select=None, style={'table': 'dttable'}):
         return '<p>-------</p>'
 
 
+def do_clear_last_lowbalance_send_time():
+    alert_rule=sys._getframe().f_code.co_name ; 
+    LOG.warning("START: %s" % alert_rule)
+    #Check if payd ws made and clear las_lowbalance_time
+    query(""" update client set last_lowbalance_time=Null where client_id in
+    (  select c.client_id
+    from client c,c4_client_balance b,client_low_balance_config con where
+    c.client_id::text=b.client_id 
+    and c.client_id=con.client_id
+    and ( (value_type=0 and balance::numeric > notify_client_balance)  
+    or (value_type=1 and balance::numeric > percentage_notify_balance*allowed_credit/100 ) )  
+    and status=true ) """)    
+
 def do_notify_client_balance():
     u"""
 Check every 5 minute for each “active” clients’ current balance and “low
@@ -317,15 +330,7 @@ notify_client_balance, low_balance_notice from client; To check if client is
 active: Select status from client ;"""
     alert_rule=sys._getframe().f_code.co_name ; 
     LOG.warning("START: %s" % alert_rule)
-#Check if payd ws made and clear las_lowbalance_time
-    query(""" update client set last_lowbalance_time=Null where client_id in
-    (  select c.client_id
-    from client c,c4_client_balance b,client_low_balance_config con where
-    c.client_id::text=b.client_id 
-    and c.client_id=con.client_id
-    and ( (value_type=0 and balance::numeric > notify_client_balance)  
-    or (value_type=1 and balance::numeric > percentage_notify_balance*allowed_credit/100 ) )  
-    and status=true ) """)
+
     #query bad clients
     clients = query("""
     select b.client_id,name,payment_term_id,company,allowed_credit,
@@ -942,6 +947,7 @@ class App():
             schedule.every(1).minutes.do(fifteen_minute_job)
             schedule.every(1).minutes.do(daily_job)
         else:
+            schedule.every(1).minutes.do(do_clear_last_lowbalance_send_time)
             schedule.every(15).minutes.do(fifteen_minute_job)
             schedule.every().hours.at(':00').do(daily_job)
         #initial one run;
