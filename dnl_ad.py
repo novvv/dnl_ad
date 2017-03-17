@@ -205,7 +205,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
             LOG.error("MAIL EROR: %s", str(e))
             errors = errors+str(e)
             status=1
-        LOG.warning('MAIL SENT: from: %s to: %s subj: %s body:%s' % (mfrom, to, subject,  cleanhtml(text)))
+        LOG.warning('MAIL SENT: from: %s to: %s status: %d subj: %s body:%s ' % (mfrom, to, status, subject,  body, cleanhtml(text)[0:500]))
         """
   id integer NOT NULL DEFAULT nextval('daily_email_log_id_seq'::regclass),
   send_time timestamp with time zone,
