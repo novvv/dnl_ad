@@ -327,7 +327,17 @@ def do_clear_last_lowbalance_send_time():
     and c.client_id=con.client_id
     and ( (value_type=0 and balance::numeric > notify_client_balance)  
     or (value_type=1 and balance::numeric > percentage_notify_balance*allowed_credit/100 ) )  
-    and status=true ) """)    
+    and status=true ) """)
+    #zero balance too clear if paid
+    query(""" update client c set zero_balance_notice_last_sent = Null where client_id in
+( select  c.client_id from client c,c4_client_balance b
+  where c.client_id::text=b.client_id and not unlimited_credit 
+    and status and zero_balance_notice and
+    ( (balance::numeric >= 0  and mode=1 )
+    or
+      (balance::numeric > allowed_credit and mode=2)
+    )
+)"""     )    
 
 def do_notify_client_balance():
     u"""
@@ -420,16 +430,6 @@ Select credit from client;"""
 
     alert_rule=sys._getframe().f_code.co_name ; 
     LOG.warning("START: %s" % alert_rule)
-    #clear if paid
-    query(""" update client c set zero_balance_notice_last_sent = Null where client_id in
-( select  c.client_id from client c,c4_client_balance b
-  where c.client_id::text=b.client_id and not unlimited_credit 
-    and status and zero_balance_notice and
-    ( (balance::numeric >= 0  and mode=1 )
-    or
-      (balance::numeric > allowed_credit and mode=2)
-    )
-)"""     )
       
     clients1=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,
         notify_client_balance,billing_email, zero_balance_notice_time
