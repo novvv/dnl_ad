@@ -194,16 +194,17 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
         lastto=''
         try:
             server = smtplib.SMTP(host+':'+port)
-            server.ehlo()
-            if port == '587':
-                server.starttls()
-            server.login(user, passw)
             cc = '' if not cc else cc
             for t in to.split(';')+cc.split(';'):
                 if '@' in t:
                     lastto=t
+                    server.ehlo()
+                    if port == '587':
+                        server.starttls()
+                    server.login(user, passw)
                     server.sendmail(mfrom, t, msg.as_string())
-            server.quit()
+                    server.quit()
+                    sleep(1)
         except Exception as e:
             LOG.error("MAIL EROR: to:%s %s", (lastto,  str(e)) )
             errors = errors+str(e)
