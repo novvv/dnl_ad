@@ -195,11 +195,9 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
         try:
             server = smtplib.SMTP(host+':'+port)
             cc = '' if not cc else cc
-            sendlist=[]
-            for t in to.split(';')+cc.split(';'):
-                if '@' in t and not t in sendlist:
+            to_set=set([x for x in to.split(';')+cc.split(';') if x !='' and '@' in x])
+            for t in to_set:
                     lastto=t
-                    sendlist.append(t)
                     server.ehlo()
                     if port == '587':
                         server.starttls()
@@ -237,9 +235,8 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
         errors=json.dumps(errors).replace("'", '"')
         query("""insert into email_log(send_time,client_id,email_addresses,type,status,error,subject,content,alert_rule )
                 values(now(),%d,'%s',%d,%d,'%s','%s','%s','%s')  """ %  (int(client_id), email_addresses[0:500], type, status, errors, subject[0:100], text, alert_rule[0:500]) )
-        if status!=0:
-            raise Exception('MAIL ERROR! to:%s,%d,%s' % (lastto, client_id, alert_rule))
-
+        #if status!=0:
+        #   raise 
 def query(sql, all=True):
     """Call postgresql query, return record array."""
     def _res(row, descr):
