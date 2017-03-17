@@ -200,17 +200,17 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
                     print t
                     server = smtplib.SMTP(host+':'+port)
                     #server.connect()
-                    print 'connect'
+                    #print 'connect'
                     server.ehlo_or_helo_if_needed()
-                    print 'ehlo'
+                    #print 'ehlo'
                     if port == '587':
                         server.starttls()
                     server.login(user, passw)
-                    print 'login'
+                    #print 'login'
                     server.sendmail(mfrom, t, msg.as_string())
-                    print 'sent'
+                    #print 'sent'
                     server.quit()
-                    print 'quit'
+                    #print 'quit'
                     sleep(1)
         except Exception as e:
             #server.quit()
