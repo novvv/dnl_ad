@@ -200,8 +200,9 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
             server.login(user, passw)
             cc = '' if not cc else cc
             for t in to.split(';')+cc.split(';'):
-                lastto=t
-                server.sendmail(mfrom, t, msg.as_string())
+                if '@' in t:
+                    lastto=t
+                    server.sendmail(mfrom, t, msg.as_string())
             server.quit()
         except Exception as e:
             LOG.error("MAIL EROR: to:%s %s", (lastto,  str(e)) )
