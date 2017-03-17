@@ -230,7 +230,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
         subject=json.dumps(subject)
         errors=json.dumps(errors)
         query("""insert into email_log(send_time,client_id,email_addresses,type,status,error,subject,content,alert_rule )
-                values(now(),%d,'%s',%d,%d,'%s','%s','%s','%s')  """ %  (client_id, email_addresses, type, status, errors, subject, text, alert_rule) )
+                values(now(),%d,'%s',%d,%d,'%s','%s','%s','%s')  """ %  (int(client_id), email_addresses, type, status, errors, subject, text, alert_rule) )
         if status!=0:
             raise Exception('MAIL ERROR! %d,%s' % (client_id, alert_rule))
 
