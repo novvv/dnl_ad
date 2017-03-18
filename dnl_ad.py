@@ -330,10 +330,10 @@ def do_clear_last_lowbalance_send_time():
     and status=true ) """)
     #zero balance too clear if paid
     query(""" update client c set zero_balance_notice_last_sent = Null,zero_balance_notice_time=0 where client_id in
-( select  c.client_id from client c,c4_client_balance b
-  where c.client_id::text=b.client_id and not unlimited_credit 
+( select  c.client_id from client c,c4_client_balance b,client_low_balance_config l
+         where c.client_id::text=b.client_id and c.client_id =l.client_id
     and status and zero_balance_notice and
-    ( (balance::numeric >= 0  and mode=1 )
+    ( (balance::numeric >= actual_notify_balance  and mode=1 )
     or
       (balance::numeric > allowed_credit and mode=2)
     )
@@ -432,13 +432,14 @@ Select credit from client;"""
     LOG.warning("START: %s" % alert_rule)
       
     clients1=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,
-        notify_client_balance,billing_email, zero_balance_notice_time
-        from client c,c4_client_balance b
-         where c.client_id::text=b.client_id and balance::numeric <= 0
+        notify_client_balance,actual_notify_balance,billing_email, zero_balance_notice_time,mode
+        from client c,c4_client_balance b,client_low_balance_config l
+         where c.client_id::text=b.client_id and c.client_id =l.client_id
+         and balance::numeric <= actual_notify_balance
          and status=true and mode=1 and zero_balance_notice and not unlimited_credit
          and (zero_balance_notice_last_sent is null or zero_balance_notice_last_sent < now() - interval '24 hour') """)
     clients2=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,
-        notify_client_balance,billing_email,zero_balance_notice_time
+        notify_client_balance,billing_email,zero_balance_notice_time,mode
         from client c,c4_client_balance b
          where c.client_id::text=b.client_id and balance::numeric < allowed_credit
          and status=true and mode=2 and zero_balance_notice and not unlimited_credit
@@ -471,10 +472,10 @@ Select credit from client;"""
         cl.client_name = cl.name 
         cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
         cl.balance = '%.2f' % float(cl.balance)
-        if not cl.notify_client_balance:
-            cl.notify_balance=''
+        if cl.mode==1:
+            cl.notify_balance='%.2f' % cl.actual_notify_balance
         else:
-        	cl.notify_balance = cl.notify_client_balance
+        	cl.notify_balance = '%.2f' % cl.notify_client_balance
         subj = process_template(templ.subject, cl)
         cont = process_template(templ.content, cl)
         LOG.info("%s : %s subject: %s content: %s" %
