@@ -329,7 +329,7 @@ def do_clear_last_lowbalance_send_time():
     or (value_type=1 and balance::numeric > percentage_notify_balance*allowed_credit/100 ) )  
     and status=true ) """)
     #zero balance too clear if paid
-    query(""" update client c set zero_balance_notice_last_sent = Null where client_id in
+    query(""" update client c set zero_balance_notice_last_sent = Null,zero_balance_notice_time=0 where client_id in
 ( select  c.client_id from client c,c4_client_balance b
   where c.client_id::text=b.client_id and not unlimited_credit 
     and status and zero_balance_notice and
@@ -436,13 +436,13 @@ Select credit from client;"""
         from client c,c4_client_balance b
          where c.client_id::text=b.client_id and balance::numeric <= 0
          and status=true and mode=1 and zero_balance_notice and not unlimited_credit
-         and zero_balance_notice_last_sent < now() - interval '24 hour' """)
+         and (zero_balance_notice_last_sent is null or zero_balance_notice_last_sent < now() - interval '24 hour') """)
     clients2=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,
         notify_client_balance,billing_email,zero_balance_notice_time
         from client c,c4_client_balance b
          where c.client_id::text=b.client_id and balance::numeric < allowed_credit
          and status=true and mode=2 and zero_balance_notice and not unlimited_credit
-         and zero_balance_notice_last_sent < now() - interval '24 hour' """)
+         and (zero_balance_notice_last_sent is null or zero_balance_notice_last_sent < now() - interval '24 hour' )""")
     clients = clients1+clients2
     try:
         templ = query(
@@ -611,7 +611,7 @@ order by client.client_id;""" % \
         cl.beginning_balance='%.2f' % b0[0].actual_balance
         cl.ending_balance='%.2f' % b1[0].actual_balance
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
-        rem=float(cl.allowed_credit) - abs( float(cl.ending_balance) )
+        rem=float(-cl.allowed_credit) - abs( float(cl.ending_balance) )
         cl.remaining_credit='%.2f' % rem
         cl.balance = '%.2f' % float(cl.balance)
         cl.client_name=cl.name
@@ -702,7 +702,7 @@ def do_daily_balance_summary():
         cl.sell_amount=bl.unbilled_outgoing_traffic
         cl.client_name=cl.name
         cl.credit_limit = '%.2f' % -float(cl.allowed_credit)
-        rem= float(cl.allowed_credit)-abs(float(cl.ending_balance))
+        rem= float(-cl.allowed_credit)-abs(float(cl.ending_balance))
         cl.remaining_credit = '%.2f' %  rem
         cl.beginning_of_day_balance='%.2f' % bl.actual_balance
         cl.allowed_credit = '%.2f' % -float(cl.allowed_credit)
