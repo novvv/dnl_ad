@@ -468,6 +468,7 @@ Select credit from client;"""
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
         cl.company_name = cl.company
+        cl.client_name = cl.name 
         cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
         cl.balance = '%.2f' % float(cl.balance)
         if not cl.notify_client_balance:
@@ -966,7 +967,8 @@ class App():
             try:
                 schedule.run_pending()
             except Exception as e:
-                LOG.error('Unexpected:'+str(e))
+                LOG.error('Unexpected: %s! \n Will wait 2 min...'+str(e))
+                sleep(120)
             finally:
                 sleep(1)
 
