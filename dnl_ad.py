@@ -217,7 +217,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
                     sleep(1)
         except Exception as e:
             #server.quit()
-            LOG.error("MAIL EROR: from:%s to:%s err:" % (mfrom, lastto , str(e) ) )
+            LOG.error("MAIL EROR: from:%s to:%s err: %s" % (mfrom, lastto , str(e) ) )
             errors = errors+str(e)
             status=1
         LOG.warning('MAIL SENT: from: %s to: %s status: %d subj: %s body:%s ' % (mfrom, to, status, subject,  cleanhtml(text)[0:500]))
