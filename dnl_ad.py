@@ -107,6 +107,9 @@ LOGGING = {
             'format': '%(asctime)-15s %(levelname)s %(module)s P%(process)d \
             T%(thread)d %(message)s'
             },
+        'compact':{
+             'format': '%(asctime)-15s %(levelname)s %(message)s'
+           }, 
         },
     'handlers': {
         'stdout': {
@@ -117,7 +120,7 @@ LOGGING = {
         'rotated': {
             '()': rotating_file_handler,
             'level': LOGLEVEL,
-            'formatter': 'verbose',
+            'formatter': 'compact',
             'filename': LOGFILE,
             'maxBytes': 160000,
             'backupCount': 32,
