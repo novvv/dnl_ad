@@ -972,7 +972,7 @@ class App():
             try:
                 schedule.run_pending()
             except Exception as e:
-                LOG.error('Unexpected: %s! \n Will wait 2 min...'+str(e))
+                LOG.error('Unexpected: %s! \n Will wait 2 min...' % str(e))
                 sleep(120)
             finally:
                 sleep(1)
