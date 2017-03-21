@@ -321,7 +321,7 @@ def process_table(data, select=None, style={'table': 'dttable'}):
 
 def do_clear_last_lowbalance_send_time():
     alert_rule=sys._getframe().f_code.co_name ; 
-    LOG.warning("START: %s" % alert_rule)
+    LOG.info("START: %s" % alert_rule)
     #Check if payd ws made and clear las_lowbalance_time
     query(""" update client set last_lowbalance_time=Null where client_id in
     (  select c.client_id
