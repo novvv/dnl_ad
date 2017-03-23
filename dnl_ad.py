@@ -17,7 +17,7 @@ import smtplib
 #import signal
 from signal import SIGTERM
 
-import sys, os, atexit
+import sys, os, time, atexit
 import gzip
 
 import logging.handlers
@@ -896,7 +896,7 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,
 c.client_id
 """)
     try:
-        templ=query('select no_download_rate_subject as subject,no_download_rate_content as content from mail_tmplate')[0]
+#        templ=query('select no_download_rate_subject as subject,no_download_rate_content as content from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
             raise ('Template send_cdr!')
     except Exception as e:
@@ -918,7 +918,7 @@ company_name:{company_name}
 trunk_name:{trunk_name}
 rate_download_deadline:{rate_download_deadline}
 rate_update_file_name:{rate_update_file_name}
-""")
+""", cl)
         try:
             subj=process_template(templ.subject, cl)
         except: 
