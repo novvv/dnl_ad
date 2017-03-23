@@ -17,7 +17,7 @@ That is why it will need small of processor time
 
 # Functions
 
-##Now, the daemon will fire 7 types of alerts:
+## Now, the daemon will fire 7 types of alerts:
 1. Notify client balance
 when client balance go lower than limits.
 2. Notify zero balance
@@ -27,11 +27,11 @@ Notification for client od daily usage.
 This notification send every day at scheduled time.
 4. Daily balance summary
 Information for clients about his balance.
-5.Daily cdr delivery
+5. Daily cdr delivery
 Send link to download detailed information about resorce usage
-6.Trunk pending suspension notice
+6. Trunk pending suspension notice
 Send notice about near future deadline of download rate limits file. 
-7.Trunk is suspended notice
+7. Trunk is suspended notice
 If file (item 6) not download, daemon wil send email to client and set in database block on selected resource.
 
 User story you can read in AlertScriptRequriement.odt  document.
@@ -40,9 +40,9 @@ User story you can read in AlertScriptRequriement.odt  document.
 The dnl_ad requre for properly work installed python 2.7.
 Also must be installed listed python libraries:
 
-sudo pip3 install python-daemon
+
 psycopg2
-sudo pip3 install pytz
+pytz
 json
 
 The bundle include library "schedule" for event processing
@@ -77,6 +77,11 @@ $./dnl_ad.py start
 
 Quickly restart very simple:
 ./dnl_ad.py restart
+
+If after crash stay anl_ad.pid file in place you can clear it:
+
+./dnl_ad.py zap
+
 
 # Testing and debugging
 
