@@ -37,7 +37,7 @@ If file (item 6) not download, daemon wil send email to client and set in databa
 User story you can read in AlertScriptRequriement.odt  document.
 
 # System requriements
-The dnl_ad requre for properly work installed python 2.7.
+The dnl_ad requre for properly work installed python 2.7 or python 3.5.
 Also must be installed listed python libraries:
 
 
@@ -78,7 +78,7 @@ $./dnl_ad.py start
 Quickly restart very simple:
 ./dnl_ad.py restart
 
-If after crash stay anl_ad.pid file in place you can clear it:
+If after crash  dnl_ad.pid file stay in place, and interrupt normal starting, you can clear it:
 
 ./dnl_ad.py zap
 
