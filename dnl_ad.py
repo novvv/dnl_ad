@@ -753,12 +753,14 @@ def do_daily_cdr_delivery():
     report_end=report_start+timedelta(hours=24)
     unix_start = mktime(report_start.timetuple())
     unix_end = mktime(report_end.timetuple())
-    cdr_tab0=query("""select ingress_client_id as id,ingress_id  as rid,'i' as dir from cdr_report_detail  
+    cdr_tab0=query("""select ingress_client_id as id
+    from cdr_report_detail  
     where not ingress_client_id is NULL and
-    report_time between '%s' and '%s' group by ingress_client_id,ingress_id ;"""  % (report_start, report_end))
-    cdr_tab1=query("""select egress_client_id as id,egress_id as rid,'e' as dir from cdr_report_detail  
+    report_time between '%s' and '%s' group by ingress_client_id;"""  % (report_start, report_end))
+    cdr_tab1=query("""select egress_client_id as id
+    from cdr_report_detail  
     where not egress_client_id is NULL and
-    report_time between '%s' and '%s' group by egress_client_id,egress_id ;"""  % (report_start, report_end))
+    report_time between '%s' and '%s' group by egress_client_id ;"""  % (report_start, report_end))
     for cli in cdr_tab0+cdr_tab1:
         cdr_clients=query(""" select * from client 
         where client_id=%d""" % cli.id)
@@ -773,8 +775,19 @@ def do_daily_cdr_delivery():
             cl.begin_time=str(tz_align(report_start, tz))[0:19]
             cl.end_time=str(tz_align(report_end, tz))[0:19]
             cl.customer_gmt=tz
-            url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=12,56,65&format=json' % (unix_start, unix_end, cli.dir,  cli.rid )
-            link='<a href="%s">%s</a>' % (url, url)
+            cli_tab0=query("""select ingress_client_id as id,ingress_id  as rid,'i' as dir from cdr_report_detail  
+                where not ingress_client_id is NULL and
+                report_time between '%s' and '%s' and ingress_client_id=%d 
+                group by ingress_client_id,ingress_id ;"""  % (report_start, report_end, cl.client_id))
+            cli_tab1=query("""select egress_client_id as id,egress_id as rid,'e' as dir from cdr_report_detail  
+                where not egress_client_id is NULL and
+                report_time between '%s' and '%s' and egress_client_id=%d 
+                group by egress_client_id,egress_id ;"""  % (report_start, report_end, cl.client_id))
+            cli_tab=cli_tab0+cli_tab1
+            link=''
+            for clii in cli_tab:
+                url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=12,56,65&format=json' % (unix_start, unix_end, clii.dir,  clii.rid )
+                link+='<p><a href="%s">resource %d</a></p>' % (url, clii.rid)
             cl.download_link=link
             LOG.warning('DAILY CDR DELIVERY: %s,RID:%s,url=%s' %
                      (cl.client_id, cli.rid, cl.download_link) )
