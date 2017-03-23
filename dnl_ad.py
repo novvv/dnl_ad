@@ -785,8 +785,9 @@ def do_daily_cdr_delivery():
                 group by egress_client_id,egress_id ;"""  % (report_start, report_end, cl.client_id))
             cli_tab=cli_tab0+cli_tab1
             link=''
+            flds="31,10,38,37,11,6,67" #",31,82,107,55,48,61,51,86,22,3,"
             for clii in cli_tab:
-                url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=12,56,65' % (unix_start, unix_end, clii.dir,  clii.rid )
+                url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
                 link+='<p><a href="%s">resource %d</a></p>' % (url, clii.rid)
             cl.download_link=link
             LOG.warning('DAILY CDR DELIVERY: %s,RID:%s,url=%s' %
