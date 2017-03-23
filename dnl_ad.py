@@ -1109,7 +1109,7 @@ class MyDaemon(Daemon):
     def run(self):
         "main cycle"
         LOG.warning('DNL AD started!')
-        if 1:#LOGLEVEL == logging.DEBUG:
+        if LOGLEVEL == logging.DEBUG:
             schedule.every(1).minutes.do(fifteen_minute_job)
             schedule.every(1).minutes.do(daily_job)
         else:
