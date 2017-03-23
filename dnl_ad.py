@@ -909,7 +909,7 @@ l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,
 c.client_id
 """)
     try:
-#        templ=query('select no_download_rate_subject as subject,no_download_rate_content as content from mail_tmplate')[0]
+        templ=query('select no_download_rate_subject as subject,no_download_rate_content as content from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
             raise ('Template send_cdr!')
     except Exception as e:
