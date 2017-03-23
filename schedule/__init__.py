@@ -193,7 +193,7 @@ class Job(object):
             job_func_name = repr(self.job_func)
         args = [repr(x) for x in self.job_func.args]
         kwargs = ['%s=%s' % (k, repr(v))
-                  for k, v in self.job_func.keywords.items()]
+                  for k, v in list(self.job_func.keywords.items())]
         call_repr = job_func_name + '(' + ', '.join(args + kwargs) + ')'
 
         if self.at_time is not None:

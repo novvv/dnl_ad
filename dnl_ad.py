@@ -160,7 +160,7 @@ def get_mail_params(fr):
     except Exception as e:
         LOG.error("system_parameters not ready: %s", str(e)+traceback.format_exc())
         raise e
-    if  p.__dict__.has_key(fr):
+    if  fr in p.__dict__:
        frm=p.__dict__[fr]
     else:
         frm=fr
@@ -200,7 +200,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
             to_set=set([x for x in to.split(';')+cc.split(';') if x !='' and '@' in x])
             for t in to_set:
                     lastto=t
-                    print t
+                    print(t)
                     server = smtplib.SMTP(host+':'+port)
                     #server.connect()
                     #print 'connect'
@@ -293,7 +293,7 @@ def process_template(templ, env):
             if hasattr(env, f):
                 r = re.compile('{%s}' % f, re.VERBOSE)
                 out = r.sub(str(env.__dict__[f]), out)
-            if hasattr(env, 'has_key') and env.has_key(f):
+            if hasattr(env, 'has_key') and f in env:
                 r = re.compile('{%s}' % f, re.VERBOSE)
                 out = r.sub(str(env[f]), out)
         LOG.debug('RENDERED TEMPLATE:\n'+out)
@@ -307,7 +307,7 @@ def process_table(data, select=None, style={'table': 'dttable'}):
     if len(data) > 0:
         text = '<table class="%s">' % style['table']
         if not select:
-            select = data[0].__dict__.keys()
+            select = list(data[0].__dict__.keys())
         for row in data:
             text += '<tr>'
             for f in select:
@@ -343,7 +343,7 @@ def do_clear_last_lowbalance_send_time():
 )"""     )    
 
 def do_notify_client_balance():
-    u"""
+    """
 Check every 5 minute for each “active” clients’ current balance and “low
 balance” trigger.  If the “current balance” is below the “low balance”
 trigger, then send out an alert.Also, there is a “number of time” that we should send in total before payment
@@ -415,7 +415,7 @@ active: Select status from client ;"""
 
 
 def do_notify_zero_balance():
-    u"""
+    """
 Check every 5 minute for each “active” clients’ current balance and “low
 balance” trigger.  If the “current balance” is below 0 for prepay client type
 or below  ( negative value of credit ) for postpay client type.
@@ -496,7 +496,7 @@ Select credit from client;"""
             LOG.error('cannot sendmail:'+str(e))
             
 def do_daily_usage_summary():
-    u"""For each client who has “daily usage summary” selected, at the client’s GMT
+    """For each client who has “daily usage summary” selected, at the client’s GMT
 time zone, we need to send out a daily usage summary mail. """
     # auto_summary_not_zero
     alert_rule=sys._getframe().f_code.co_name ; 
@@ -512,7 +512,7 @@ time zone, we need to send out a daily usage summary mail. """
             from
         mail_tmplate""")[0] 
         if templ.subject == ''  or  templ.content == '':
-            raise 'Template auto_summary empty!'
+            raise Exception('Template auto_summary empty!')
     except Exception as e:
         LOG.error('No template:'+str(e))
         raise
@@ -639,7 +639,7 @@ order by client.client_id;""" % \
 
 
 def do_daily_balance_summary():
-    u"""
+    """
     For each client who has “daily balance summary” selected, at the client’s
     GMT time zone, we need to send out a daily balance summary mail.
     """
@@ -722,7 +722,7 @@ def do_daily_balance_summary():
             LOG.error('cannot sendmail:'+str(e))
 
 def do_daily_cdr_delivery():
-    u"""
+    """
     For each client who has “daily CDR delivery” selected, at the client’s GMT
     time zone, we need to send out a daily CDR mail. Instead of including a
     large attachment, it should be a CDR link.
@@ -734,7 +734,7 @@ def do_daily_cdr_delivery():
     try:
         templ=query('select download_cdr_subject as subject,download_cdr_content as content,* from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
-            raise 'Template send_cdr!'
+            raise Exception('Template send_cdr!')
     except Exception as e:
         LOG.error('no template table:'+str(e))
         raise 
@@ -797,7 +797,7 @@ def do_daily_cdr_delivery():
 
 
 def do_trunk_pending_suspension_notice():
-    u"""
+    """
     For each client, at the client’s timezone 00:00:00, we need to check if
     there is any pending rate download and the deadline is to be reached within
     24 hours.
@@ -818,7 +818,7 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
     try:
         templ=query('select download_rate_notice_subject as subject,download_rate_notice_content as content,* from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
-            raise 'Template send_cdr!'
+            raise ('Template send_cdr!')
     except Exception as e:
         LOG.error('no template table:'+str(e))
         raise
@@ -896,7 +896,7 @@ c.client_id
     try:
         templ=query('select no_download_rate_subject as subject,no_download_rate_content as content from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
-            raise 'Template send_cdr!'
+            raise ('Template send_cdr!')
     except Exception as e:
         LOG.error('no template table:'+str(e))
         raise
@@ -990,7 +990,7 @@ app=App()
 
 if __name__ == '__main__':
     "main cli routine"
-    print 'This is a Dnl Alert Daemon (novvvster@gmail.com)'
+    print('This is a Dnl Alert Daemon (novvvster@gmail.com)')
     if sys.argv[1] == 'debug':
         app.run()
     else:

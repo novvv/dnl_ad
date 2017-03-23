@@ -40,9 +40,9 @@ User story you can read in AlertScriptRequriement.odt  document.
 The dnl_ad requre for properly work installed python 2.7.
 Also must be installed listed python libraries:
 
-daemon
+sudo pip3 install python-daemon
 psycopg2
-pytz
+sudo pip3 install pytz
 json
 
 The bundle include library "schedule" for event processing
@@ -95,6 +95,8 @@ And, for run in foreground mode you can do:
 ./dnl_ad.py debug
  
 # Release notes
+
+verion 1.2 adapted to python3 
 
 version 1.1  default settings to productive.
 

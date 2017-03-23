@@ -1,6 +1,6 @@
 #/usr/bin/python
 # -*- coding: UTF-8 -*-
-import json, base64, urllib2, json
+import json, base64, urllib.request, urllib.error, urllib.parse, json
 import re,sys,time
 import email
 from email.mime.multipart import MIMEMultipart
@@ -12,7 +12,7 @@ base="http://192.99.10.113:8000/api/v1.0/"
 
 def cdr(q,data=None,method='GET'):
     url=base+q
-    print url
+    print(url)
     #User=username
     #Pass=password
     #base64string = base64.encodestring('%s:%s' % (User, Pass)).replace('\n', '')
@@ -26,24 +26,24 @@ def cdr(q,data=None,method='GET'):
        'Content-Type': 'application/json',
        #"Authorization": "Basic %s" % base64string
        }    
-    request=urllib2.Request(url,headers=hdr)
+    request=urllib.request.Request(url,headers=hdr)
     if data and method=='GET':
         method='POST'
     request.get_method = lambda: method
     try:
         if data:
-            response=urllib2.urlopen(request, json.JSONEncoder().encode(data))
+            response=urllib.request.urlopen(request, json.JSONEncoder().encode(data))
             text=response.read()
             return text #json.JSONDecoder().decode(text)
         else:
-            response=urllib2.urlopen(request)
+            response=urllib.request.urlopen(request)
             text=response.read()
             return json.JSONDecoder().decode(text)
     #try:
      #   pass
     except Exception as e: #urllib2.HTTPError, e:
         text=e.fp.read()
-        print text
+        print(text)
         return json.JSONDecoder().decode(text)
     return None
    
@@ -59,6 +59,6 @@ if __name__=='__main__':
   "cdr_subject":"CDR parsing testing",
   "cdr_body":"CDR parsing {from_time} {to_time} {search_parameter} completed with status {status} . URL is {url}."
    }
-    print 'Call API'
-    print 'DATA:\n',data
-    print cdr('create_query', data)
+    print('Call API')
+    print('DATA:\n',data)
+    print(cdr('create_query', data))
