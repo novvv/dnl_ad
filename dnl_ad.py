@@ -773,7 +773,7 @@ def do_daily_cdr_delivery():
             cl.begin_time=str(tz_align(report_start, tz))[0:19]
             cl.end_time=str(tz_align(report_end, tz))[0:19]
             cl.customer_gmt=tz
-            url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d' % (unix_start, unix_end, cli.dir,  cli.rid )
+            url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=12,56,65&format=json' % (unix_start, unix_end, cli.dir,  cli.rid )
             link='<a href="%s">%s</a>' % (url, url)
             cl.download_link=link
             LOG.warning('DAILY CDR DELIVERY: %s,RID:%s,url=%s' %
