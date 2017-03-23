@@ -17,7 +17,7 @@ import smtplib
 #import signal
 from signal import SIGTERM
 
-import sys, os, time, atexit
+import sys, os, atexit
 import gzip
 
 import logging.handlers
