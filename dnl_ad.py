@@ -786,7 +786,7 @@ def do_daily_cdr_delivery():
             cli_tab=cli_tab0+cli_tab1
             link=''
             for clii in cli_tab:
-                url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=12,56,65&format=json' % (unix_start, unix_end, clii.dir,  clii.rid )
+                url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=12,56,65' % (unix_start, unix_end, clii.dir,  clii.rid )
                 link+='<p><a href="%s">resource %d</a></p>' % (url, clii.rid)
             cl.download_link=link
             LOG.warning('DAILY CDR DELIVERY: %s,RID:%s,url=%s' %
