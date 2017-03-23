@@ -102,7 +102,7 @@ q - exit
     dnl_ad.LOGLEVEL = logging.DEBUG
     dnl_ad.LOG = logging.getLogger("debug-logger")
     while True:
-        choice = input("> ")
+        choice = str(input("> "))
         if choice in ['q','Q', '0']:
             print('bye')
             sys.exit(0)
@@ -112,3 +112,4 @@ q - exit
         else:
             print('nothing to do.')
         
+
