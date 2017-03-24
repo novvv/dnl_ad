@@ -742,8 +742,21 @@ def do_daily_cdr_delivery():
         raise 
     text=''
     fields=query("SELECT field, label FROM daily_cdr_fields WHERE type = 0 ORDER BY id ASC")
+    fmap={"Call Duration": 31,
+  "Class4 IP":10,  
+  "End Time": 0, 
+  "Ingress Alias":38, 
+"Ingress ID":37, 
+"Orig DST Number":11, 
+"Orig/Term Release":6, 
+ "Orig Code":67
+}
+    fm=[]
     for f in fields:
-        text=text+'<p>%s:%s</p>\n' % ( f.label, f.field)
+        lab=f.label.strip()
+        if  lab in fmap:
+            fm.append(str( fmap[lab] ) )
+    
     reportdate=date.today()
     reporttime = time(datetime.now(UTC).hour, 0, 0)
     #reporttime=time(0, 0, 0, 0, UTC)
@@ -785,7 +798,7 @@ def do_daily_cdr_delivery():
                 group by egress_client_id,egress_id ;"""  % (report_start, report_end, cl.client_id))
             cli_tab=cli_tab0+cli_tab1
             link=''
-            flds="31,10,37,11,6,67" #",31,82,107,55,48,61,51,86,22,3,"
+            flds = ','.join(fm)#"31,10,37,11,6,67" #",31,82,107,55,48,61,51,86,22,3,"
             for clii in cli_tab:
                 url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s&format=plain' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
                 link+='<p><a href="%s">resource %d</a></p>' % (url, clii.rid)
