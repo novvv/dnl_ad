@@ -768,20 +768,23 @@ def do_daily_cdr_delivery():
     unix_end = mktime(report_end.timetuple())
     cdr_tab0=query("""select ingress_client_id as id
     from cdr_report_detail  
-    where not ingress_client_id is NULL and
-    report_time between '%s' and '%s' group by ingress_client_id;"""  % (report_start, report_end))
+    where not ingress_client_id is NULL 
+    and report_time between '%s'::date - interval '2 month' and '%s' 
+    group by ingress_client_id;"""  % (report_start, report_end))
     cdr_tab1=query("""select egress_client_id as id
     from cdr_report_detail  
-    where not egress_client_id is NULL and
-    report_time between '%s' and '%s' group by egress_client_id ;"""  % (report_start, report_end))
+    where not egress_client_id is NULL 
+    and report_time between '%s'::date - interval '2 month' and '%s' 
+    group by egress_client_id ;"""  % (report_start, report_end))
     for cli in cdr_tab0+cdr_tab1:
         cdr_clients=query(""" select * from client 
-        where client_id=%d""" % cli.id)
+        where daily_cdr_generation and client_id=%d""" % cli.id)
         for cl in cdr_clients:
             #todo make header
             #tz=cl.daily_cdr_generation_zone
             tz=cl.auto_send_zone
             nowh=datetime.now(UTC).hour
+            LOG.info('now %s tz %s' % (nowh, tz))
             if ((nowh+tz_to_hdelta(tz))  % 24) != 0:
                 continue
             cl.client_name=cl.company
@@ -790,11 +793,11 @@ def do_daily_cdr_delivery():
             cl.customer_gmt=tz
             cli_tab0=query("""select ingress_client_id as id,ingress_id  as rid,'i' as dir from cdr_report_detail  
                 where not ingress_client_id is NULL and
-                report_time between '%s' and '%s' and ingress_client_id=%d 
+                report_time between '%s'::date - interval '2 month' and '%s' and ingress_client_id=%d 
                 group by ingress_client_id,ingress_id ;"""  % (report_start, report_end, cl.client_id))
             cli_tab1=query("""select egress_client_id as id,egress_id as rid,'e' as dir from cdr_report_detail  
                 where not egress_client_id is NULL and
-                report_time between '%s' and '%s' and egress_client_id=%d 
+                report_time between '%s'::date - interval '2 month' and '%s' and egress_client_id=%d 
                 group by egress_client_id,egress_id ;"""  % (report_start, report_end, cl.client_id))
             cli_tab=cli_tab0+cli_tab1
             link=''
@@ -803,8 +806,8 @@ def do_daily_cdr_delivery():
                 url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s&format=plain' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
                 link+='<p><a href="%s">resource %d</a></p>' % (url, clii.rid)
             cl.download_link=link
-            LOG.warning('DAILY CDR DELIVERY: %s,RID:%s,url=%s' %
-                     (cl.client_id, cli.rid, cl.download_link) )
+            LOG.warning('DAILY CDR DELIVERY: %s,url=%s' %
+                     (cl.client_id,  cl.download_link) )
             cl.cdr_count=0 # TODO ?? where is it
             cl.site_name='THE SITE NAME'
             cl.file_name='None'
@@ -821,8 +824,11 @@ def do_daily_cdr_delivery():
             cl.date=date.today()
             cl.time=datetime.now(UTC).timetz()
             cl.now=datetime.now(UTC)
-            finance_email=query("select * from system_parameter")[0].finance_email            
-            send_mail('fromemail', cl.billing_email+';'+finance_email, subj, cont, templ.auto_cdr_cc,  5, alert_rule, cl.client_id)
+            finance_email=query("select * from system_parameter")[0].finance_email
+            to=''
+            if cl.billing_email : to = cl.billing_email
+            if finance_email : to   += ';'+finance_email
+            send_mail('fromemail', to, subj, cont, templ.auto_cdr_cc,  5, alert_rule, cl.client_id)
 
 
 def do_trunk_pending_suspension_notice():
