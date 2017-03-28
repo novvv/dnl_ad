@@ -330,17 +330,21 @@ def do_clear_last_lowbalance_send_time():
     from client c,c4_client_balance b,client_low_balance_config con where
     c.client_id::text=b.client_id 
     and c.client_id=con.client_id
-    and ( (value_type=0 and balance::numeric > notify_client_balance)  
-    or (value_type=1 and balance::numeric > percentage_notify_balance*allowed_credit/100 ) )  
+    and not last_lowbalance_time is null
+    and ( 
+       (value_type=0 and ((mode=1 and balance::numeric > actual_notify_balance) or 
+          (mode=2 and balance::numeric > notify_client_balance)) )   or 
+       (value_type=1 and balance::numeric > percentage_notify_balance*allowed_credit/100 ) )  
     and status=true ) """)
     #zero balance too clear if paid
     query(""" update client c set zero_balance_notice_last_sent = Null,zero_balance_notice_time=0 where client_id in
 ( select  c.client_id from client c,c4_client_balance b,client_low_balance_config l
          where c.client_id::text=b.client_id and c.client_id =l.client_id
-    and status and zero_balance_notice and
-    ( (balance::numeric >= actual_notify_balance  and mode=1 )
+    and status and zero_balance_notice 
+    and not zero_balance_notice_last_sent is null and
+    ( (mode=1 and balance::numeric > 0)
     or
-      (balance::numeric > allowed_credit and mode=2)
+      (mode=2 and balance::numeric > allowed_credit)
     )
 )"""     )    
 
@@ -360,12 +364,13 @@ active: Select status from client ;"""
     #query bad clients
     clients = query("""
     select b.client_id,name,payment_term_id,company,allowed_credit,
-    balance,notify_client_balance,billing_email,finance_email_cc,percentage_notify_balance,value_type
+    balance,notify_client_balance,actual_notify_balance,billing_email,
+    finance_email_cc,percentage_notify_balance,value_type,mode
     from client c,c4_client_balance b,client_low_balance_config con where
     c.client_id::text=b.client_id 
     and c.client_id=con.client_id
-    and ( (value_type=0 and balance::numeric <= notify_client_balance)  
-    or (value_type=1 and balance::numeric < percentage_notify_balance*allowed_credit/100 ) )  
+    and ( (value_type=0 and ((mode=1 and balance::numeric <= actual_notify_balance) or (mode=2 and balance::numeric <= notify_client_balance)))  
+    or (value_type=1 and balance::numeric <= percentage_notify_balance*allowed_credit/100 ) )  
     and status and  (last_lowbalance_time is Null or ( last_lowbalance_time < now()
     - interval '24 hour'  and   extract(day from now()- last_lowbalance_time)  < duplicate_days ) )""")
     try:
@@ -394,7 +399,10 @@ active: Select status from client ;"""
         cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
         cl.balance = '%.2f' % float(cl.balance)
         if cl.value_type == 0:
-        	cl.notify_balance = '$%.2f' % float(cl.notify_client_balance)
+            if mode==1:
+                cl.notify_balance = '$%.2f' % float(cl.actual_notify_balance)
+            else:
+                cl.notify_balance = '$%.2f' % float(cl.notify_client_balance)
         else:
             nb = cl.percentage_notify_balance  #-float(cl.percentage_notify_balance)*float(cl.allowed_credit)/100.0
             cl.notify_balance = '%.2f%%' % nb
@@ -436,20 +444,16 @@ Select credit from client;"""
     alert_rule=sys._getframe().f_code.co_name ; 
     LOG.warning("START: %s" % alert_rule)
       
-    clients1=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,
-        notify_client_balance,actual_notify_balance,billing_email, zero_balance_notice_time,mode
-        from client c,c4_client_balance b,client_low_balance_config l
-         where c.client_id::text=b.client_id and c.client_id =l.client_id
-         and balance::numeric <= actual_notify_balance
-         and status=true and mode=1 and zero_balance_notice and not unlimited_credit
-         and (zero_balance_notice_last_sent is null or zero_balance_notice_last_sent < now() - interval '24 hour') """)
-    clients2=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,
-        notify_client_balance,billing_email,zero_balance_notice_time,mode
-        from client c,c4_client_balance b
-         where c.client_id::text=b.client_id and balance::numeric < allowed_credit
-         and status=true and mode=2 and zero_balance_notice and not unlimited_credit
-         and (zero_balance_notice_last_sent is null or zero_balance_notice_last_sent < now() - interval '24 hour' )""")
-    clients = clients1+clients2
+    clients=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,
+    notify_client_balance,actual_notify_balance,billing_email, zero_balance_notice_time,mode
+    from client c,c4_client_balance b,client_low_balance_config l
+    where c.client_id::text=b.client_id and c.client_id =l.client_id
+    and status and zero_balance_notice and not unlimited_credit and
+    ( (mode=1 and balance::numeric <= 0) or
+      (mode=2 and balance::numeric <= allowed_credit)
+    )
+    and (zero_balance_notice_last_sent is null or 
+        zero_balance_notice_last_sent < now() - interval '24 hour') """)
     try:
         templ = query(
             """select  zerobalance_content as content, zerobalance_subject as subject,*  
