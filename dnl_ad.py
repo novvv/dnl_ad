@@ -399,7 +399,7 @@ active: Select status from client ;"""
         cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
         cl.balance = '%.2f' % float(cl.balance)
         if cl.value_type == 0:
-            if mode==1:
+            if cl.mode==1:
                 cl.notify_balance = '$%.2f' % float(cl.actual_notify_balance)
             else:
                 cl.notify_balance = '$%.2f' % float(cl.notify_client_balance)
