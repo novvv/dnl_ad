@@ -804,9 +804,13 @@ def do_daily_cdr_delivery():
             flds = ','.join(fm)#"31,10,37,11,6,67" #",31,82,107,55,48,61,51,86,22,3,"
             for clii in cli_tab:
                 if not clii.rid : 
-                    clii.rid = 0
+                    continue
                 url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s&format=plain' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
                 link+='<p><a href="%s">resource %d</a></p>' % (url, clii.rid)
+            if link=='':
+                LOG.warning('DAILY CDR DELIVERY (EMPTY LINK - NO SEND): %s,url=%s' %
+                     (cl.client_id,  cl.download_link) )
+                continue
             cl.download_link=link
             LOG.warning('DAILY CDR DELIVERY: %s,url=%s' %
                      (cl.client_id,  cl.download_link) )
