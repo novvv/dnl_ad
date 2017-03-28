@@ -969,7 +969,7 @@ rate_update_file_name:{rate_update_file_name}
               (cl.now, cl.resource_id))
         rollback="update resource set active=true,disable_by_alert=false,update_at='%s',update_by='dnl_ad' where resource_id=%s" % (cl.now, cl.resource_id)
         query(""" insert into modif_log( time ,module,type,name ,detail,rollback,rollback_msg,rollback_flg,rollback_extra_info )
-        values(now(),'Trunk',2,'dnl_ad','Trunk Name:%s','%s','Modify Trunk [%s] operation have been rolled back!',Null,'{"type":2}')
+        values(now(),'Trunk',2,'dnl_ad','Trunk Name:%s',$$%s$$,'Modify Trunk [%s] operation have been rolled back!',Null,'{"type":2}')
         """ % (cl.trunk_name, rollback, cl.trunk_name)
         )
 
