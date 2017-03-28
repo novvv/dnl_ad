@@ -670,7 +670,7 @@ def do_daily_balance_summary():
         """select c.client_id,name,company,daily_cdr_generation_zone,balance,allowed_credit,billing_email
  from client c,c4_client_balance b  where status=true and
         c.client_id::text=b.client_id and
-        --is_daily_balance_notification
+        --is_daily_balance_notification--
         is_auto_summary
         group by c.client_id,name,company,daily_cdr_generation_zone,balance,allowed_credit,billing_email
 """)
