@@ -755,21 +755,15 @@ def do_daily_cdr_delivery():
         raise 
     text=''
     fields=query("SELECT field, label FROM daily_cdr_fields WHERE type = 0 ORDER BY id ASC")
-    fmap={"Call Duration": 31,
-  "Class4 IP":10,  
-  "End Time": 0, 
-  "Ingress Alias":38, 
-"Ingress ID":37, 
-"Orig DST Number":11, 
-"Orig/Term Release":6, 
- "Orig Code":67
-}
+    fmap={'Orig Codecs': '18', 'Egress Bill Result': '56', 'Answer Time': '3', 'Time': '0', 'Call Duration': '31', 'Term Code': '70', 'Orig Code Name': '68', 'PDD(ms)': '32', 'Translation ANI': '64', 'Egress Rate ID': '66', 'Egress Rate Type': '62', 'Term DST Number': '21', 'Egress Cost': '49', 'Ingress Client Currency': '42', 'Ring Time(ms)': '33', 'LRN Number': '60', 'Ingress Client Name': '38', 'Term Delay Second': '86', 'Egress DNIS Type': '61', 'Ingress Rate Type': '59', 'Orig Code': '67', 'Term SRC Number': '19', 'Final Route': '78', 'Start Time': '2', 'Ingress Client Bill Time': '43', 'Response To Ingress': '7', 'Ingress Client Rate': '41', 'Ingress Bill Minutes': '57', 'Dynamic Route Name': '82', 'Ingress Client Cost': '45', 'Term Codecs': '28', 'Q850 Cause Code': '107', 'Response From Egress': '6', 'Ingress Rate ID': '39', 'Term IP': '22', 'Term Country': '72', 'Routing Plan Name': '83', 'Orig Delay Second': '85', 'Orig SRC Number': '9', 'Egress Bill Time': '50', 'Orig Country': '69', 'Egress Six Seconds': '54', 'Egress Name': '51', 'Ingress ID': '37', 'Ingress Client Rate Table Name': '39', 'Orig Call Duration': '87', 'Ingress Client Bill Result': '44', 'Static Route Name': '81', 'Egress Bill Minutes': '55', 'Term Call Id': '23', 'Orig DST Number': '11', 'Term Code Name': '71', 'Egress Client Currency': '53', 'Egress Rate': '48', 'Egress Trunk Trace': '75', 'Release Cause': '1', 'Orig Call Id': '13', 'Orig IP': '10', 'Ingress DNIS Type': '58'} ###, 'Orig/Term Release': ''}
     fm=[]
     for f in fields:
         lab=f.label.strip()
         if  lab in fmap:
             fm.append(str( fmap[lab] ) )
-    
+        else:
+            LOG.warning('CDR field for label "%s" not found' % lab)
+    fm.sort()
     reportdate=date.today()
     reporttime = time(datetime.now(UTC).hour, 0, 0)
     #reporttime=time(0, 0, 0, 0, UTC)
@@ -814,7 +808,7 @@ def do_daily_cdr_delivery():
                 group by egress_client_id,egress_id ;"""  % (report_start, report_end, cl.client_id))
             cli_tab=cli_tab0+cli_tab1
             link=''
-            flds = ','.join(fm)#"31,10,37,11,6,67" #",31,82,107,55,48,61,51,86,22,3,"
+            flds = ','.join(fm) ###"31,10,37,11,6,67" #",31,82,107,55,48,61,51,86,22,3,"
             for clii in cli_tab:
                 if not clii.rid : 
                     continue
@@ -827,7 +821,7 @@ def do_daily_cdr_delivery():
             cl.download_link=link
             LOG.warning('DAILY CDR DELIVERY: %s,url=%s' %
                      (cl.client_id,  cl.download_link) )
-            cl.cdr_count=0 # TODO ?? where is it
+            cl.cdr_count=len(cli_tab) # TODO ?? where is it
             cl.site_name='THE SITE NAME'
             cl.file_name='None'
             # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
