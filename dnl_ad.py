@@ -1,13 +1,18 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-import logging
+import logging,sys
+import ConfigParser
+
+config = ConfigParser.ConfigParser()
+config.read('dnl_ad.ini')
+
 
 #configuration
-CONNECTION_STRING = "host='localhost' dbname='class4_pr' user='postgres'"
-CDR_DOWNLOAD_URL ="http://192.99.10.113:8888"
-PIDFILE = '/var/tmp/dnl_ad.pid'
-LOGFILE = '/var/tmp/dnl_ad.log'
-LOGLEVEL = logging.WARN
+CONNECTION_STRING = config.get('dnl_ad','CONNECTION_STRING')
+CDR_DOWNLOAD_URL =config.get('dnl_ad','CONNECTION_STRING')
+PIDFILE = config.get('dnl_ad','PIDFILE')
+LOGFILE = config.get('dnl_ad','LOGFILE')
+LOGLEVEL = config.getint('dnl_ad','LOGLEVEL')
 #/configuration
 
 #from daemon import runner

@@ -55,14 +55,14 @@ git clone http://stash.denovolab.com/scm/ta/class4-alert---valentin.git
 
 # Configuration
 
-On top in file dnl_ad.py you can check and edit basic configuration parameters:
-\#configuration
+In file "dnl_ad.ini" you can check and edit basic configuration parameters:
+
 CONNECTION_STRING = "host='localhost' dbname='class4_pr' user='postgres'"
 CDR_DOWNLOAD_URL ="http://xx.xx.xx.xx:8888"
 PIDFILE = '/var/tmp/dnl_ad.pid'
 LOGFILE = '/var/tmp/dnl_ad.log'
-LOGLEVEL = logging.WARN
-\#/configuration
+LOGLEVEL = 20
+
 
 Other parameters for properly run set in provider database.
 
