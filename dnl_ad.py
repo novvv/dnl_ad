@@ -599,7 +599,7 @@ order by client.client_id;""" % \
         LOG.warning('DAILY USAGE ! client_id:%s, name:%s' %
                     (cl.client_id, cl.name))
         if not cl.auto_summary_not_zero and cl.total_not_zero_calls_buy == 0  and cl.total_not_zero_calls_sell == 0:
-            LOG.info('Skip auto_summary_not_zero for %s' % cl.client_id)
+            LOG.warning('Skip auto_summary_not_zero for %s' % cl.client_id)
             continue
         sw=query("select alias from resource where client_id =%s" % cl.client_id)
         cl.switch_alias = ",".join([ x.alias for x in sw])
