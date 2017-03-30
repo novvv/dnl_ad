@@ -1,9 +1,12 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 import logging,sys
-import ConfigParser
+try:
+    import ConfigParser as configparser
+except:
+    import configparser
 
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 config.read('dnl_ad.ini')
 
 
