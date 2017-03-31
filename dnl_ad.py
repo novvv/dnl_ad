@@ -211,7 +211,10 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
             for t in to_set:
                     lastto=t
                     #print(t)
-                    server = smtplib.SMTP(host+':'+port)
+                    if port=='465':
+                        server = smtplib.SMTP_SSL(host+':'+port)
+                    else:
+                        server = smtplib.SMTP(host+':'+port)
                     #server.connect()
                     #print 'connect'
                     server.ehlo_or_helo_if_needed()
