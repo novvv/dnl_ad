@@ -12,7 +12,7 @@ config.read('dnl_ad.ini')
 
 #configuration
 CONNECTION_STRING = config.get('dnl_ad','CONNECTION_STRING')
-CDR_DOWNLOAD_URL =config.get('dnl_ad','CONNECTION_STRING')
+CDR_DOWNLOAD_URL =config.get('dnl_ad','CDR_DOWNLOAD_URL')
 PIDFILE = config.get('dnl_ad','PIDFILE')
 LOGFILE = config.get('dnl_ad','LOGFILE')
 LOGLEVEL = config.getint('dnl_ad','LOGLEVEL')
