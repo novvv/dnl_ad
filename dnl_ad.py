@@ -502,7 +502,7 @@ Select credit from client;"""
                  (cl.client_id, cl.billing_email, subj, cont))
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail(templ.zerobalance_from, cl.billing_email,subj, cont, templ.lowbalance_cc,  1, alert_rule, cl.client_id)
+                send_mail('fromemail', cl.billing_email,subj, cont, templ.lowbalance_cc,  1, alert_rule, cl.client_id)
                 #make things after send alert
                 times = int(cl.zero_balance_notice_time)+1
                 query("""update client set
