@@ -541,10 +541,8 @@ time zone, we need to send out a daily usage summary mail. """
     report_start=report_end-timedelta(hours=24)
     clients_buy=query("""
 select client.client_id, 
-daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero,
-
+daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero,mode,
 max(balance) as balance,max(allowed_credit) as allowed_credit,
-
 sum(ingress_total_calls) as total_call_buy,
 sum(not_zero_calls) as total_not_zero_calls_buy,
 sum(ingress_success_calls) as total_success_call_buy,
@@ -569,15 +567,14 @@ where
 client.client_id::text=c4_client_balance.client_id and 
 client.client_id=ingress_client_id
 and client.status and is_auto_summary
-group by client.client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero
+group by client.client_id,ingress_client_id,daily_balance_send_time_zone,billing_email,
+client.name,auto_summary_not_zero,mode
 order by client.client_id;""" % \
                       report_start.strftime("%Y%m%d") )
     clients_sell=query("""
 select client.client_id , 
-daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero,
-
+daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero,mode,
 max(balance) as balance,max(allowed_credit) as allowed_credit,
-
 --sum(ingress_total_calls) 
 0 as total_call_buy,
 -- sum(not_zero_calls) 
@@ -602,7 +599,8 @@ where
 client.client_id::text=c4_client_balance.client_id and 
 client.client_id=egress_client_id
 and client.status and is_auto_summary
-group by client.client_id,egress_client_id,daily_balance_send_time_zone,billing_email,client.name,auto_summary_not_zero
+group by client.client_id,egress_client_id,daily_balance_send_time_zone,billing_email,
+client.name,auto_summary_not_zero,mode
 order by client.client_id;""" % \
                       report_start.strftime("%Y%m%d") )
     clients=clients_buy+clients_sell
@@ -634,7 +632,10 @@ order by client.client_id;""" % \
         cl.ending_balance='%.2f' % b1[0].actual_balance
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
         rem=float(-cl.allowed_credit) - abs( float(cl.ending_balance) )
-        cl.remaining_credit='%.2f' % rem
+        if cl.mode == 1 :
+            cl.remaining_credit='%.2f' % rem
+        else:
+            cl.remaining_credit='N/A'
         cl.balance = '%.2f' % float(cl.balance)
         cl.client_name=cl.name
         cl.begin_time=report_start.strftime("%Y-%m-%d 00:00:00")
@@ -682,12 +683,12 @@ def do_daily_balance_summary():
     report_end=report_start+timedelta(hours=23, minutes=59)
 
     clients=query(
-        """select c.client_id,name,company,daily_cdr_generation_zone,balance,allowed_credit,billing_email
+        """select c.client_id,name,company,daily_cdr_generation_zone,balance,allowed_credit,billing_email,mode
  from client c,c4_client_balance b  where status=true and
         c.client_id::text=b.client_id and
         --is_daily_balance_notification--
         is_auto_summary
-        group by c.client_id,name,company,daily_cdr_generation_zone,balance,allowed_credit,billing_email
+        group by c.client_id,name,company,daily_cdr_generation_zone,balance,allowed_credit,billing_email,mode
 """)
     for cl in clients:
         LOG.warning('NOTIFY DAILY BALANCE SUMMARY! client_id:%s, name:%s' %
@@ -726,7 +727,10 @@ def do_daily_balance_summary():
         cl.client_name=cl.name
         cl.credit_limit = '%.2f' % -float(cl.allowed_credit)
         rem= float(-cl.allowed_credit)-abs(float(cl.ending_balance))
-        cl.remaining_credit = '%.2f' %  rem
+        if cl.mode == 1 :
+            cl.remaining_credit='%.2f' % rem
+        else:
+            cl.remaining_credit='N/A'
         cl.beginning_of_day_balance='%.2f' % bl.actual_balance
         cl.allowed_credit = '%.2f' % -float(cl.allowed_credit)
         cont=process_template(templ.content, cl)
@@ -880,7 +884,10 @@ r.alias as trunk_name,c.company as company_name,c.billing_email,daily_cdr_genera
 c.client_id
 from rate_send_log_detail d, resource r , client c,rate_send_log l
 where r.resource_id = d.resource_id and c.client_id=r.client_id
-and d.log_id= l.id and download_deadline - interval '24 hour' < now()
+and r.active
+and d.log_id= l.id 
+and download_deadline - interval '24 hour' < now()
+and download_deadline > now()
 and l.is_email_alert
 group by
 l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,daily_cdr_generation_zone,
