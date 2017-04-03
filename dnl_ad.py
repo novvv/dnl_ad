@@ -820,7 +820,7 @@ def do_daily_cdr_delivery():
                 if not clii.rid : 
                     continue
                 url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s&format=plain' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
-                link+='<p><a href="%s">Download CDR %d</a></p>' % (url, clii.rid)
+                link+='<p><a href="%s">Download CDR here %d</a></p>' % (url, clii.rid)
             if link=='':
                 LOG.warning('DAILY CDR DELIVERY (EMPTY LINK - NO SEND): %s,url=%s' %
                      (cl.client_id,  cl.download_link) )
