@@ -171,7 +171,7 @@ def get_mail_params(fr):
         if  fr in p.__dict__:
             frm_id=p.__dict__[fr]
             frm=query("select id,email from mail_sender order by email where id = %d" % frm_id)[0].email
-        elif fr='default':
+        elif fr=='default':
             frm=default
         else:
             frm=fr
