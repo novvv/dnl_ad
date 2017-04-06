@@ -166,17 +166,21 @@ LOG = logging.getLogger("my-logger")
 def get_mail_params(fr):
     """Get parameters for sending mail from system configuration table."""
     try:
-        p = query("select * from system_parameter")[0]
-    except Exception as e:
-        LOG.error("system_parameters not ready: %s", str(e)+traceback.format_exc())
-        raise e
-    if  fr in p.__dict__:
-       frm=p.__dict__[fr]
-    else:
-        frm=fr
-    return (
+        default = query("select * from system_parameter")[0].fromemail
+        p = query("select * from mail_tmplate")[0]
+        if  fr in p.__dict__:
+            frm_id=p.__dict__[fr]
+            frm=query("select id,email from mail_sender order by email where id = %d" % frm_id)[0].email
+        elif fr='default':
+            frm=default
+        else:
+            frm=fr
+        return (
         (p.smtphost, p.smtpport, p.emailusername, \
          p.emailpassword, frm)
+    except Exception as e:
+        LOG.error("Email parameters  not ready: %s", str(e)+traceback.format_exc())
+        raise e
     )
 
 def cleanhtml(raw_html):
@@ -189,7 +193,7 @@ def cleanhtml(raw_html):
 def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', client_id=0):
     """sending email."""
     (host, port, user, passw, mfrom) = get_mail_params(from_field)
-    if LOGLEVEL == logging.DEBUG:
+    if LOGLEVEL > logging.DEBUG:
         subject = 'DEBUG mail for %s %s' % (to, subject)
         to = 'novvvster@gmail.com'
     msg = MIMEMultipart()
@@ -422,7 +426,7 @@ active: Select status from client ;"""
         LOG.debug("%s : %s subject: %s content: %s" %
                  (cl.client_id, cl.billing_email, subj, cont))
         if cl.billing_email and '@' in cl.billing_email :
-            send_mail('fromemail', cl.billing_email, subj, cont, templ.lowbalance_cc,  1, alert_rule, cl.client_id)
+            send_mail('lowbalance_from', cl.billing_email, subj, cont, templ.lowbalance_cc,  1, alert_rule, cl.client_id)
         #make things after send alert
         #times = int(cl.lowbalance_notication_time)+1
         #if cl.notify_client_balance:
@@ -502,7 +506,7 @@ Select credit from client;"""
                  (cl.client_id, cl.billing_email, subj, cont))
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email,subj, cont, templ.lowbalance_cc,  1, alert_rule, cl.client_id)
+                send_mail('zerobalance_from', cl.billing_email,subj, cont, templ.lowbalance_cc,  1, alert_rule, cl.client_id)
                 #make things after send alert
                 times = int(cl.zero_balance_notice_time)+1
                 query("""update client set
@@ -739,7 +743,7 @@ def do_daily_balance_summary():
         #subj=process_template("<p>Daily balance summary for {client_name}</p>", cl)
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, cont, templ.auto_balance_cc,  8, alert_rule, cl.client_id)
+                send_mail('auto_summary_from', cl.billing_email, subj, cont, templ.auto_balance_cc,  8, alert_rule, cl.client_id)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
@@ -848,7 +852,7 @@ def do_daily_cdr_delivery():
             to=''
             if cl.billing_email : to = cl.billing_email
             if finance_email : to   += ';'+finance_email
-            send_mail('fromemail', to, subj, cont, templ.auto_cdr_cc,  5, alert_rule, cl.client_id)
+            send_mail('auto_cdr_from', to, subj, cont, templ.auto_cdr_cc,  5, alert_rule, cl.client_id)
 
 
 def do_trunk_pending_suspension_notice():
