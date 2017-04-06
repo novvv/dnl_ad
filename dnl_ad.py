@@ -177,11 +177,11 @@ def get_mail_params(fr):
             frm=fr
         return (
         (p.smtphost, p.smtpport, p.emailusername, \
-         p.emailpassword, frm)
+         p.emailpassword, frm))
     except Exception as e:
         LOG.error("Email parameters  not ready: %s", str(e)+traceback.format_exc())
         raise e
-    )
+
 
 def cleanhtml(raw_html):
   cleanr = re.compile('<.*?>')
