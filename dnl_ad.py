@@ -166,7 +166,8 @@ LOG = logging.getLogger("my-logger")
 def get_mail_params(fr):
     """Get parameters for sending mail from system configuration table."""
     try:
-        default = query("select * from system_parameter")[0].fromemail
+        m = query("select * from system_parameter")[0]
+        default = m.fromemail
         p = query("select * from mail_tmplate")[0]
         if  fr in p.__dict__:
             frm_id=p.__dict__[fr]
@@ -176,8 +177,8 @@ def get_mail_params(fr):
         else:
             frm=fr
         return (
-        (p.smtphost, p.smtpport, p.emailusername, \
-         p.emailpassword, frm))
+        (m.smtphost, m.smtpport, m.emailusername, \
+         m.emailpassword, frm))
     except Exception as e:
         LOG.error("Email parameters  not ready: %s", str(e)+traceback.format_exc())
         raise e
