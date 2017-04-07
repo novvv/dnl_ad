@@ -194,9 +194,6 @@ def cleanhtml(raw_html):
 def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', client_id=0):
     """sending email."""
     (host, port, user, passw, mfrom) = get_mail_params(from_field)
-    if LOGLEVEL > logging.DEBUG:
-        subject = 'DEBUG mail for %s %s' % (to, subject)
-        to = 'novvvster@gmail.com'
     msg = MIMEMultipart()
     msg['Subject'] = subject
     msg['From'] = mfrom
