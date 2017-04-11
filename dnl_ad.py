@@ -167,15 +167,13 @@ def get_mail_params(fr):
     """Get parameters for sending mail from system configuration table."""
     try:
         m = query("select * from system_parameter")[0]
-        default = m.fromemail
+        frm = m.fromemail
         p = query("select * from mail_tmplate")[0]
         if  fr in p.__dict__:
             frm_id=p.__dict__[fr]
-            frm=query("select id,email from mail_sender where id = %d" % int(frm_id))[0].email
-        elif fr=='default' or fr=='fromemail':
-            frm=default
-        else:
-            frm=fr
+            fe=query("select id,email from mail_sender where id = %d" % int(frm_id))
+            if fe:
+                frm=fe[0].email
         return (
         (m.smtphost, m.smtpport, m.emailusername, \
          m.emailpassword, frm))
