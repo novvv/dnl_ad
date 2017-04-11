@@ -653,7 +653,7 @@ order by client.client_id;""" % \
         subj=process_template(templ.subject, cl)
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, cont, templ.auto_summary_cc,  2, alert_rule, cl.client_id)
+                send_mail('auto_summary_from', cl.billing_email, subj, cont, templ.auto_summary_cc,  2, alert_rule, cl.client_id)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
@@ -918,7 +918,7 @@ rate_update_file_name:{rate_update_file_name}
             subj=process_template('TRUNK {trunk_name}, company {company_name}', cl)        
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, cont, '',  35, alert_rule, cl.client_id)
+                send_mail('rate_watch_alert_email_from', cl.billing_email, subj, cont, '',  35, alert_rule, cl.client_id)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
@@ -983,18 +983,22 @@ rate_update_file_name:{rate_update_file_name}
             subj=process_template('TRUNK SUSPENDED {trunk_name}, company {company_name}', cl)        
         try:
             if cl.billing_email and '@' in cl.billing_email:
-                send_mail('fromemail', cl.billing_email, subj, cont, '',  35, alert_rule, cl.client_id)
+                send_mail('no_download_rate_from', cl.billing_email, subj, cont, '',  35, alert_rule, cl.client_id)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
         #do trunk blocking
-        query(
+        try:
+            query(
             "update resource set active=false,disable_by_alert=true,update_at='%s',update_by='dnl_ad' where resource_id=%s" %
               (cl.now, cl.resource_id))
-        rollback="update resource set active=true,disable_by_alert=false,update_at='%s',update_by='dnl_ad' where resource_id=%s" % (cl.now, cl.resource_id)
-        query(""" insert into modif_log( time ,module,type,name ,detail,rollback,rollback_msg,rollback_flg,rollback_extra_info )
-        values(now(),'Trunk',2,'dnl_ad','Trunk Name:%s',$$%s$$,'Modify Trunk [%s] operation have been rolled back!',Null,'{"type":2}')
-        """ % (cl.trunk_name, rollback, cl.trunk_name)
-        )
+            rollback="update resource set active=true,disable_by_alert=false,update_at='%s',update_by='dnl_ad' where resource_id=%s" % (cl.now, cl.resource_id)
+            query(""" insert into modif_log( time ,module,type,name ,detail,rollback,rollback_msg,rollback_flg,rollback_extra_info )
+            values(now(),'Trunk',2,'dnl_ad','Trunk Name:%s',$$%s$$,'Modify Trunk [%s] operation have been rolled back!',Null,'{"type":2}')
+            """ % (cl.trunk_name, rollback, cl.trunk_name)
+            )
+        except Exception as e:
+            LOG.error('cannot update resource table:'+str(e))
+            
 
 def fifteen_minute_job():
     "call this each 15 minutes"
