@@ -407,6 +407,7 @@ active: Select status from client ;"""
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
         cl.company_name = cl.company
+        cl.client_name = cl.name
         cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
         cl.balance = '%.2f' % float(cl.balance)
         if cl.value_type == 0:
@@ -618,15 +619,18 @@ order by client.client_id;""" % \
             "SELECT * FROM balance_history_actual  WHERE  date = '%s'::date- interval '1 day'\
             AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
         if len(b0)<1:
-            LOG.error('No balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
+            LOG.warning('No incoming balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
             continue
         b1=query(
             "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
             AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
         if len(b1)<1:
-             LOG.error('No balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
-             continue
+            LOG.warning('No current balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
+            continue
         #raise
+        if len(b0)+len(b1) == 0:
+            LOG.error('No balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
+            continue
         bl=b1[0]
         cl.beginning_balance='%.2f' % b0[0].actual_balance
         cl.ending_balance='%.2f' % b1[0].actual_balance
@@ -650,7 +654,7 @@ order by client.client_id;""" % \
         cont=process_template(templ.content, cl)
         subj=process_template(templ.subject, cl)
         try:
-            if cl.billing_email and '@' in cl.billing_email:
+            if len(b0) and len(b1) and cl.billing_email and '@' in cl.billing_email:
                 send_mail('auto_summary_from', cl.billing_email, subj, cont, templ.auto_summary_cc,  2, alert_rule, cl.client_id)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
@@ -697,6 +701,7 @@ def do_daily_balance_summary():
         sw=query("select alias from resource where client_id =%s" % cl.client_id)
         cl.switch_alias = ",".join([ x.alias for x in sw])
         cl.company_name=cl.company
+        cl.client_name=cl.name
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
@@ -801,7 +806,8 @@ def do_daily_cdr_delivery():
             LOG.info('now %s tz %s' % (nowh, tz))
             if ((nowh+tz_to_hdelta(tz))  % 24) != 0:
                 continue
-            cl.client_name=cl.company
+            cl.client_name=cl.name
+            cl.company_name=cl.company
             cl.begin_time=str(tz_align(report_start, tz))[0:19]
             cl.end_time=str(tz_align(report_end, tz))[0:19]
             cl.customer_gmt=tz
@@ -961,10 +967,9 @@ c.client_id
     for cl in clients:
         LOG.warning('TRUNK SUSPENDED! %s, company %s' %
                     (cl.trunk_name, cl.company_name))
-                    
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
-        cl.now=datetime.now(UTC)
+        cl.effective_date=datetime.now(UTC)
         try:
           cont=process_template(templ.content, cl)
         except:
