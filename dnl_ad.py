@@ -266,7 +266,8 @@ def query(sql, all=True):
     def _res(row, descr):
         "Make one record as class Rec"
         class Rec:
-            pass
+            def __repr__(self):
+                return str(self.__dict__)
         r = Rec()
         i = 0
         for ds in descr:
@@ -788,12 +789,12 @@ def do_daily_cdr_delivery():
     cdr_tab0=query("""select ingress_client_id as id
     from cdr_report_detail  
     where not ingress_client_id is NULL 
-    and report_time between '%s'::date - interval '2 month' and '%s' 
+    and report_time between '%s'::date - interval '2 day' and '%s' 
     group by ingress_client_id;"""  % (report_start, report_end))
     cdr_tab1=query("""select egress_client_id as id
     from cdr_report_detail  
     where not egress_client_id is NULL 
-    and report_time between '%s'::date - interval '2 month' and '%s' 
+    and report_time between '%s'::date - interval '2 day' and '%s' 
     group by egress_client_id ;"""  % (report_start, report_end))
     for cli in cdr_tab0+cdr_tab1:
         cdr_clients=query(""" select * from client 
@@ -813,11 +814,11 @@ def do_daily_cdr_delivery():
             cl.customer_gmt=tz
             cli_tab0=query("""select ingress_client_id as id,ingress_id  as rid,'i' as dir from cdr_report_detail  
                 where not ingress_client_id is NULL and
-                report_time between '%s'::date - interval '2 month' and '%s' and ingress_client_id=%d 
+                report_time between '%s'::date - interval '2 day' and '%s' and ingress_client_id=%d 
                 group by ingress_client_id,ingress_id ;"""  % (report_start, report_end, cl.client_id))
             cli_tab1=query("""select egress_client_id as id,egress_id as rid,'e' as dir from cdr_report_detail  
                 where not egress_client_id is NULL and
-                report_time between '%s'::date - interval '2 month' and '%s' and egress_client_id=%d 
+                report_time between '%s'::date - interval '2 day' and '%s' and egress_client_id=%d 
                 group by egress_client_id,egress_id ;"""  % (report_start, report_end, cl.client_id))
             cli_tab=cli_tab0+cli_tab1
             link=''
