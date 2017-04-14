@@ -703,7 +703,7 @@ def do_daily_balance_summary():
         cl.switch_alias = ",".join([ x.alias for x in sw])
         cl.company_name=cl.company
         cl.client_name=cl.name
-        cl.current_date=date.today()
+        cl.current_day=datetime.now(UTC).date()
         cl.current_time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
         #tz=cl.daily_cdr_generation_zone
