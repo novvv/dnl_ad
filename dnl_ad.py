@@ -233,7 +233,7 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
             LOG.error("MAIL EROR: from:%s to:%s err: %s" % (mfrom, lastto , str(e) ) )
             errors = errors+str(e)
             status=1
-        LOG.warning('MAIL SENT: from: %s to: %s status: %d subj: %s body:%s ' % (mfrom, to, status, subject,  cleanhtml(text)[0:500]))
+        LOG.warning('MAIL SENT: from: %s to: %s status: %d subj: %s body:%s ' % (mfrom, to, status, subject,  cleanhtml(text)[0:1024]))
         """
   id integer NOT NULL DEFAULT nextval('daily_email_log_id_seq'::regclass),
   send_time timestamp with time zone,
@@ -703,8 +703,8 @@ def do_daily_balance_summary():
         cl.switch_alias = ",".join([ x.alias for x in sw])
         cl.company_name=cl.company
         cl.client_name=cl.name
-        cl.date=date.today()
-        cl.time=datetime.now(UTC).timetz()
+        cl.current_date=date.today()
+        cl.current_time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
         #tz=cl.daily_cdr_generation_zone
         #cl.start_time=str(tz_align(report_start, tz))[0:19]
@@ -727,7 +727,10 @@ def do_daily_balance_summary():
         #raise
         bl=b1[0]
         cl.beginning_balance='%.2f' % b0[0].actual_balance
+        cl.begining_of_day = report_start ##-timedelta(hours=24)
+        cl.beginning_of_day_balance=cl.beginning_balance
         cl.ending_balance='%.2f' % b1[0].actual_balance
+        cl.current_balance=cl.ending_balance
         cl.buy_amount=bl.unbilled_incoming_traffic
         cl.sell_amount=bl.unbilled_outgoing_traffic
         cl.client_name=cl.name
@@ -737,7 +740,7 @@ def do_daily_balance_summary():
             cl.remaining_credit='%.2f' % rem
         else:
             cl.remaining_credit='N/A'
-        cl.beginning_of_day_balance='%.2f' % bl.actual_balance
+        #cl.beginning_of_day_balance='%.2f' % bl.actual_balance
         cl.allowed_credit = '%.2f' % -float(cl.allowed_credit)
         cont=process_template(templ.content, cl)
         subj=process_template(templ.subject, cl)
