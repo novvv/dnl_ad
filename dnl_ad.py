@@ -640,7 +640,7 @@ order by client.client_id;""" % \
         if cl.mode == 1 :
             cl.remaining_credit='%.2f' % rem
         else:
-            cl.remaining_credit='N/A'
+            cl.remaining_credit='0' #'N/A'
         cl.balance = '%.2f' % float(cl.balance)
         cl.client_name=cl.name
         cl.begin_time=report_start.strftime("%Y-%m-%d 00:00:00")
@@ -739,7 +739,7 @@ def do_daily_balance_summary():
         if cl.mode == 1 :
             cl.remaining_credit='%.2f' % rem
         else:
-            cl.remaining_credit='N/A'
+            cl.remaining_credit='0' #'N/A'
         #cl.beginning_of_day_balance='%.2f' % bl.actual_balance
         cl.allowed_credit = '%.2f' % -float(cl.allowed_credit)
         cont=process_template(templ.content, cl)
