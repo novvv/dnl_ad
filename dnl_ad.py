@@ -1189,11 +1189,11 @@ class MyDaemon(Daemon):
             schedule.every(5).minutes.do(do_notify_client_balance)
             schedule.every(5).minutes.do(do_notify_zero_balance)
             
-            schedule.every().hours.at(':15').do(do_daily_usage_summary)
-            schedule.every().hours.at(':15').do(do_daily_balance_summary)
-            schedule.every().hours.at(':01').do(do_daily_cdr_delivery)
-            schedule.every().hours.at(':02').do(do_trunk_pending_suspension_notice)
-            schedule.every().hours.at(':03').do(do_trunk_is_suspended_notice)
+            schedule.every().hours.at(':00').do(do_daily_usage_summary)
+            schedule.every().hours.at(':00').do(do_daily_balance_summary)
+            schedule.every().hours.at(':00').do(do_daily_cdr_delivery)
+            schedule.every().hours.at(':00').do(do_trunk_pending_suspension_notice)
+            schedule.every().hours.at(':00').do(do_trunk_is_suspended_notice)
             
         #initial one run;
         while True:
