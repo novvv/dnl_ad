@@ -621,10 +621,8 @@ order by client.client_id;""" % \
             AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
         if len(b0)<1:
             LOG.warning('No incoming balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
-            continue
-        b1=query(
-            "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
-            AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
+        b1=query("SELECT *,balance as actual_balance FROM c4_client_balance \
+            WHERE client_id = '%s'" %  cl.client_id  )
         if len(b1)<1:
             LOG.warning('No current balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
             continue
@@ -718,11 +716,10 @@ def do_daily_balance_summary():
             AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
         if len(b0)<1:
             continue
-        b1=query(
-            "SELECT * FROM balance_history_actual  WHERE  date = '%s'\
-            AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
+        b1=query("SELECT *,balance as actual_balance FROM c4_client_balance \
+            WHERE client_id = '%s'" %  cl.client_id  )
         if len(b1)<1:
-             LOG.error('No balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
+             LOG.error('No balance records for id:%s name:%s' % (cl.client_id,cl.name) )
              continue
         #raise
         bl=b1[0]
@@ -763,7 +760,7 @@ def do_daily_cdr_delivery():
     alert_rule=sys._getframe().f_code.co_name ; 
     LOG.warning("START: %s" % alert_rule)
     try:
-        templ=query('select download_cdr_subject as subject,download_cdr_content as content,* from mail_tmplate')[0]
+        templ=query('select auto_cdr_subject as subject, auto_cdr_content as content,* from mail_tmplate')[0]
         if templ.subject == '' or templ.content == '':
             raise Exception('Template send_cdr!')
     except Exception as e:
