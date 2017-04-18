@@ -491,8 +491,11 @@ Select credit from client;"""
         cl.time = datetime.now(UTC).timetz()
         cl.now = datetime.now(UTC)
         cl.company_name = cl.company
-        cl.client_name = cl.name 
-        cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
+        cl.client_name = cl.name
+        if cl.mode == 2:
+            cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
+        else:
+            cl.allow_credit = '0'
         cl.balance = '%.2f' % float(cl.balance)
         if cl.mode==1:
             cl.notify_balance='%.2f' % cl.actual_notify_balance
@@ -635,7 +638,7 @@ order by client.client_id;""" % \
         cl.ending_balance='%.2f' % b1[0].actual_balance
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
         rem=float(-cl.allowed_credit) - abs( float(cl.ending_balance) )
-        if cl.mode == 1 :
+        if cl.mode == 2 :
             cl.remaining_credit='%.2f' % rem
         else:
             cl.remaining_credit='0' #'N/A'
@@ -728,12 +731,14 @@ def do_daily_balance_summary():
         cl.beginning_of_day_balance=cl.beginning_balance
         cl.ending_balance='%.2f' % b1[0].actual_balance
         cl.current_balance=cl.ending_balance
-        cl.buy_amount=bl.unbilled_incoming_traffic
-        cl.sell_amount=bl.unbilled_outgoing_traffic
+        incoming=b0[0].unbilled_incoming_traffic
+        outcoming=b0[0].unbilled_outgoing_traffic
+        cl.buy_amount=incoming
+        cl.sell_amount=outcoming
         cl.client_name=cl.name
         cl.credit_limit = '%.2f' % -float(cl.allowed_credit)
         rem= float(-cl.allowed_credit)-abs(float(cl.ending_balance))
-        if cl.mode == 1 :
+        if cl.mode == 2 :
             cl.remaining_credit='%.2f' % rem
         else:
             cl.remaining_credit='0' #'N/A'
