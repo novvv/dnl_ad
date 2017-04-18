@@ -500,7 +500,11 @@ Select credit from client;"""
         if cl.mode==1:
             cl.notify_balance='%.2f' % cl.actual_notify_balance
         else:
-        	cl.notify_balance = '%.2f' % cl.notify_client_balance
+            if cl.value_type==0:
+                cl.notify_balance = '%.2f' % cl.notify_client_balance
+            else:
+                nb = cl.percentage_notify_balance  #-float(cl.percentage_notify_balance)*float(cl.allowed_credit)/100.0
+                cl.notify_balance = '%.2f%%' % nb
         subj = process_template(templ.subject, cl)
         cont = process_template(templ.content, cl)
         LOG.info("%s : %s subject: %s content: %s" %
