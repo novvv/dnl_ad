@@ -458,7 +458,8 @@ Select credit from client;"""
     LOG.warning("START: %s" % alert_rule)
       
     clients=query("""select  b.client_id,name,payment_term_id,company,allowed_credit,balance,
-    notify_client_balance,actual_notify_balance,billing_email, zero_balance_notice_time,value_type,mode
+    notify_client_balance,actual_notify_balance,billing_email, zero_balance_notice_time,
+    percentage_notify_balance,value_type,mode
     from client c,c4_client_balance b,client_low_balance_config l
     where c.client_id::text=b.client_id and c.client_id =l.client_id
     and status and zero_balance_notice and not unlimited_credit and
