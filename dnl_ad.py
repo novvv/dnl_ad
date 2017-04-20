@@ -821,6 +821,7 @@ def do_daily_cdr_delivery():
             cl.company_name=cl.company
             cl.begin_time=str(tz_align(report_start, tz))[0:19]
             cl.end_time=str(tz_align(report_end, tz))[0:19]
+            cl.current_day=date.today()
             cl.customer_gmt=tz
             cli_tab0=query("""select ingress_client_id as id,ingress_id  as rid,'i' as dir from cdr_report_detail  
                 where not ingress_client_id is NULL and
