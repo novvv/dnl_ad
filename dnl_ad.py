@@ -178,7 +178,7 @@ def get_mail_params(fr):
         return (
         (m.smtphost, m.smtpport, m.emailusername, \
          m.emailpassword, efrom))
-    except Exception as e:___) ___-__-__
+    except Exception as e:
         LOG.error("Email parameters  not ready: %s", str(e)+traceback.format_exc())
         raise e
 
