@@ -171,13 +171,14 @@ def get_mail_params(fr):
         p = query("select * from mail_tmplate")[0]
         if  fr in p.__dict__:
             frm_id=p.__dict__[fr]
-            fe=query("select id,email from mail_sender where id = %d" % int(frm_id))
-            if fe and fe[0].email:
-                efrom=fe[0].email
+            if frm != 'default':
+                fe=query("select id,email from mail_sender where id = %d" % int(frm_id))
+                if fe and fe[0].email:
+                    efrom=fe[0].email
         return (
         (m.smtphost, m.smtpport, m.emailusername, \
          m.emailpassword, efrom))
-    except Exception as e:
+    except Exception as e:___) ___-__-__
         LOG.error("Email parameters  not ready: %s", str(e)+traceback.format_exc())
         raise e
 
