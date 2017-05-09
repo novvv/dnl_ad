@@ -802,12 +802,12 @@ def do_daily_cdr_delivery():
     where not ingress_client_id is NULL 
     and report_time between '%s'::date - interval '2 day' and '%s' 
     group by ingress_client_id;"""  % (report_start, report_end))
-    cdr_tab1=query("""select egress_client_id as id
-    from cdr_report_detail  
-    where not egress_client_id is NULL 
-    and report_time between '%s'::date - interval '2 day' and '%s' 
-    group by egress_client_id ;"""  % (report_start, report_end))
-    for cli in cdr_tab0+cdr_tab1:
+    #cdr_tab1=query("""select egress_client_id as id
+    #from cdr_report_detail  
+    #where not egress_client_id is NULL 
+    #and report_time between '%s'::date - interval '2 day' and '%s' 
+    #group by egress_client_id ;"""  % (report_start, report_end))
+    for cli in cdr_tab0: #+cdr_tab1:
         cdr_clients=query(""" select * from client 
         where daily_cdr_generation and client_id=%d""" % cli.id)
         for cl in cdr_clients:
@@ -824,15 +824,15 @@ def do_daily_cdr_delivery():
             cl.end_time=str(tz_align(report_end, tz))[0:19]
             cl.current_day=date.today()
             cl.customer_gmt=tz
-            cli_tab0=query("""select ingress_client_id as id,ingress_id  as rid,'i' as dir from cdr_report_detail  
-                where not ingress_client_id is NULL and
+            cli_tab0=query("""select ingress_client_id as id,ingress_id  as rid,'i' as dir from cdr_report_detail d,resource r  
+                where not ingress_client_id is NULL and not_zero_calls >0 and d.ingress_id=r.resource_id and r.active and
                 report_time between '%s'::date - interval '2 day' and '%s' and ingress_client_id=%d 
                 group by ingress_client_id,ingress_id ;"""  % (report_start, report_end, cl.client_id))
-            cli_tab1=query("""select egress_client_id as id,egress_id as rid,'e' as dir from cdr_report_detail  
-                where not egress_client_id is NULL and
-                report_time between '%s'::date - interval '2 day' and '%s' and egress_client_id=%d 
-                group by egress_client_id,egress_id ;"""  % (report_start, report_end, cl.client_id))
-            cli_tab=cli_tab0+cli_tab1
+            #cli_tab1=query("""select egress_client_id as id,egress_id as rid,'e' as dir from cdr_report_detail  
+            #    where not egress_client_id is NULL and
+            #    report_time between '%s'::date - interval '2 day' and '%s' and egress_client_id=%d 
+            #    group by egress_client_id,egress_id ;"""  % (report_start, report_end, cl.client_id))
+            cli_tab=cli_tab0#+cli_tab1
             link=''
             flds = ','.join(fm) ###"31,10,37,11,6,67" #",31,82,107,55,48,61,51,86,22,3,"
             for clii in cli_tab:
