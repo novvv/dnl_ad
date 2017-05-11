@@ -254,12 +254,15 @@ def send_mail(from_field, to, subject, text, cc='', type=0, alert_rule='', clien
   alert_rule character varying(500),
   CONSTRAINT daily_email_log_id PRIMARY KEY (id)
         """
-        email_addresses=json.dumps(to+';'+cc)
-        text=json.dumps(text)
-        subject=json.dumps(subject)
-        errors=json.dumps(errors).replace("'", '"')
-        query("""insert into email_log(send_time,client_id,email_addresses,type,status,error,subject,content,alert_rule )
+        try:
+            email_addresses=json.dumps(to+';'+cc)
+            text=json.dumps(text)
+            subject=json.dumps(subject)
+            errors=json.dumps(errors).replace("'", '"')
+            query("""insert into email_log(send_time,client_id,email_addresses,type,status,error,subject,content,alert_rule )
                 values(date_trunc('second',now()),%d,'%s',%d,%d,'%s','%s','%s','%s')  """ %  (int(client_id), email_addresses[0:500], type, status, errors, subject[0:100], text, alert_rule[0:500]) )
+        except:
+            LOG.warning('MAIL SENT: cannot write in email_log table')
         #if status!=0:
         #   raise 
 def query(sql, all=True):
