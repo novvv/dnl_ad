@@ -791,6 +791,9 @@ def do_daily_cdr_delivery():
         else:
             LOG.warning('CDR field for label "%s" not found' % lab)
     fm.sort()
+    flds='0,9,11,41,45'#['Time' , Orig SRC Number, origination_destinatino_number, ingress_billed_duration, ingress_rate, ingress_cost
+    if fm:
+        flds = ','.join(fm) ###"31,10,37,11,6,67" #",31,82,107,55,48,61,51,86,22,3,"
     reportdate=date.today()
     reporttime = time(datetime.now(UTC).hour, 0, 0)
     #reporttime=time(0, 0, 0, 0, UTC)
@@ -837,22 +840,20 @@ def do_daily_cdr_delivery():
             #    group by egress_client_id,egress_id ;"""  % (report_start, report_end, cl.client_id))
             cli_tab=cli_tab0#+cli_tab1
             link=''
-            flds = ','.join(fm) ###"31,10,37,11,6,67" #",31,82,107,55,48,61,51,86,22,3,"
             for clii in cli_tab:
                 if not clii.rid : 
                     continue
                 url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s&format=plain' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
                 link+='<p><a href="%s">Download CDR here %d</a></p>' % (url, clii.rid)
             if link=='':
-                LOG.warning('DAILY CDR DELIVERY (EMPTY LINK - NO SEND): %s,url=%s' %
-                     (cl.client_id,  cl.download_link) )
+                LOG.warning('DAILY CDR DELIVERY (EMPTY LINK - NO SEND): %s' % cl.client_id )
                 continue
             cl.download_link=link
             LOG.warning('DAILY CDR DELIVERY: %s,url=%s' %
                      (cl.client_id,  cl.download_link) )
             cl.cdr_count=len(cli_tab) # TODO ?? where is it
             cl.site_name='THE SITE NAME'
-            cl.file_name='None'
+            cl.file_name=''
             # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
             # cl)
             #
