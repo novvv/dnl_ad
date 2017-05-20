@@ -508,7 +508,7 @@ Select credit from client;"""
             if cl.value_type==0:
                 if cl.notify_client_balance:
                     cl.notify_balance = '%.2f' % cl.notify_client_balance
-                else
+                else:
                     cl.notify_balance = '0'
             else:
                 nb = cl.percentage_notify_balance  #-float(cl.percentage_notify_balance)*float(cl.allowed_credit)/100.0
