@@ -830,7 +830,7 @@ def do_daily_cdr_delivery():
             cl.end_time=str(tz_align(report_end, tz))[0:19]
             cl.current_day=date.today()
             cl.customer_gmt=tz
-            cli_tab0=query("""select ingress_client_id as id,ingress_id  as rid,'i' as dir from cdr_report_detail d,resource r  
+            cli_tab0=query("""select ingress_client_id as id,ingress_id  as rid,'i' as dir,r.alias from cdr_report_detail d,resource r  
                 where not ingress_client_id is NULL and not_zero_calls >0 and d.ingress_id=r.resource_id and r.active and
                 report_time between '%s'::date - interval '2 day' and '%s' and ingress_client_id=%d 
                 group by ingress_client_id,ingress_id ;"""  % (report_start, report_end, cl.client_id))
@@ -844,7 +844,7 @@ def do_daily_cdr_delivery():
                 if not clii.rid : 
                     continue
                 url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s&format=plain' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
-                link+='<p><a href="%s">Download CDR here %d</a></p>' % (url, clii.rid)
+                link+='<p><a href="%s">Trunk name %d</a></p>' % (url, clii.alias)
             if link=='':
                 LOG.warning('DAILY CDR DELIVERY (EMPTY LINK - NO SEND): %s' % cl.client_id )
                 continue
