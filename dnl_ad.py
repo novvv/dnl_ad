@@ -87,6 +87,15 @@ def get_systz():
         systz='+00:00'
     return systz
 
+def _f(balance):
+    if not balance:
+        return '0'
+    balance=float(balance)
+    if balance<0:
+        return '(%.2f)' % -balance
+    else:
+        return '%.2f' % balance
+
 class GZipRotator:
 
 
@@ -414,12 +423,12 @@ active: Select status from client ;"""
         cl.company_name = cl.company
         cl.client_name = cl.name
         cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
-        cl.balance = '%.2f' % float(cl.balance)
+        cl.balance =  _f(cl.balance)
         if cl.value_type == 0:
             if cl.mode==1:
-                cl.notify_balance = '$%.2f' % float(cl.actual_notify_balance)
+                cl.notify_balance =  _f(cl.actual_notify_balance)
             else:
-                cl.notify_balance = '$%.2f' % float(cl.notify_client_balance)
+                cl.notify_balance = _f(cl.notify_client_balance)
         else:
             nb = cl.percentage_notify_balance  #-float(cl.percentage_notify_balance)*float(cl.allowed_credit)/100.0
             cl.notify_balance = '%.2f%%' % nb
@@ -501,13 +510,13 @@ Select credit from client;"""
             cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
         else:
             cl.allow_credit = '0'
-        cl.balance = '%.2f' % float(cl.balance)
+        cl.balance = _f(cl.balance)
         if cl.mode==1:
-            cl.notify_balance='%.2f' % cl.actual_notify_balance
+            cl.notify_balance=_f(cl.actual_notify_balance)
         else:
             if cl.value_type==0:
                 if cl.notify_client_balance:
-                    cl.notify_balance = '%.2f' % cl.notify_client_balance
+                    cl.notify_balance = _f(cl.notify_client_balance)
                 else:
                     cl.notify_balance = '0'
             else:
@@ -646,15 +655,15 @@ order by client.client_id;""" % \
             LOG.error('No balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
             continue
         bl=b1[0]
-        cl.beginning_balance='%.2f' % b0[0].actual_balance
-        cl.ending_balance='%.2f' % b1[0].actual_balance
+        cl.beginning_balance=_f( b0[0].actual_balance )
+        cl.ending_balance=_f( b1[0].actual_balance )
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
-        rem=float(-cl.allowed_credit) - abs( float(cl.ending_balance) )
+        rem=float(-cl.allowed_credit) - abs( b1[0].actual_balance )
         if cl.mode == 2 :
             cl.remaining_credit='%.2f' % rem
         else:
             cl.remaining_credit='0' #'N/A'
-        cl.balance = '%.2f' % float(cl.balance)
+        cl.balance = _f(cl.balance)
         cl.client_name=cl.name
         cl.begin_time=report_start.strftime("%Y-%m-%d 00:00:00")
         cl.end_time=report_start.strftime("%Y-%m-%d 23:59:59")
@@ -738,10 +747,10 @@ def do_daily_balance_summary():
              continue
         #raise
         bl=b1[0]
-        cl.beginning_balance='%.2f' % b0[0].actual_balance
+        cl.beginning_balance=_f( b0[0].actual_balance )
         cl.begining_of_day = report_start ##-timedelta(hours=24)
         cl.beginning_of_day_balance=cl.beginning_balance
-        cl.ending_balance='%.2f' % b1[0].actual_balance
+        cl.ending_balance=_f( b1[0].actual_balance )
         cl.current_balance=cl.ending_balance
         incoming=b0[0].unbilled_incoming_traffic
         outcoming=b0[0].unbilled_outgoing_traffic
@@ -749,7 +758,7 @@ def do_daily_balance_summary():
         cl.sell_amount=outcoming
         cl.client_name=cl.name
         cl.credit_limit = '%.2f' % -float(cl.allowed_credit)
-        rem= float(-cl.allowed_credit)-abs(float(cl.ending_balance))
+        rem= float(-cl.allowed_credit)-abs( cb1[0].actual_balance )
         if cl.mode == 2 :
             cl.remaining_credit='%.2f' % rem
         else:
