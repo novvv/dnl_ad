@@ -658,9 +658,9 @@ order by client.client_id;""" % \
         cl.beginning_balance=_f( b0[0].actual_balance )
         cl.ending_balance=_f( b1[0].actual_balance )
         cl.credit_limit = '%.2f' % float(-cl.allowed_credit)
-        rem=float(-cl.allowed_credit) - abs( b1[0].actual_balance )
+        rem=float(-cl.allowed_credit) - abs( float( b1[0].actual_balance) )
         if cl.mode == 2 :
-            cl.remaining_credit='%.2f' % rem
+            cl.remaining_credit=_f( rem )
         else:
             cl.remaining_credit='0' #'N/A'
         cl.balance = _f(cl.balance)
@@ -758,9 +758,9 @@ def do_daily_balance_summary():
         cl.sell_amount=outcoming
         cl.client_name=cl.name
         cl.credit_limit = '%.2f' % -float(cl.allowed_credit)
-        rem= float(-cl.allowed_credit)-abs( cb1[0].actual_balance )
+        rem= float(-cl.allowed_credit)-abs( float(cb1[0].actual_balance) )
         if cl.mode == 2 :
-            cl.remaining_credit='%.2f' % rem
+            cl.remaining_credit=_f( rem )
         else:
             cl.remaining_credit='0' #'N/A'
         #cl.beginning_of_day_balance='%.2f' % bl.actual_balance
