@@ -758,7 +758,7 @@ def do_daily_balance_summary():
         cl.sell_amount=outcoming
         cl.client_name=cl.name
         cl.credit_limit = '%.2f' % -float(cl.allowed_credit)
-        rem= float(-cl.allowed_credit)-abs( float(cb1[0].actual_balance) )
+        rem= float(-cl.allowed_credit)-abs( float( b1[0].actual_balance ) )
         if cl.mode == 2 :
             cl.remaining_credit=_f( rem )
         else:
