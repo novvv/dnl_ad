@@ -804,7 +804,7 @@ def do_daily_cdr_delivery():
             LOG.warning('CDR field for label "%s" not found' % lab)
     fm.sort()
     flds='0,9,11,41,45'#['Time' , Orig SRC Number, origination_destinatino_number, ingress_billed_duration, ingress_rate, ingress_cost
-    if fm:
+    if fm and len(fm) > 0:
         flds = ','.join(fm) ###"31,10,37,11,6,67" #",31,82,107,55,48,61,51,86,22,3,"
     reportdate=date.today()
     reporttime = time(datetime.now(UTC).hour, 0, 0)
@@ -845,11 +845,11 @@ def do_daily_cdr_delivery():
             cli_tab0=query("""select ingress_client_id as id,ingress_id  as rid,'i' as dir,r.alias from cdr_report_detail d,resource r  
                 where not ingress_client_id is NULL and not_zero_calls >0 and d.ingress_id=r.resource_id and r.active and
                 report_time between '%s'::date - interval '2 day' and '%s' and ingress_client_id=%d 
-                group by ingress_client_id,ingress_id ;"""  % (report_start, report_end, cl.client_id))
-            #cli_tab1=query("""select egress_client_id as id,egress_id as rid,'e' as dir from cdr_report_detail  
+                group by alias,ingress_client_id,ingress_id ;"""  % (report_start, report_end, cl.client_id))
+            #cli_tab1=query("""select egress_client_id as id,egress_id as rid,'e' as dir ,r.alias from cdr_report_detail  
             #    where not egress_client_id is NULL and
             #    report_time between '%s'::date - interval '2 day' and '%s' and egress_client_id=%d 
-            #    group by egress_client_id,egress_id ;"""  % (report_start, report_end, cl.client_id))
+            #    group by alias,egress_client_id,egress_id ;"""  % (report_start, report_end, cl.client_id))
             cli_tab=cli_tab0#+cli_tab1
             link=''
             for clii in cli_tab:
