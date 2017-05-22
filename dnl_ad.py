@@ -423,6 +423,7 @@ active: Select status from client ;"""
         cl.company_name = cl.company
         cl.client_name = cl.name
         cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
+        cl.credit_limit = cl.allow_credit
         cl.balance =  _f(cl.balance)
         if cl.value_type == 0:
             if cl.mode==1:
@@ -510,6 +511,7 @@ Select credit from client;"""
             cl.allow_credit = '%.2f' % float(-cl.allowed_credit)
         else:
             cl.allow_credit = '0'
+        cl.credit_limit = cl.allow_credit
         cl.balance = _f(cl.balance)
         if cl.mode==1:
             cl.notify_balance=_f(cl.actual_notify_balance)
