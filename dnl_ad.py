@@ -17,6 +17,7 @@ LOGFILE = config.get('dnl_ad','LOGFILE')
 LOGLEVEL = config.getint('dnl_ad','LOGLEVEL')
 #/configuration
 
+
 #from daemon import runner
 import psycopg2
 import psycopg2.extras
@@ -38,11 +39,17 @@ import pytz
 import re
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-#import urllib2
 import json
 #local imports
 import schedule
 from templates import *
+try:
+    # For Python 3.0 and later
+    from urllib.request import urlopen,Request
+except ImportError:
+    # Fall back to Python 2's urllib2
+    from urllib2 import urlopen,Request
+
 
 SLEEP_TIME = 30
 SEND_MAIL = 1
@@ -344,6 +351,42 @@ def process_table(data, select=None, style={'table': 'dttable'}):
     else:
         return '<p>-------</p>'
 
+#--- Api request ---
+
+def create_download_link(start_time=1495429200,end_time=1495515600,id=52,ingress=True,keep_longer=1, non_zero=1):
+    #To retrieve authentication token send POST request on http://localhost:8887/
+    #Authorization service is available from localhost only. If you don't have access to .113, you can use static token 'Yuza2L2rlGkdemBeYzL0SVncFafTjYNFSMpShsJT614inGMLDf
+    token = 'Yuza2L2rlGkdemBeYzL0SVncFafTjYNFSMpShsJT614inGMLDf'
+    try:
+        #stage 1: get token
+        req = Request('http://localhost:8887/')
+        request.get_method = lambda: 'POST'
+        #response=urlopen(req)
+        resp=json.JSONDecoder().decode(urlopen(req).read())
+        token = resp['token']
+    except:
+        pass
+    
+    if ingress:
+        field = '31,46,43,45,41,59,60,11,9,0'
+        trunk = 'ingress_id=%d'% id
+    else:
+        field='31,37,50,49,48,62,60,21,19,0'
+        trunk='egress_id=%d'% id
+    try
+        data = 'start_time=%d&end_time=&d&%s&field=%s&keep_longer=%d&non_zero=%d' % (start_time,end_time,trunk,keep_longer, non_zero)
+        hdr = { 'Accept':'application/json','Authorization': 'Authorization: Token %s' % token }
+        #stage 2: get request id
+        req = Request('http://localhost:8889', headers=hdr)
+        resp = json.JSONDecoder().decode(urlopen(req).read())
+        req_id = resp['request_id']
+        #stage 3: get download_link
+        req = Request('http://localhost:8889/%s' % request_id, headers=hdr)
+        resp = json.JSONDecoder().decode(urlopen(req).read())
+        return resp['download_link']
+    except Exception as e:
+        LOG.error("CREATE_DOWNLOAD_LINK: %s" % str(e) )
+        return None
 
 def do_clear_last_lowbalance_send_time():
     alert_rule=sys._getframe().f_code.co_name ; 
@@ -853,38 +896,39 @@ def do_daily_cdr_delivery():
             #    group by alias,egress_client_id,egress_id ;"""  % (report_start, report_end, cl.client_id))
             cli_tab=cli_tab0#+cli_tab1
             link=''
-            for clii in cli_tab:
+            for clii in cli_tab:#for all trunks
                 if not clii.rid : 
                     continue
-                url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s&format=plain' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
+                #url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s&format=plain' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
+                url=create_download_link(unix_start, unix_end, clii.rid)
                 link+='<p><a href="%s">Trunk name %s</a></p>' % (url, clii.alias)
-            if link=='':
-                LOG.warning('DAILY CDR DELIVERY (EMPTY LINK - NO SEND): %s' % cl.client_id )
-                continue
-            cl.download_link=link
-            LOG.warning('DAILY CDR DELIVERY: %s,url=%s' %
+                if not url:
+                    LOG.warning('DAILY CDR DELIVERY (EMPTY LINK - NO SEND): %s' % cl.client_id )
+                    continue
+                cl.download_link=link
+                LOG.warning('DAILY CDR DELIVERY: %s,url=%s' %
                      (cl.client_id,  cl.download_link) )
-            cl.cdr_count=len(cli_tab) # TODO ?? where is it
-            cl.site_name='THE SITE NAME'
-            cl.file_name=''
-            # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
-            # cl)
-            #
-            #subj=process_template('DAILY CDR DELIVERY: {client_name},IP:{ip}', cl)
-            cont=process_template(templ.content, cl)
-            if not cont or cont=='':
-                cont=process_template("</p>No template<p><p>{download_link}</p>"+text, cl)
-            subj=process_template(templ.subject, cl)
-            if not subj or subj=='':
-                subj='DAILY CDR DELIVERY (no template)'
-            cl.date=date.today()
-            cl.time=datetime.now(UTC).timetz()
-            cl.now=datetime.now(UTC)
-            finance_email=query("select * from system_parameter")[0].finance_email
-            to=''
-            if cl.billing_email : to = cl.billing_email
-            if finance_email : to   += ';'+finance_email
-            send_mail('auto_cdr_from', to, subj, cont, templ.auto_cdr_cc,  5, alert_rule, cl.client_id)
+                cl.cdr_count=len(cli_tab) # TODO ?? where is it
+                cl.site_name='THE SITE NAME'
+                cl.file_name=''
+                # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
+                # cl)
+                #
+                #subj=process_template('DAILY CDR DELIVERY: {client_name},IP:{ip}', cl)
+                cont=process_template(templ.content, cl)
+                if not cont or cont=='':
+                    cont=process_template("</p>No template<p><p>{download_link}</p>"+text, cl)
+                subj=process_template(templ.subject, cl)
+                if not subj or subj=='':
+                    subj='DAILY CDR DELIVERY (no template)'
+                cl.date=date.today()
+                cl.time=datetime.now(UTC).timetz()
+                cl.now=datetime.now(UTC)
+                finance_email=query("select * from system_parameter")[0].finance_email
+                to=''
+                if cl.billing_email : to = cl.billing_email
+                if finance_email : to   += ';'+finance_email
+                send_mail('auto_cdr_from', to, subj, cont, templ.auto_cdr_cc,  5, alert_rule, cl.client_id)
 
 
 def do_trunk_pending_suspension_notice():
