@@ -360,7 +360,7 @@ def create_download_link(start_time=1495429200,end_time=1495515600,id=52,ingress
     try:
         #stage 1: get token
         req = Request('http://localhost:8887/')
-        request.get_method = lambda: 'POST'
+        req.get_method = lambda: 'POST'
         #response=urlopen(req)
         resp=json.JSONDecoder().decode(urlopen(req).read())
         token = resp['token']
@@ -378,12 +378,12 @@ def create_download_link(start_time=1495429200,end_time=1495515600,id=52,ingress
         hdr = { 'Accept':'application/json','Authorization': 'Authorization: Token %s' % token }
         #stage 2: get request id
         req = Request('http://localhost:8889', headers=hdr,data=data)
-        request.get_method = lambda: 'POST'
+        req.get_method = lambda: 'POST'
         resp = json.JSONDecoder().decode(urlopen(req).read())
         req_id = resp['request_id']
         #stage 3: get download_link
         req = Request('http://localhost:8889/%s' % request_id, headers=hdr)
-        request.get_method = lambda: 'GET'
+        req.get_method = lambda: 'GET'
         resp = json.JSONDecoder().decode(urlopen(req).read())
         return resp['download_link']
     except Exception as e:
