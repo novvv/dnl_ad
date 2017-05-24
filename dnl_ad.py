@@ -383,12 +383,16 @@ def create_download_link(start_time=1495429200,end_time=1495515600,id=36,ingress
         req.get_method = lambda: 'POST'
         LOG.info("CREATE_DOWNLOAD_LINK: %s" % data)
         resp = json.JSONDecoder().decode(text)
+        if resp['code'] != 200:
+            LOG.error("CREATE_DOWNLOAD_LINK: %s" % str(resp) )
         req_id = resp['request_id']
         #stage 3: get download_link
         req = Request('http://localhost:8889/%s' % req_id, headers=hdr )
         req.get_method = lambda: 'GET'
         text=urlopen(req).read().decode('utf-8')
         resp = json.JSONDecoder().decode(text)
+        if resp['code'] != 200:
+            LOG.error("CREATE_DOWNLOAD_LINK: %s" % str(resp) )
         return resp['download_link']
     except Exception as e:
         LOG.error("CREATE_DOWNLOAD_LINK: %s" % str(e) )
