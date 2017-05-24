@@ -382,6 +382,7 @@ def create_download_link(start_time=1495429200,end_time=1495515600,id=36,ingress
         req = Request('http://localhost:8889', headers=hdr,data=data.encode('ascii'))
         req.get_method = lambda: 'POST'
         LOG.info("CREATE_DOWNLOAD_LINK: %s" % data)
+        resp=json.JSONDecoder().decode(text)
         resp = json.JSONDecoder().decode(text)
         if resp['code'] != 200:
             LOG.error("CREATE_DOWNLOAD_LINK: %s" % str(resp) )
