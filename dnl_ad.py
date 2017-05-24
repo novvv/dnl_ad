@@ -361,7 +361,7 @@ def create_download_link(start_time=1495429200,end_time=1495515600,id=52,ingress
         #stage 1: get token
         req = Request('http://localhost:8887/')
         req.get_method = lambda: 'POST'
-        text=urlopen(req).read()
+        text=urlopen(req).read().decode('utf-8')
         resp=json.JSONDecoder().decode(text)
         token = resp['token']
     except:
@@ -382,13 +382,13 @@ def create_download_link(start_time=1495429200,end_time=1495515600,id=52,ingress
         req = Request('http://localhost:8889', headers=hdr,data=data.encode('ascii'))
         req.get_method = lambda: 'POST'
         LOG.info("CREATE_DOWNLOAD_LINK: %s" % data)
-        text=urlopen(req).read()
+        text=urlopen(req).read().decode('utf-8')
         resp = json.JSONDecoder().decode(text)
         req_id = resp['request_id']
         #stage 3: get download_link
         req = Request('http://localhost:8889/%s' % request_id, headers=hdr)
         req.get_method = lambda: 'GET'
-        text=urlopen(req).read()
+        text=urlopen(req).read().decode('utf-8')
         resp = json.JSONDecoder().decode(text)
         return resp['download_link']
     except Exception as e:
