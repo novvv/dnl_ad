@@ -375,8 +375,8 @@ def create_download_link(start_time=1495429200,end_time=1495515600,id=52,ingress
         trunk='egress_id=%d'% id
     try:
         #data = 'start_time=%d&end_time=&d&%s&field=%s&keep_longer=%d&non_zero=%d' % (start_time,end_time,trunk,keep_longer, non_zero)
-        data = 'start_time=%d&end_time=&d&%s&field=%s&keep_longer=%d' % (start_time,end_time,trunk,keep_longer)
-        return data
+        data = 'start_time=%d&end_time=&d&%s&field=%s&%s&keep_longer=%d' % (start_time,end_time,field,trunk,keep_longer)
+        #return data
         hdr = { 'Accept':'application/json','Authorization': 'Token %s' % token }
         #stage 2: get request id
         req = Request('http://localhost:8889', headers=hdr,data=data.encode('ascii'))
