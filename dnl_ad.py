@@ -353,7 +353,7 @@ def process_table(data, select=None, style={'table': 'dttable'}):
 
 #--- Api request ---
 
-def create_download_link(start_time=1495429200,end_time=1495515600,id=52,ingress=True,keep_longer=1, non_zero=1):
+def create_download_link(start_time=1495429200,end_time=1495515600,id=36,ingress=True,keep_longer=1, non_zero=1):
     #To retrieve authentication token send POST request on http://localhost:8887/
     #Authorization service is available from localhost only. If you don't have access to .113, you can use static token 'Yuza2L2rlGkdemBeYzL0SVncFafTjYNFSMpShsJT614inGMLDf
     token = 'Yuza2L2rlGkdemBeYzL0SVncFafTjYNFSMpShsJT614inGMLDf'
@@ -382,7 +382,7 @@ def create_download_link(start_time=1495429200,end_time=1495515600,id=52,ingress
         req = Request('http://localhost:8889', headers=hdr,data=data.encode('ascii'))
         req.get_method = lambda: 'POST'
         LOG.info("CREATE_DOWNLOAD_LINK: %s" % data)
-        text=urlopen(req).read().decode('utf-8')
+        t
         resp = json.JSONDecoder().decode(text)
         req_id = resp['request_id']
         #stage 3: get download_link
