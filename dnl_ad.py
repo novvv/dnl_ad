@@ -923,6 +923,7 @@ def do_daily_cdr_delivery():
                 if not url:#try old style link
                     url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s&format=plain' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
                 link+='<p><a href="%s">Trunk name %s</a></p>' % (url, clii.alias)
+                cl.trunk_name=clii.alias
                 if not url:
                     LOG.warning('DAILY CDR DELIVERY (EMPTY LINK - NO SEND): %s' % cl.client_id )
                     continue
