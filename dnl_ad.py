@@ -389,7 +389,7 @@ def create_download_link(start_time=1495429200,end_time=1495515600,id=36,ingress
             LOG.error("CREATE_DOWNLOAD_LINK: %s" % str(resp) )
         req_id = resp['request_id']
         #stage 3: get download_link
-        retr=3
+        retr=20
         while retr:
             resp=None
             req = Request('http://localhost:8889/%s' % req_id, headers=hdr )
@@ -398,10 +398,11 @@ def create_download_link(start_time=1495429200,end_time=1495515600,id=36,ingress
             resp = json.JSONDecoder().decode(text)
             if resp['code'] != 200:
                 LOG.error("CREATE_DOWNLOAD_LINK: %s" % str(resp) )
-            if resp['status']=="Processing":
-                sleep(1)
+            if resp['status'] in ["Processing","Uploading"]:
+                sleep(3)
                 continue
             else:
+                print(resp)
                 return resp['download_link']
     except Exception as e:
         LOG.error("CREATE_DOWNLOAD_LINK: %s" % str(e) )
@@ -918,8 +919,9 @@ def do_daily_cdr_delivery():
             for clii in cli_tab:#for all trunks
                 if not clii.rid : 
                     continue
-                #url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s&format=plain' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
                 url=create_download_link(unix_start, unix_end, clii.rid)
+                if not url:#try old style link
+                    url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s&format=plain' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
                 link+='<p><a href="%s">Trunk name %s</a></p>' % (url, clii.alias)
                 if not url:
                     LOG.warning('DAILY CDR DELIVERY (EMPTY LINK - NO SEND): %s' % cl.client_id )
