@@ -385,7 +385,7 @@ def create_download_link(start_time=1495429200,end_time=1495515600,id=36,ingress
         resp = json.JSONDecoder().decode(text)
         req_id = resp['request_id']
         #stage 3: get download_link
-        req = Request('http://localhost:8889/%s' % request_id, headers=hdr)
+        req = Request('http://localhost:8889/%s' % req_id, headers=hdr)
         req.get_method = lambda: 'GET'
         text=urlopen(req).read().decode('utf-8')
         resp = json.JSONDecoder().decode(text)
