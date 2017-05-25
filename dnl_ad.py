@@ -1189,7 +1189,7 @@ class Daemon(object):
         """
         # Check pidfile to see if the daemon already runs.
         try:
-            minor=open('.git/ORIG_HEAD','rt').read()
+            minor=open('.git/ORIG_HEAD','rt').read().strip()[0:11]
         except:
             minor=''
         build = datetime.fromtimestamp(os.path.getmtime('dnl_ad.py'))
