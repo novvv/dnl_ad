@@ -1197,10 +1197,10 @@ class Daemon(object):
         ver = query("select id, program_name from version_information where program_name='dnl_ad'")
         if len (ver):
             query("""update version_information set major_ver='V%s', minor_ver='%s',
-                   build_date = '%s', start_date='%s'
+                   build_date = '%s', start_time='%s'
                    where program_name='dnl_ad' """ % (__version__,minor,str(build),str(start)))
         else:
-            query("""insert into version_information(program_name,major_ver,minor_ver,build_date,start_date)
+            query("""insert into version_information(program_name,major_ver,minor_ver,build_date,start_time)
                 values('dnl_ad','V%s', '%s','%s', '%s') """ % (__version__,minor,str(build),str(start)))
         
         try:
