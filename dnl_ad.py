@@ -186,7 +186,7 @@ def get_mail_params(fr):
         p = query("select * from mail_tmplate")[0]
         if  fr in p.__dict__:
             frm_id=p.__dict__[fr]
-            if frm_id != 'default':
+            if frm_id and frm_id != 'default':
                 fe=query("select id,email from mail_sender where id = %d" % int(frm_id))
                 if fe and fe[0].email:
                     efrom=fe[0].email
