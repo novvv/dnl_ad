@@ -926,11 +926,18 @@ def do_daily_cdr_delivery():
             for clii in cli_tab:#for all trunks
                 if not clii.rid : 
                     continue
+                cl.file_name=''
+                cl.site_name=''
                 url=create_download_link(unix_start, unix_end, clii.rid)
+                if url:
+                    cl.file_name = url.split('/')[-1]
+                    cl.site_name = url.split('/')[2]
                 if not url:#try old style link
+                    cl.file_name = 'Send direct link on api error'
                     url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s&format=plain' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
                 link+='<p><a href="%s">Trunk name %s</a></p>' % (url, clii.alias)
                 cl.trunk_name=clii.alias
+                
                 if not url:
                     LOG.warning('DAILY CDR DELIVERY (EMPTY LINK - NO SEND): %s' % cl.client_id )
                     continue
@@ -938,8 +945,7 @@ def do_daily_cdr_delivery():
                 LOG.warning('DAILY CDR DELIVERY: %s,url=%s' %
                      (cl.client_id,  cl.download_link) )
                 cl.cdr_count=len(cli_tab) # TODO ?? where is it
-                cl.site_name='THE SITE NAME'
-                cl.file_name=''
+                
                 # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
                 # cl)
                 #
