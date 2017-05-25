@@ -1194,7 +1194,7 @@ class Daemon(object):
             minor=''
         build = datetime.fromtimestamp(os.path.getmtime('dnl_ad.py'))
         start = datetime.now()
-        ver = query("select id.program_name from version_information where program_name='dnl_ad'")
+        ver = query("select id, program_name from version_information where program_name='dnl_ad'")
         if len (ver):
             query("""update version_information set major_ver='V%s', minor_ver='%s',
                    build_date = '%s', start_date='%s'
