@@ -183,13 +183,16 @@ def get_mail_params(fr):
     try:
         m = query("select * from system_parameter")[0]
         efrom = m.fromemail
-        p = query("select * from mail_tmplate")[0]
-        if  fr in p.__dict__:
-            frm_id=p.__dict__[fr]
-            if frm_id and frm_id != 'default':
-                fe=query("select id,email from mail_sender where id = %d" % int(frm_id))
-                if fe and fe[0].email:
-                    efrom=fe[0].email
+        try:
+            p = query("select * from mail_tmplate")[0]
+            if  fr in p.__dict__:
+                frm_id=p.__dict__[fr]
+                if frm_id and frm_id != 'default':
+                    fe=query("select id,email from mail_sender where id = %d" % int(frm_id))
+                    if fe and fe[0].email:
+                        efrom=fe[0].email
+        except:
+            LOG.warning("Email parameters  not good: %s", str(e)+traceback.format_exc())
         return (
         (m.smtphost, m.smtpport, m.emailusername, \
          m.emailpassword, efrom))
