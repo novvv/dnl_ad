@@ -709,6 +709,7 @@ order by client.client_id;""" % \
             AND client_id = %s" % ( report_start.strftime("%Y%m%d"), cl.client_id ) )
         if len(b0)<1:
             LOG.warning('No incoming balanse records for id:%s name:%s' % (cl.client_id,cl.name) )
+            continue
         b1=query("SELECT *,balance as actual_balance FROM c4_client_balance \
             WHERE client_id = '%s'" %  cl.client_id  )
         if len(b1)<1:
