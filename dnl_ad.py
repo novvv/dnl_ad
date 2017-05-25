@@ -1189,6 +1189,21 @@ class Daemon(object):
         """
         # Check pidfile to see if the daemon already runs.
         try:
+            minor=open('.git/ORIG_HEAD','rt').read()
+        except:
+            minor=''
+        build = datetime.fromtimestamp(os.path.getmtime('dnl_ad.py'))
+        start = datetime.now()
+        ver = query("select id.program_name from version_information where program_name='dnl_ad'")
+        if len (ver):
+            query("""update version_information set major_ver='V%s', minor_ver='%s',
+                   build_date = '%s', start_date='%s'
+                   where program_name='dnl_ad' """ % (__version__,minor,str(build),str(start)))
+        else:
+            query("""insert into version_information(program_name,major_ver,minor_ver,build_date,start_date)
+                values('dnl_ad','V%s', '%s','%s', '%s') """ % (__version__,minor,str(build),str(start)))
+        
+        try:
             pf = open(self.pidfile,'r')
             pid = int(pf.read().strip())
             pf.close()
@@ -1281,20 +1296,7 @@ class Daemon(object):
 class MyDaemon(Daemon):
     def run(self):
         "main cycle"
-        try:
-            minor=open('.git/ORIG_HEAD','rt').read()
-        except:
-            minor=''
-        build = datetime.fromtimestamp(os.path.getmtime('dnl_ad.py'))
-        start = datetime.now()
-        ver = query("select id.program_name from version_information where program_name='dnl_ad'")
-        if len (ver):
-            query("""update version_information set major_ver='V%s', minor_ver='%s',
-                   build_date = '%s', start_date='%s'
-                   where program_name='dnl_ad' """ % (__version__,minor,str(build),str(start)))
-        else:
-            query("""insert into version_information(program_name,major_ver,minor_ver,build_date,start_date)
-                values('dnl_ad','V%s', '%s','%s', '%s') """ % (__version__,minor,str(build),str(start)))
+        
         LOG.warning('DNL AD started!')
         if LOGLEVEL == logging.DEBUG:
             schedule.every(1).minutes.do(fifteen_minute_job)
