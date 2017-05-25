@@ -1192,7 +1192,7 @@ class Daemon(object):
             minor=open('.git/ORIG_HEAD','rt').read().strip()[0:11]
         except:
             minor=''
-        build = datetime.fromtimestamp(os.path.getmtime('dnl_ad.py'))
+        build = datetime.fromtimestamp(os.path.getmtime('dnl_ad.py')).date()
         start = datetime.now()
         ver = query("select id, program_name from version_information where program_name='dnl_ad'")
         if len (ver):
