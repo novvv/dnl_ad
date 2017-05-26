@@ -926,6 +926,7 @@ def do_daily_cdr_delivery():
             for clii in cli_tab:#for all trunks
                 if not clii.rid : 
                     continue
+                LOG.warning("TRUNK CDR: %d:%s " % (clii.rid,clii.alias) )
                 cl.file_name=''
                 cl.site_name=''
                 url=create_download_link(unix_start, unix_end, clii.rid)
@@ -1299,6 +1300,11 @@ class Daemon(object):
                     time.sleep(1)
         """
                 
+def _one(func):
+    try:
+        func()
+    except Exception as e:
+        LOG.error('UNEXPECTED!\n'+traceback.format_exc() )
  
 class MyDaemon(Daemon):
     def run(self):
@@ -1306,19 +1312,19 @@ class MyDaemon(Daemon):
         
         LOG.warning('DNL AD started!')
         if LOGLEVEL == logging.DEBUG:
-            schedule.every(1).minutes.do(fifteen_minute_job)
-            schedule.every(1).minutes.do(daily_job)
+            schedule.every(1).minutes.do( _one(fifteen_minute_job))
+            schedule.every(1).minutes.do(_one(daily_job))
         else:
-            schedule.every(1).minutes.do(do_clear_last_lowbalance_send_time)
+            schedule.every(1).minutes.do(_one(do_clear_last_lowbalance_send_time))
             
-            schedule.every(5).minutes.do(do_notify_client_balance)
-            schedule.every(5).minutes.do(do_notify_zero_balance)
+            schedule.every(5).minutes.do(_one(do_notify_client_balance))
+            schedule.every(5).minutes.do(_one(do_notify_zero_balance))
             
-            schedule.every().hours.at(':00').do(do_daily_usage_summary)
-            schedule.every().hours.at(':00').do(do_daily_balance_summary)
-            schedule.every().hours.at(':00').do(do_daily_cdr_delivery)
-            schedule.every().hours.at(':00').do(do_trunk_pending_suspension_notice)
-            schedule.every().hours.at(':00').do(do_trunk_is_suspended_notice)
+            schedule.every().hours.at(':00').do(_one(do_daily_usage_summary))
+            schedule.every().hours.at(':00').do(_one(do_daily_balance_summary))
+            schedule.every().hours.at(':00').do(_one(do_daily_cdr_delivery))
+            schedule.every().hours.at(':00').do(_one(do_trunk_pending_suspension_notice))
+            schedule.every().hours.at(':00').do(_one(do_trunk_is_suspended_notice))
             
         #initial one run;
         while True:
