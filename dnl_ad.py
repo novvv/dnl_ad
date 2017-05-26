@@ -56,6 +56,9 @@ except ImportError:
 SLEEP_TIME = 30
 SEND_MAIL = 1
 
+
+
+
 dt = datetime.now(UTC)  # current time in UTC
 zone_names = defaultdict(list)
 
@@ -179,6 +182,17 @@ LOGGING = {
 config.dictConfig(LOGGING)
 #Establish logger
 LOG = logging.getLogger("my-logger")
+
+def _one(func):
+    def one_call(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except Exception as e:
+            LOG.error('UNEXPECTED!\n'+traceback.format_exc() )
+        try:
+            return func(*args, **kwargs)
+    return one_call
+
 
 def get_mail_params(fr):
     """Get parameters for sending mail from system configuration table."""
@@ -412,7 +426,7 @@ def create_download_link(start_time=1495429200,end_time=1495515600,id=36,ingress
     except Exception as e:
         LOG.error("CREATE_DOWNLOAD_LINK: %s" % str(e) )
         return None
-
+@_one
 def do_clear_last_lowbalance_send_time():
     alert_rule=sys._getframe().f_code.co_name ; 
     LOG.info("START: %s" % alert_rule)
@@ -440,6 +454,7 @@ def do_clear_last_lowbalance_send_time():
     )
 )"""     )    
 
+@_one
 def do_notify_client_balance():
     """
 Check every 5 minute for each “active” clients’ current balance and “low
@@ -517,7 +532,7 @@ active: Select status from client ;"""
             "update client_low_balance_config set last_alert_time=now() where client_id=%s" %
                cl.client_id)
 
-
+@_one
 def do_notify_zero_balance():
     """
 Check every 5 minute for each “active” clients’ current balance and “low
@@ -606,7 +621,7 @@ Select credit from client;"""
                 where client_id=%s""" %  ( times, str(cl.now), cl.client_id) )
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
-            
+@_one
 def do_daily_usage_summary():
     """For each client who has “daily usage summary” selected, at the client’s GMT
 time zone, we need to send out a daily usage summary mail. """
@@ -752,7 +767,7 @@ order by client.client_id;""" % \
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
-
+@_one
 def do_daily_balance_summary():
     """
     For each client who has “daily balance summary” selected, at the client’s
@@ -844,7 +859,7 @@ def do_daily_balance_summary():
                 send_mail('auto_summary_from', cl.billing_email, subj, cont, templ.auto_balance_cc,  8, alert_rule, cl.client_id)
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
-
+@_one
 def do_daily_cdr_delivery():
     """
     For each client who has “daily CDR delivery” selected, at the client’s GMT
@@ -966,7 +981,7 @@ def do_daily_cdr_delivery():
                 if finance_email : to   += ';'+finance_email
                 send_mail('auto_cdr_from', to, subj, cont, templ.auto_cdr_cc,  5, alert_rule, cl.client_id)
 
-
+@_one
 def do_trunk_pending_suspension_notice():
     """
     For each client, at the client’s timezone 00:00:00, we need to check if
@@ -1036,7 +1051,7 @@ rate_update_file_name:{rate_update_file_name}
         except Exception as e:
             LOG.error('cannot sendmail:'+str(e))
 
-
+@_one
 def do_trunk_is_suspended_notice():
     """
     For each client, at the client’s timezone 00:00:00, we need to check if
@@ -1300,11 +1315,6 @@ class Daemon(object):
                     time.sleep(1)
         """
                 
-def _one(func):
-    try:
-        func()
-    except Exception as e:
-        LOG.error('UNEXPECTED!\n'+traceback.format_exc() )
  
 class MyDaemon(Daemon):
     def run(self):
@@ -1312,19 +1322,19 @@ class MyDaemon(Daemon):
         
         LOG.warning('DNL AD started!')
         if LOGLEVEL == logging.DEBUG:
-            schedule.every(1).minutes.do( _one(fifteen_minute_job))
-            schedule.every(1).minutes.do(_one(daily_job))
+            schedule.every(1).minutes.do(fifteen_minute_job)
+            schedule.every(1).minutes.do(daily_job)
         else:
-            schedule.every(1).minutes.do(_one(do_clear_last_lowbalance_send_time))
+            schedule.every(1).minutes.do(do_clear_last_lowbalance_send_time)
             
-            schedule.every(5).minutes.do(_one(do_notify_client_balance))
-            schedule.every(5).minutes.do(_one(do_notify_zero_balance))
+            schedule.every(5).minutes.do(do_notify_client_balance)
+            schedule.every(5).minutes.do(do_notify_zero_balance)
             
-            schedule.every().hours.at(':00').do(_one(do_daily_usage_summary))
-            schedule.every().hours.at(':00').do(_one(do_daily_balance_summary))
-            schedule.every().hours.at(':00').do(_one(do_daily_cdr_delivery))
-            schedule.every().hours.at(':00').do(_one(do_trunk_pending_suspension_notice))
-            schedule.every().hours.at(':00').do(_one(do_trunk_is_suspended_notice))
+            schedule.every().hours.at(':00').do(do_daily_usage_summary)
+            schedule.every().hours.at(':00').do(do_daily_balance_summary)
+            schedule.every().hours.at(':00').do(do_daily_cdr_delivery)
+            schedule.every().hours.at(':00').do(do_trunk_pending_suspension_notice)
+            schedule.every().hours.at(':00').do(do_trunk_is_suspended_notice)
             
         #initial one run;
         while True:
