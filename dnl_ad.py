@@ -189,8 +189,6 @@ def _one(func):
             func(*args, **kwargs)
         except Exception as e:
             LOG.error('UNEXPECTED!\n'+traceback.format_exc() )
-        try:
-            return func(*args, **kwargs)
     return one_call
 
 
