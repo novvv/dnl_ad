@@ -1067,17 +1067,18 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
         LOG.info('Skipped time nowh %d tz %s delta %d tz+delta %d' % (nowh, tz, tz_to_hdelta(tz),  ( (nowh+tz_to_hdelta(tz))  % 24 )  ) )
         return
     clients=query("""
-select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_file_name,
+select max(l.id),max(l.download_deadline) as rate_download_deadline,l.file as rate_update_file_name,
 r.alias as trunk_name,r.resource_id,c.company as company_name,c.billing_email,daily_cdr_generation_zone,
 c.client_id
 from rate_send_log_detail d, resource r , client c,rate_send_log l
 where 
 r.resource_id = d.resource_id and c.client_id=r.client_id 
 and r.active
-and d.log_id= l.id and download_deadline < now()
+and d.log_id= l.id and download_deadline < now() - interval '1 day'
 and l.is_email_alert
+and c.client_id=75
 group by 
-l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,daily_cdr_generation_zone,
+l.file,r.alias,r.resource_id,c.company,c.billing_email,daily_cdr_generation_zone,
 c.client_id
 """)
     try:
