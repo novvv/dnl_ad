@@ -711,8 +711,21 @@ group by client.client_id,egress_client_id,daily_balance_send_time_zone,billing_
 client.name,auto_summary_not_zero,mode
 order by client.client_id;""" % \
                       report_start.strftime("%Y%m%d") )
+    for clb in clients_buy:
+        for cls in clients_sell:
+            if clb.cient_id == cls.client_id:
+                clb.total_success_call_sell = cls.total_success_call_sell
+                clb.total_call_sell = cls.total_call_sell
+                clb.total_not_zero_calls_sell = cls.total_not_zero_calls_sell
+                clb.total_billed_min_sell = cls.total_billed_min_sell
+                clb.total_billed_amount_sell = cls.total_billed_amount_sell
+                clb.sell_total_duration = cls.sell_total_duration
+                cls.client_id = None
+                
     clients=clients_buy+clients_sell
     for cl in clients:
+        if not cl.client_id:
+            continue
         LOG.warning('DAILY USAGE ! client_id:%s, name:%s' %
                     (cl.client_id, cl.name))
         if not cl.auto_summary_not_zero and cl.total_not_zero_calls_buy == 0  and cl.total_not_zero_calls_sell == 0:
