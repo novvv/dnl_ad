@@ -1144,9 +1144,8 @@ rate_update_file_name:{rate_update_file_name}
                 values(now(),'Trunk',2,'dnl_ad','Trunk Name:%s',$$%s$$,'Modify Trunk [%s] operation have been rolled back!',Null,'{"type":2}')
                 """ % (cl.trunk_name, rollback, cl.trunk_name)
                 )
-            except:
-                except Exception as e:
-                    LOG.error('cannot insert modif_log:'+str(e))
+            except Exception as e:
+                LOG.error('cannot insert modif_log:'+str(e))
         except Exception as e:
             LOG.error('cannot update resource table:'+str(e))
             
