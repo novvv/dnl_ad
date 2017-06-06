@@ -1021,19 +1021,22 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
         raise
     #tm=datetime.now(UTC)
     clients=query("""
-select l.id,l.download_deadline as rate_download_deadline,l.file as rate_update_file_name,
-r.alias as trunk_name,c.company as company_name,c.billing_email,daily_cdr_generation_zone,
+select d.id,d.log_id,l.download_deadline,l.file as rate_update_file_name,
+r.alias as trunk_name,r.resource_id,c.company as company_name,c.billing_email,daily_cdr_generation_zone,
 c.client_id
 from rate_send_log_detail d, resource r , client c,rate_send_log l
-where r.resource_id = d.resource_id and c.client_id=r.client_id
+where 
+r.resource_id = d.resource_id and c.client_id=r.client_id
 and r.active
-and d.log_id= l.id 
+and d.log_id= l.id
+and not l.download_deadline is null
 and download_deadline - interval '24 hour' < now()
-and download_deadline > now()
+and download_deadline = (select max(download_deadline) from rate_send_log l1,rate_send_log_detail d1 
+         where l1.id=d1.log_id and d1.resource_id=r.resource_id 
+                 group by d1.resource_id)
 and l.is_email_alert
-group by
-l.id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,daily_cdr_generation_zone,
-c.client_id
+--and c.client_id=75
+--group by l.id,d.id,d.log_id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,daily_cdr_generation_zone,c.client_id
 """ )
     for cl in clients:
         LOG.warning('TRUNK NOTICE! trunk:%s, company:%s' %
@@ -1080,19 +1083,22 @@ Select * from rate_download_log where client_id = xx and log_detail_id = xx
         LOG.info('Skipped time nowh %d tz %s delta %d tz+delta %d' % (nowh, tz, tz_to_hdelta(tz),  ( (nowh+tz_to_hdelta(tz))  % 24 )  ) )
         return
     clients=query("""
-select max(l.id),max(l.download_deadline) as rate_download_deadline,l.file as rate_update_file_name,
+select d.id,d.log_id,l.download_deadline,l.file as rate_update_file_name,
 r.alias as trunk_name,r.resource_id,c.company as company_name,c.billing_email,daily_cdr_generation_zone,
 c.client_id
 from rate_send_log_detail d, resource r , client c,rate_send_log l
 where 
-r.resource_id = d.resource_id and c.client_id=r.client_id 
+r.resource_id = d.resource_id and c.client_id=r.client_id
 and r.active
-and d.log_id= l.id and download_deadline < now() - interval '1 day'
+and d.log_id= l.id
+and not l.download_deadline is null
+and l.download_deadline < now() - interval '1 day'
+and download_deadline = (select max(download_deadline) from rate_send_log l1,rate_send_log_detail d1 
+         where l1.id=d1.log_id and d1.resource_id=r.resource_id 
+                 group by d1.resource_id)
 and l.is_email_alert
-and c.client_id=75
-group by 
-l.file,r.alias,r.resource_id,c.company,c.billing_email,daily_cdr_generation_zone,
-c.client_id
+--and c.client_id=75
+--group by l.id,d.id,d.log_id,l.download_deadline,l.file,r.alias,r.resource_id,c.company,c.billing_email,daily_cdr_generation_zone,c.client_id
 """)
     try:
         templ=query('select no_download_rate_subject as subject,no_download_rate_content as content from mail_tmplate')[0]
@@ -1132,11 +1138,15 @@ rate_update_file_name:{rate_update_file_name}
             query(
             "update resource set active=false,disable_by_alert=true,update_at='%s',update_by='dnl_ad' where resource_id=%s" %
               (cl.now, cl.resource_id))
-            rollback="update resource set active=true,disable_by_alert=false,update_at='%s',update_by='dnl_ad' where resource_id=%s" % (cl.now, cl.resource_id )
-            query(""" insert into modif_log( time ,module,type,name ,detail,rollback,rollback_msg,rollback_flg,rollback_extra_info )
-            values(now(),'Trunk',2,'dnl_ad','Trunk Name:%s',$$%s$$,'Modify Trunk [%s] operation have been rolled back!',Null,'{"type":2}')
-            """ % (cl.trunk_name, rollback, cl.trunk_name)
-            )
+            try:
+                rollback="update resource set active=true,disable_by_alert=false,update_at='%s',update_by='dnl_ad' where resource_id=%s" % (cl.now, cl.resource_id )
+                query(""" insert into modif_log( time ,module,type,name ,detail,rollback,rollback_msg,rollback_flg,rollback_extra_info )
+                values(now(),'Trunk',2,'dnl_ad','Trunk Name:%s',$$%s$$,'Modify Trunk [%s] operation have been rolled back!',Null,'{"type":2}')
+                """ % (cl.trunk_name, rollback, cl.trunk_name)
+                )
+            except:
+                except Exception as e:
+                    LOG.error('cannot insert modif_log:'+str(e))
         except Exception as e:
             LOG.error('cannot update resource table:'+str(e))
             
