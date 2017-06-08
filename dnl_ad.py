@@ -1029,8 +1029,8 @@ where
 r.resource_id = d.resource_id and c.client_id=r.client_id
 and r.active
 and d.log_id= l.id
-and l.status
-and l.download_date is null
+and d.status
+and d.download_date is null
 and not l.download_deadline is null
 and download_deadline - interval '24 hour' < now()
 and download_deadline = (select max(download_deadline) from rate_send_log l1,rate_send_log_detail d1 
@@ -1093,8 +1093,8 @@ where
 r.resource_id = d.resource_id and c.client_id=r.client_id
 and r.active
 and d.log_id= l.id
-and l.download_date is null
-and l.status
+and d.download_date is null
+and d.status
 and not l.download_deadline is null
 and l.download_deadline < now() - interval '1 day'
 and download_deadline = (select max(download_deadline) from rate_send_log l1,rate_send_log_detail d1 
