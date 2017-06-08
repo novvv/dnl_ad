@@ -1029,6 +1029,8 @@ where
 r.resource_id = d.resource_id and c.client_id=r.client_id
 and r.active
 and d.log_id= l.id
+and l.status
+and l.download_date is null
 and not l.download_deadline is null
 and download_deadline - interval '24 hour' < now()
 and download_deadline = (select max(download_deadline) from rate_send_log l1,rate_send_log_detail d1 
@@ -1091,6 +1093,8 @@ where
 r.resource_id = d.resource_id and c.client_id=r.client_id
 and r.active
 and d.log_id= l.id
+and l.dowload_date is null
+and l.status
 and not l.download_deadline is null
 and l.download_deadline < now() - interval '1 day'
 and download_deadline = (select max(download_deadline) from rate_send_log l1,rate_send_log_detail d1 
@@ -1135,6 +1139,8 @@ rate_update_file_name:{rate_update_file_name}
         #do trunk blocking
         cl.now = datetime.now(UTC)
         try:
+            query(
+            "update rate_send_log_detail set status=false and error='trunk was blocked by dnl_ad daemon' where id=%s" % cl.id )
             query(
             "update resource set active=false,disable_by_alert=true,update_at='%s',update_by='dnl_ad' where resource_id=%s" %
               (cl.now, cl.resource_id))
