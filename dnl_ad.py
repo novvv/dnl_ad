@@ -1047,6 +1047,8 @@ and l.is_email_alert
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.now=datetime.now(UTC)
+        cl.download_time=cl.download_deadline
+        cl.rate_download_link=cl.rate_update_file_name
         try:
             cont=process_template(templ.content, cl)
         except:
@@ -1117,6 +1119,8 @@ and l.is_email_alert
         cl.date=date.today()
         cl.time=datetime.now(UTC).timetz()
         cl.effective_date=datetime.now(UTC)
+        cl.download_time=cl.download_deadline
+        cl.rate_download_link=cl.rate_update_file_name
         try:
           cont=process_template(templ.content, cl)
         except:
