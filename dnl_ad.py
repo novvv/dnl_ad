@@ -1093,7 +1093,7 @@ where
 r.resource_id = d.resource_id and c.client_id=r.client_id
 and r.active
 and d.log_id= l.id
-and l.dowload_date is null
+and l.download_date is null
 and l.status
 and not l.download_deadline is null
 and l.download_deadline < now() - interval '1 day'
