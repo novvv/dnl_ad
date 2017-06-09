@@ -1126,10 +1126,7 @@ and l.is_email_alert
         except:
             #cont=process_template(fake_trunk_pending_suspension_notice_template, cl)
             cont=process_template("""no template download_rate_notice_content!
-company_name:{company_name}
-trunk_name:{trunk_name}
-rate_download_deadline:{rate_download_deadline}
-rate_update_file_name:{rate_update_file_name}
+nano
 """, cl)
         try:
             subj=process_template(templ.subject, cl)
