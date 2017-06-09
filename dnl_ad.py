@@ -940,7 +940,7 @@ def do_daily_cdr_delivery():
             cl.current_day=date.today()
             cl.customer_gmt=tz
             cli_tab0=query("""select ingress_client_id as id,ingress_id  as rid,'i' as dir,r.alias from cdr_report_detail d,resource r  
-                where not ingress_client_id is NULL and not_zero_calls >0 and d.ingress_id=r.resource_id and r.active and
+                where not ingress_client_id is NULL and not ingress_id is NULL  and not_zero_calls >0 and d.ingress_id=r.resource_id and r.active and
                 report_time between '%s'::date - interval '2 day' and '%s' and ingress_client_id=%d 
                 group by alias,ingress_client_id,ingress_id ;"""  % (report_start, report_end, cl.client_id))
             #cli_tab1=query("""select egress_client_id as id,egress_id as rid,'e' as dir ,r.alias from cdr_report_detail  
@@ -949,12 +949,13 @@ def do_daily_cdr_delivery():
             #    group by alias,egress_client_id,egress_id ;"""  % (report_start, report_end, cl.client_id))
             cli_tab=cli_tab0#+cli_tab1
             link=''
+            cl.file_name=''
+            cl.site_name=''
+            cl.trunk_name=''
             for clii in cli_tab:#for all trunks
                 if not clii.rid : 
                     continue
                 LOG.warning("TRUNK CDR: %d:%s " % (clii.rid,clii.alias) )
-                cl.file_name=''
-                cl.site_name=''
                 url=create_download_link(unix_start, unix_end, clii.rid)
                 if url:
                     cl.file_name = url.split('/')[-1]
@@ -962,35 +963,35 @@ def do_daily_cdr_delivery():
                 if not url:#try old style link
                     cl.file_name = 'Send direct link on api error'
                     url=CDR_DOWNLOAD_URL+'/?start=%d&end=%d&%s=%d&field=%s&format=plain' % (unix_start, unix_end, clii.dir,  clii.rid , flds)
-                link+='<p><a href="%s">Trunk name %s</a></p>' % (url, clii.alias)
-                cl.trunk_name=clii.alias
-                
-                if not url:
-                    LOG.warning('DAILY CDR DELIVERY (EMPTY LINK - NO SEND): %s' % cl.client_id )
-                    continue
-                cl.download_link=link
-                LOG.warning('DAILY CDR DELIVERY: %s,url=%s' %
-                     (cl.client_id,  cl.download_link) )
-                cl.cdr_count=len(cli_tab) # TODO ?? where is it
-                
-                # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
-                # cl)
-                #
-                #subj=process_template('DAILY CDR DELIVERY: {client_name},IP:{ip}', cl)
-                cont=process_template(templ.content, cl)
-                if not cont or cont=='':
-                    cont=process_template("</p>No template<p><p>{download_link}</p>"+text, cl)
-                subj=process_template(templ.subject, cl)
-                if not subj or subj=='':
-                    subj='DAILY CDR DELIVERY (no template)'
-                cl.date=date.today()
-                cl.time=datetime.now(UTC).timetz()
-                cl.now=datetime.now(UTC)
-                finance_email=query("select * from system_parameter")[0].finance_email
-                to=''
-                if cl.billing_email : to = cl.billing_email
-                if finance_email : to   += ';'+finance_email
-                send_mail('auto_cdr_from', to, subj, cont, templ.auto_cdr_cc,  5, alert_rule, cl.client_id)
+                link += '<p><a href="%s">Trunk name %s</a></p>' % (url, clii.alias)
+                cl.trunk_name += clii.alias + ' '
+            
+            if not url:
+                LOG.warning('DAILY CDR DELIVERY (EMPTY LINK - NO SEND): %s' % cl.client_id )
+                continue
+            cl.download_link=link
+            LOG.warning('DAILY CDR DELIVERY: %s,url=%s' %
+                    (cl.client_id,  cl.download_link) )
+            cl.cdr_count=len(cli_tab) # TODO ?? where is it
+            
+            # file_name,cdr_countcontent = process_template(templ.auto_cdr_content,
+            # cl)
+            #
+            #subj=process_template('DAILY CDR DELIVERY: {client_name},IP:{ip}', cl)
+            cont=process_template(templ.content, cl)
+            if not cont or cont=='':
+                cont=process_template("</p>No template<p><p>{download_link}</p>"+text, cl)
+            subj=process_template(templ.subject, cl)
+            if not subj or subj=='':
+                subj='DAILY CDR DELIVERY (no template)'
+            cl.date=date.today()
+            cl.time=datetime.now(UTC).timetz()
+            cl.now=datetime.now(UTC)
+            finance_email=query("select * from system_parameter")[0].finance_email
+            to=''
+            if cl.billing_email : to = cl.billing_email
+            if finance_email : to   += ';'+finance_email
+            send_mail('auto_cdr_from', to, subj, cont, templ.auto_cdr_cc,  5, alert_rule, cl.client_id)
 
 @_one
 def do_trunk_pending_suspension_notice():
