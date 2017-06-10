@@ -713,7 +713,7 @@ order by client.client_id;""" % \
                       report_start.strftime("%Y%m%d") )
     for clb in clients_buy:
         for cls in clients_sell:
-            if clb.cient_id == cls.client_id:
+            if cls.client_id and clb.cient_id == cls.client_id:
                 clb.total_success_call_sell = cls.total_success_call_sell
                 clb.total_call_sell = cls.total_call_sell
                 clb.total_not_zero_calls_sell = cls.total_not_zero_calls_sell
